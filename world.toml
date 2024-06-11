@@ -1,0 +1,23 @@
+[cardinal]
+BASE_SHARD_SEQUENCER_ADDRESS = ''
+CARDINAL_LOG_LEVEL = 'info'
+CARDINAL_MODE = 'development'
+CARDINAL_NAMESPACE = 'my-world-1'
+REDIS_ADDRESS = ''
+REDIS_PASSWORD = ''
+
+[common]
+ROUTER_KEY = '71c57568344543e967a3031ab965d72d164d0a121f036cc608203f208f2eccaa'
+
+[evm]
+BLOCK_TIME = '1s'
+CHAIN_ID = 'world-engine'
+DA_AUTH_TOKEN = ''
+DA_BASE_URL = 'http://celestia-devnet:26658'
+DA_NAMESPACE_ID = '67480c4a88c4d12935d4'
+FAUCET_ADDR = 'world142fg37yzx04cslgeflezzh83wa4xlmjpms0sg5'
+KEY_MNEMONIC = 'enact adjust liberty squirrel bulk ticket invest tissue antique window thank slam unknown fury script among bread social switch glide wool clog flag enroll'
+
+[nakama]
+ENABLE_ALLOWLIST = 'false'
+OUTGOING_QUEUE_SIZE = 64
