@@ -4,7 +4,6 @@ go 1.22.1
 
 require (
 	github.com/rs/zerolog v1.32.0
-	gotest.tools/v3 v3.5.1
 	pkg.world.dev/world-engine/cardinal v1.3.3
 )
 
@@ -41,7 +40,6 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.2 // indirect
 	github.com/gofiber/swagger v0.1.14 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/pprof v0.0.0-20230901174712-0191c66da455 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/holiman/uint256 v1.2.3 // indirect
