@@ -7,6 +7,7 @@ type SpatialCell struct {
 	PositionsX []float32        `json:"PositionsX"`
 	PositionsY []float32        `json:"PositionsY"`
 	Radii      []int            `json:"Radius"`
+	Team       []string         `json:"Team"`
 }
 
 // DirectionMap is the component that holds mapping from coordinates to vectors directly within.

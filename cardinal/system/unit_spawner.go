@@ -13,16 +13,17 @@ import (
 )
 
 type UnitType struct {
-	Name   string
-	Health float32
-	Damage int
-	Speed  float32
-	Cost   int
-	Radius int
+	Name         string
+	Health       float32
+	Damage       int
+	Speed        float32
+	Cost         int
+	Radius       int
+	AttackRadius int
 }
 
 var UnitRegistry = map[string]UnitType{
-	"Vampire": {Health: 100, Damage: 20, Speed: 50, Cost: 50, Radius: 50},
+	"Vampire": {Health: 100, Damage: 20, Speed: 50, Cost: 50, Radius: 70, AttackRadius: 1400},
 }
 
 // Spawns player units
@@ -112,13 +113,14 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 				comp.Position{PositionVectorX: create.Msg.PositionX, PositionVectorY: create.Msg.PositionY, PositionVectorZ: create.Msg.PositionZ, RotationVectorX: create.Msg.RotationX, RotationVectorY: create.Msg.RotationY, RotationVectorZ: create.Msg.RotationZ},
 				comp.MapName{MapName: create.Msg.MapName},
 				comp.Distance{Distance: tempDistance},
-				comp.SizeCircle{Radius: unitType.Radius},
+				comp.UnitRadius{UnitRadius: unitType.Radius},
+				comp.AttackRadius{AttackRadius: unitType.AttackRadius},
 			)
 			if errr != nil {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("error creating unit: %w", err)
 			}
 
-			AddObjectSpatialHash(SpatialHash, entityID, create.Msg.PositionX, create.Msg.PositionY, unitType.Radius)
+			AddObjectSpatialHash(SpatialHash, entityID, create.Msg.PositionX, create.Msg.PositionY, unitType.Radius, create.Msg.Team)
 
 			//incriment UID
 			tempUID.UID++

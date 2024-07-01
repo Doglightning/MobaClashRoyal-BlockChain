@@ -19,25 +19,12 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 	// search through every map
 	err := cardinal.NewSearch().Entity(
 		filter.Exact(MapFilters()),
-	).Each(world, func(id types.EntityID) bool {
-		//store map component
-		dirMap, err := cardinal.GetComponent[comp.DirectionMap](world, id)
-		if err != nil {
-			fmt.Printf("error retrieving map direction component: %v", err)
-			return false
-		}
+	).Each(world, func(mapID types.EntityID) bool {
 
-		//store Grid Utilities component
-		gridUtils, err := cardinal.GetComponent[comp.GridUtils](world, id)
+		//Get All Components Needed From Map ID
+		dirMap, gridUtils, nameMap, err := GetMapComponentsUM(world, mapID)
 		if err != nil {
-			fmt.Printf("error retrieving map GridUtils component: %v", err)
-			return false
-		}
-
-		//store map name component
-		nameMap, err := cardinal.GetComponent[comp.MapName](world, id)
-		if err != nil {
-			fmt.Printf("error retrieving map name component (unit movement): %v", err)
+			fmt.Printf("%v", err)
 			return false
 		}
 
@@ -48,25 +35,12 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 			return false
 		}
 
-		//go through all ID's
+		//go through all Unit ID's
 		for _, id := range priorityUnitIDs {
-			tempPosition, err := cardinal.GetComponent[comp.Position](world, id)
+			//get Unit Components
+			tempPosition, tempRadius, tempAttackRadius, tempTeam, tempMovespeed, tempMatchID, tempDistance, err := GetUnitComponentsUM(world, id)
 			if err != nil {
-				fmt.Printf("error retrieving position component on tempPosition (unit movement): %v", err)
-				continue
-			}
-			tempX := tempPosition.PositionVectorX
-			tempY := tempPosition.PositionVectorY
-
-			tempRadius, err := cardinal.GetComponent[comp.SizeCircle](world, id)
-			if err != nil {
-				fmt.Printf("error retrieving SizeCircle component on tempradius (unit movement): %v", err)
-				continue
-			}
-
-			tempMatchID, err := cardinal.GetComponent[comp.MatchId](world, id)
-			if err != nil {
-				fmt.Printf("error retrieving matchid component on tempMatchID (unit movement): %v", err)
+				fmt.Printf("%v", err)
 				continue
 			}
 
@@ -74,11 +48,9 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 			teamFilter := cardinal.ComponentFilter[comp.MatchId](func(m comp.MatchId) bool {
 				return m.MatchId == tempMatchID.MatchId
 			})
-			teamSearch := cardinal.NewSearch().Entity(
+			foundTeam, err := cardinal.NewSearch().Entity(
 				filter.Exact(TeamFilters())).
-				Where(teamFilter)
-
-			foundTeam, err := teamSearch.First(world)
+				Where(teamFilter).First(world)
 
 			if err != nil {
 
@@ -90,14 +62,12 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 				fmt.Printf("no match found with ID or missing components (unit movement): %s", tempMatchID.MatchId)
 				continue
 			}
-
+			//get Spatial Hash
 			tempSpartialHash, err := cardinal.GetComponent[comp.SpatialHash](world, foundTeam)
 			if err != nil {
 				fmt.Printf("error retrieving SpartialHash component on tempSpartialHash (unit movement): %s", err)
 				continue
 			}
-
-			//RemoveObjectFromSpatialHash(tempSpartialHash, id, tempPosition.PositionVectorX, tempPosition.PositionVectorY, tempRadius.Radius)
 
 			//normalize the units position to the maps grid increments.
 			normalizedX := int(((int(tempPosition.PositionVectorX)-gridUtils.StartX)/gridUtils.Increment))*gridUtils.Increment + gridUtils.StartX
@@ -111,18 +81,6 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 				fmt.Println("No direction vector found for the given coordinates (unit movement)")
 				continue // continue processing       <<---------------------------------- later need to create handling for units not found.  They outside map and bugged won't move.
 			}
-			//get units movespeed
-			tempMovespeed, err := cardinal.GetComponent[comp.Movespeed](world, id)
-			if err != nil {
-				fmt.Printf("error retrieving Movespeed component on tempMovespeed (unit movement): %v", err)
-				continue
-			}
-			//get team
-			tempTeam, err := cardinal.GetComponent[comp.Team](world, id)
-			if err != nil {
-				fmt.Printf("error retrieving Team component on tempTeam (unit movement): %v", err)
-				continue
-			}
 
 			//updated rotation based on team
 			if tempTeam.Team == "Blue" {
@@ -132,24 +90,21 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 				tempPosition.RotationVectorX = directionVector[0] * -1
 				tempPosition.RotationVectorY = directionVector[1] * -1
 			}
-
+			// //Store Original X and Y
+			tempX := tempPosition.PositionVectorX
+			tempY := tempPosition.PositionVectorY
 			//update new x,y
 			tempPosition.PositionVectorX = tempPosition.PositionVectorX + (tempPosition.RotationVectorX * tempMovespeed.CurrentMS)
 			tempPosition.PositionVectorY = tempPosition.PositionVectorY + (tempPosition.RotationVectorY * tempMovespeed.CurrentMS)
+
+			tempPosition.PositionVectorX, tempPosition.PositionVectorY = UpdateUnitPositionSpatialHash(tempSpartialHash, id, tempX, tempY, tempPosition.PositionVectorX, tempPosition.PositionVectorY, tempRadius.UnitRadius, tempTeam.Team)
 
 			err = cardinal.SetComponent(world, id, tempPosition)
 			if err != nil {
 				fmt.Printf("error set component on tempPosition (unit movement): %v", err)
 				continue
 			}
-			tempPosition.PositionVectorX, tempPosition.PositionVectorY = UpdateUnitPositionSpatialHash(tempSpartialHash, id, tempX, tempY, tempPosition.PositionVectorX, tempPosition.PositionVectorY, tempRadius.Radius)
-			//AddObjectSpatialHash(tempSpartialHash, id, tempPosition.PositionVectorX, tempPosition.PositionVectorY, tempRadius.Radius)
 
-			tempDistance, err := cardinal.GetComponent[comp.Distance](world, id)
-			if err != nil {
-				fmt.Printf("error retrieving distance component on tempDistance (unit movement): %v", err)
-				continue
-			}
 			//calculate distance from enemy spawn
 			if tempTeam.Team == "Blue" {
 				tempDistance.Distance = math.Sqrt(((float64(tempPosition.PositionVectorX) - float64(gridUtils.RedX)) * (float64(tempPosition.PositionVectorX) - float64(gridUtils.RedX))) + ((float64(tempPosition.PositionVectorY) - float64(gridUtils.RedY)) * (float64(tempPosition.PositionVectorY) - float64(gridUtils.RedY))))
@@ -162,6 +117,26 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 				fmt.Printf("error setting Distance component on tempDistance (unit movement): %v", err)
 				continue
 			}
+
+			enemyID, _, _, found := FindClosestEnemySpatialHash(tempSpartialHash, id, tempPosition.PositionVectorX, tempPosition.PositionVectorY, tempAttackRadius.AttackRadius, tempTeam.Team)
+
+			if found {
+				enemyHealth, err := cardinal.GetComponent[comp.UnitHealth](world, enemyID)
+				if err != nil {
+					fmt.Printf("error getting enemy Health component (unit movement): %v", err)
+					continue
+				}
+				enemyHealth.CurrentHP = enemyHealth.CurrentHP - 5
+				if enemyHealth.CurrentHP < 0 {
+					enemyHealth.CurrentHP = 0
+				}
+				err = cardinal.SetComponent(world, enemyID, enemyHealth)
+				if err != nil {
+					fmt.Printf("error setting Distance component on tempDistance (unit movement): %v", err)
+					continue
+				}
+			}
+
 		}
 
 		return true
@@ -220,4 +195,54 @@ func PriorityUnitMovement(world cardinal.WorldContext, mapNameComponent *comp.Ma
 	}
 
 	return sortedIDs, nil
+}
+
+// GetMapComponents fetches all necessary components related to a map entity.
+func GetMapComponentsUM(world cardinal.WorldContext, mapID types.EntityID) (*comp.DirectionMap, *comp.GridUtils, *comp.MapName, error) {
+	dirMap, err := cardinal.GetComponent[comp.DirectionMap](world, mapID)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("error retrieving Direction Map component (Unit Movement): %v", err)
+	}
+	gridUtils, err := cardinal.GetComponent[comp.GridUtils](world, mapID)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("error retrieving Grid Utilities component (Unit Movement): %v", err)
+	}
+	mapName, err := cardinal.GetComponent[comp.MapName](world, mapID)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("error retrieving Map Name component (Unit Movement): %v", err)
+	}
+	return dirMap, gridUtils, mapName, nil
+}
+
+// GetUnitComponents fetches all necessary components related to a unit entity.
+func GetUnitComponentsUM(world cardinal.WorldContext, unitID types.EntityID) (*comp.Position, *comp.UnitRadius, *comp.AttackRadius, *comp.Team, *comp.Movespeed, *comp.MatchId, *comp.Distance, error) {
+	position, err := cardinal.GetComponent[comp.Position](world, unitID)
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Position component (Unit Movement): %v", err)
+	}
+	unitRadius, err := cardinal.GetComponent[comp.UnitRadius](world, unitID)
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Unit Radius component (Unit Movement): %v", err)
+	}
+	unitAttackRadius, err := cardinal.GetComponent[comp.AttackRadius](world, unitID)
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Unit attack Radius component (Unit Movement): %v", err)
+	}
+	team, err := cardinal.GetComponent[comp.Team](world, unitID)
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Team component (Unit Movement): %v", err)
+	}
+	movespeed, err := cardinal.GetComponent[comp.Movespeed](world, unitID)
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Movespeed component (Unit Movement): %v", err)
+	}
+	matchId, err := cardinal.GetComponent[comp.MatchId](world, unitID)
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving MatchId component (Unit Movement): %v", err)
+	}
+	distance, err := cardinal.GetComponent[comp.Distance](world, unitID)
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Distance component (Unit Movement): %v", err)
+	}
+	return position, unitRadius, unitAttackRadius, team, movespeed, matchId, distance, nil
 }

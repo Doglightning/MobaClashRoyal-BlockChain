@@ -11,6 +11,8 @@ import (
 	"MobaClashRoyal/msg"
 )
 
+var SpatialGridCellSize = 300
+
 // Spawns a new match entity.
 func MatchSpawnerSystem(world cardinal.WorldContext) error {
 	return cardinal.EachMessage[msg.CreateMatchMsg, msg.CreateMatchResult](
@@ -77,7 +79,7 @@ func MatchSpawnerSystem(world cardinal.WorldContext) error {
 			}
 
 			//create a new match
-			_, err = cardinal.Create(world, comp.MatchId{MatchId: create.Msg.MatchID}, comp.UID{UID: 0}, comp.Player1{Nickname: create.Tx.PersonaTag}, comp.SpatialHash{Cells: make(map[string]comp.SpatialCell), CellSize: 150, StartX: float32(gridUtils.StartX), StartY: float32(gridUtils.StartY)})
+			_, err = cardinal.Create(world, comp.MatchId{MatchId: create.Msg.MatchID}, comp.UID{UID: 0}, comp.Player1{Nickname: create.Tx.PersonaTag}, comp.SpatialHash{Cells: make(map[string]comp.SpatialCell), CellSize: SpatialGridCellSize, StartX: float32(gridUtils.StartX), StartY: float32(gridUtils.StartY)})
 			if err != nil {
 				return msg.CreateMatchResult{Success: false}, fmt.Errorf("error creating match: %w", err)
 			}
