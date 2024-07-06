@@ -44,7 +44,7 @@ func MatchSpawnerSystem(world cardinal.WorldContext) error {
 					return msg.CreateMatchResult{Success: false}, fmt.Errorf("error adding Player2 component: %w", err)
 				}
 
-				err = cardinal.SetComponent(world, founds, &comp.Player2{Nickname2: create.Tx.PersonaTag})
+				err = cardinal.SetComponent(world, founds, &comp.Player2{Nickname2: create.Tx.PersonaTag, RemovalList: make(map[int]bool)})
 				if err != nil {
 					err = cardinal.RemoveComponentFrom[comp.Player2](world, founds)
 					if err != nil {
@@ -79,7 +79,7 @@ func MatchSpawnerSystem(world cardinal.WorldContext) error {
 			}
 
 			//create a new match
-			_, err = cardinal.Create(world, comp.MatchId{MatchId: create.Msg.MatchID}, comp.UID{UID: 0}, comp.Player1{Nickname: create.Tx.PersonaTag}, comp.SpatialHash{Cells: make(map[string]comp.SpatialCell), CellSize: SpatialGridCellSize, StartX: float32(gridUtils.StartX), StartY: float32(gridUtils.StartY)})
+			_, err = cardinal.Create(world, comp.MatchId{MatchId: create.Msg.MatchID}, comp.UID{UID: 0}, comp.Player1{Nickname: create.Tx.PersonaTag, RemovalList: make(map[int]bool)}, comp.SpatialHash{Cells: make(map[string]comp.SpatialCell), CellSize: SpatialGridCellSize, StartX: float32(gridUtils.StartX), StartY: float32(gridUtils.StartY)})
 			if err != nil {
 				return msg.CreateMatchResult{Success: false}, fmt.Errorf("error creating match: %w", err)
 			}

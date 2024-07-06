@@ -25,6 +25,8 @@ type UnitDetails struct {
 	Movespeed       float32
 	UID             int
 	UnitName        string
+	Combat          bool
+	AttackFrame     int
 }
 
 type UnitMatchIdRequest struct {
@@ -96,6 +98,14 @@ func UnitState(world cardinal.WorldContext, req *UnitMatchIdRequest) (*UnitState
 			return false
 		}
 		unit.UnitName = unitName.UnitName
+
+		// Fetch UnitAttack component
+		unitAttack, err := cardinal.GetComponent[comp.Attack](world, id)
+		if err != nil {
+			return false
+		}
+		unit.Combat = unitAttack.Combat
+		unit.AttackFrame = unitAttack.Frame
 
 		// Append the gathered data to the response
 		response.Units = append(response.Units, unit)

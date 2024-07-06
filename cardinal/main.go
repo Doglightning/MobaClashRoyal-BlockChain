@@ -30,6 +30,7 @@ func MustInitWorld(w *cardinal.World) {
 	// Register components
 	// NOTE: You must register your components here for it to be accessible.
 	Must(
+		cardinal.RegisterComponent[component.Attack](w),
 		cardinal.RegisterComponent[component.DirectionMap](w),
 		cardinal.RegisterComponent[component.Distance](w),
 		cardinal.RegisterComponent[component.GridUtils](w),
@@ -55,6 +56,7 @@ func MustInitWorld(w *cardinal.World) {
 		cardinal.RegisterMessage[msg.CreateMatchMsg, msg.CreateMatchResult](w, "create-match"),
 		cardinal.RegisterMessage[msg.CreateUnitMsg, msg.CreateUnitResult](w, "create-unit"),
 		cardinal.RegisterMessage[msg.RemoveAllEntitiesMsg, msg.RemoveAllEntitiesResult](w, "remove-all-entities"),
+		cardinal.RegisterMessage[msg.RemoveUnitMsg, msg.RemoveUnitResult](w, "remove-list"),
 	)
 
 	// Register queries
@@ -62,6 +64,7 @@ func MustInitWorld(w *cardinal.World) {
 	Must(
 		cardinal.RegisterQuery[query.MatchIdRequest, query.TeamStateResponse](w, "team-state", query.TeamState),
 		cardinal.RegisterQuery[query.UnitMatchIdRequest, query.UnitStateResponse](w, "unit-state", query.UnitState),
+		cardinal.RegisterQuery[query.RemovalMatchIdRequest, query.RemovalStateResponse](w, "removal-state", query.RemovalState),
 	)
 
 	// Each system executes deterministically in the order they are added.
@@ -71,8 +74,11 @@ func MustInitWorld(w *cardinal.World) {
 	Must(cardinal.RegisterSystems(w,
 		system.RemoveAllEntitiesSystem,
 		system.MatchSpawnerSystem,
+		system.RemovalListSystem,
 		system.UnitSpawnerSystem,
 		system.UnitMovementSystem,
+		system.UnitAttackSystem,
+		system.UnitDestroyerSystem,
 	))
 
 	Must(cardinal.RegisterInitSystems(w,

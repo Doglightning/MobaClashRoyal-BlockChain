@@ -126,22 +126,38 @@ func CheckCollisionSpatialHashList(hash *comp.SpatialHash, x, y float32, radius 
 	return collidedUnits
 }
 
-func moveToNearestFreeSpaceSpatialHash(hash *comp.SpatialHash, startX, startY, targetX, targetY, radius float32) (float32, float32) {
-	movementRadius := float32(math.Hypot(float64(targetX-startX), float64(targetY-startY)))
-	minX := targetX - movementRadius
-	maxX := targetX + movementRadius
-	minY := targetY - movementRadius
-	maxY := targetY + movementRadius
+func moveToNearestFreeSpaceSpatialHash(hash *comp.SpatialHash, startX, startY, targetX, targetY, radius float32) (newX float32, newY float32) {
+	deltaX := targetX - startX
+	deltaY := targetY - startY
+	length := float32(math.Hypot(float64(deltaX), float64(deltaY)))
 
-	// Step size could be a fraction of the radius for finer granularity
-	step := radius / 4
+	// Normalize direction vector
+	dirX := deltaX / length
+	dirY := deltaY / length
 
-	// Iterate over a rectangle surrounding the target position
-	for x := minX; x <= maxX; x += step {
-		for y := minY; y <= maxY; y += step {
-			// Check if the position is free of collisions
-			if !CheckCollisionSpatialHash(hash, x, y, int(radius)) {
-				return x, y
+	// Perpendicular vector (normalized)
+	perpX := -dirY
+	perpY := dirX
+
+	// Step size, which can be adjusted as needed
+	step := length / 8      // or another division factor
+	halfWidth := radius / 2 // Half the unit's radius
+	// Center to edge zigzag pattern
+	maxOffset := int(halfWidth / step) // Number of steps from center to edge
+
+	// Search within the square around the line from A to B
+	for d := length; d >= -length; d -= step {
+		// Alternate checking right and left of the center line
+		for offset := 0; offset <= maxOffset; offset++ {
+			offsets := []int{offset, -offset} // Check positive and negative offsets
+			for _, w := range offsets {
+				testX := startX + dirX*d + perpX*float32(w)*step
+				testY := startY + dirY*d + perpY*float32(w)*step
+
+				// Check if the position is free of collisions
+				if !CheckCollisionSpatialHash(hash, testX, testY, int(radius)) {
+					return testX, testY
+				}
 			}
 		}
 	}
@@ -192,13 +208,14 @@ func calculateCellRangeSpatialHash(hash *comp.SpatialHash, x, y float32, radius 
 }
 
 // FindClosestEnemy performs a BFS search from the unit's position outward within the attack radius.
-func FindClosestEnemySpatialHash(hash *comp.SpatialHash, objID types.EntityID, startX, startY float32, attackRadius int, team string) (types.EntityID, float32, float32, bool) {
+func FindClosestEnemySpatialHash(hash *comp.SpatialHash, objID types.EntityID, startX, startY float32, attackRadius int, team string) (types.EntityID, float32, float32, int, bool) {
 	queue := list.New()
 	visited := make(map[string]bool)
 	queue.PushBack(&comp.Position{PositionVectorX: startX, PositionVectorY: startY})
 	minDist := float64(attackRadius * attackRadius) // Using squared distance to avoid sqrt calculations.
 	closestEnemy := types.EntityID(0)
 	closestX, closestY := float32(0), float32(0)
+	closestRadius := int(0)
 	foundEnemy := false
 
 	//fmt.Printf("Starting search with attackRadius: %d, cellSize: %d\n", attackRadius, hash.CellSize)
@@ -226,6 +243,7 @@ func FindClosestEnemySpatialHash(hash *comp.SpatialHash, objID types.EntityID, s
 						minDist = distSq
 						closestEnemy = id
 						closestX, closestY = cell.PositionsX[i], cell.PositionsY[i]
+						closestRadius = cell.Radii[i]
 						foundEnemy = true
 					}
 				}
@@ -248,5 +266,5 @@ func FindClosestEnemySpatialHash(hash *comp.SpatialHash, objID types.EntityID, s
 
 	//fmt.Printf("Search completed. Found enemy: %v\n", foundEnemy)
 
-	return closestEnemy, closestX, closestY, foundEnemy
+	return closestEnemy, closestX, closestY, closestRadius, foundEnemy
 }

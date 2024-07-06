@@ -59,10 +59,10 @@ func SpawnMaps(world cardinal.WorldContext) error {
 		EndX:      xCoords[len(xCoords)-1],
 		EndY:      yCoords[len(yCoords)-1],
 		Increment: increment,
-		BlueX:     3830.0,
-		BlueY:     460.0,
-		RedX:      -3720.0,
-		RedY:      610.0,
+		BlueX:     3860.0,
+		BlueY:     500.0,
+		RedX:      -3680.0,
+		RedY:      700.0,
 	}
 
 	_, err = cardinal.Create(world, &directionMap, &gridUtils, comp.MapName{MapName: "ProtoType"})
