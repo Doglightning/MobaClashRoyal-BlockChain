@@ -35,7 +35,7 @@ func WinCondition(world cardinal.WorldContext) error {
 			fmt.Printf("error getting matchID component (win condition): %s\n", err)
 			return false
 		}
-		test
+
 		return true
 	})
 
