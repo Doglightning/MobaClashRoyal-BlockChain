@@ -11,8 +11,8 @@ import (
 	"MobaClashRoyal/msg"
 )
 
-// RemoveAllEntitiesSystem removes all entities associated with a given MatchId when a game ends.
-func RemoveAllEntitiesSystem(world cardinal.WorldContext) error {
+// RemoveAllEntitiesSystem removes all entities associated with a given MatchId based on a MSG.
+func RemoveAllEntitiesMsgSystem(world cardinal.WorldContext) error {
 	return cardinal.EachMessage[msg.RemoveAllEntitiesMsg, msg.RemoveAllEntitiesResult](
 		world,
 		func(create cardinal.TxData[msg.RemoveAllEntitiesMsg]) (msg.RemoveAllEntitiesResult, error) {
@@ -41,4 +41,34 @@ func RemoveAllEntitiesSystem(world cardinal.WorldContext) error {
 
 			return msg.RemoveAllEntitiesResult{Success: true}, nil
 		})
+}
+
+// RemoveAllEntitiesSystem removes all entities associated with a given MatchId.
+func RemoveAllEntitiesSystem(world cardinal.WorldContext, matchID string) error {
+
+	// Create a filter to match entities with the specified MatchId.
+	matchFilter := cardinal.ComponentFilter[comp.MatchId](func(m comp.MatchId) bool {
+		return m.MatchId == matchID
+	})
+
+	entitySearch := cardinal.NewSearch().Entity(
+		filter.Contains(filter.Component[comp.MatchId]())).
+		Where(matchFilter)
+
+	// Attempt to remove each entity found that matches the filter.
+	err := entitySearch.Each(world, func(id types.EntityID) bool {
+
+		if err := cardinal.Remove(world, id); err != nil {
+			fmt.Println("Error removing entity:", err) // Log error if any
+			return false                               // Stop iteration on error
+		}
+		return true // Continue if successful
+	})
+
+	if err != nil {
+		return fmt.Errorf("error during entity removal: %w", err)
+	}
+
+	return nil
+
 }

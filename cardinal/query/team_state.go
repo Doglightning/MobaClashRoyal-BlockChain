@@ -27,29 +27,29 @@ func TeamState(world cardinal.WorldContext, req *MatchIdRequest) (*TeamStateResp
 	})
 
 	var response TeamStateResponse
-	teamSearch := cardinal.NewSearch().Entity(
-		filter.Exact(system.TeamFilters())).
+	gameSearch := cardinal.NewSearch().Entity(
+		filter.Exact(system.GameStateFilters())).
 		Where(matchFilter)
 
-	found, err := teamSearch.First(world)
+	gameState, err := gameSearch.First(world)
 
 	if err != nil {
 		return nil, fmt.Errorf("error searching for match: %w", err)
 	}
 
-	if found == iterators.BadID { // Assuming cardinal.NoEntity represents no result found
+	if gameState == iterators.BadID { // Assuming cardinal.NoEntity represents no result found
 		return nil, fmt.Errorf("no match found with ID or missing components: %s", req.MatchId)
 	}
 
 	// Get Player1 component
-	player1, err := cardinal.GetComponent[comp.Player1](world, found)
+	player1, err := cardinal.GetComponent[comp.Player1](world, gameState)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving Player1 component: %w", err)
 	}
 	response.Player1 = player1.Nickname
 
 	// Get Player2 component
-	player2, err := cardinal.GetComponent[comp.Player2](world, found)
+	player2, err := cardinal.GetComponent[comp.Player2](world, gameState)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving Player2 component: %w", err)
 	}

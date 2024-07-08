@@ -65,14 +65,14 @@ func UnitDestroyerSystem(world cardinal.WorldContext) error {
 		}
 
 		//get team state
-		foundTeam, err := getTeamFilterUM(world, MatchID)
+		gameState, err := getGameStateUM(world, MatchID)
 		if err != nil {
 			fmt.Printf("%v", err)
 			return false
 		}
 
 		//get player1 team state
-		player1, err := cardinal.GetComponent[comp.Player1](world, foundTeam)
+		player1, err := cardinal.GetComponent[comp.Player1](world, gameState)
 		if err != nil {
 			fmt.Printf("error retrieving player1 component (unit destroyer): %s", err)
 			return false
@@ -82,13 +82,13 @@ func UnitDestroyerSystem(world cardinal.WorldContext) error {
 		player1.RemovalList[uid.UID] = true
 
 		//add removed unit to player1 removal list component
-		if err := cardinal.SetComponent[comp.Player1](world, foundTeam, player1); err != nil {
+		if err := cardinal.SetComponent[comp.Player1](world, gameState, player1); err != nil {
 			fmt.Printf("error updating player1 component (unit destroyer): %s", err)
 			return false
 		}
 
 		//get player2 team state
-		player2, err := cardinal.GetComponent[comp.Player2](world, foundTeam)
+		player2, err := cardinal.GetComponent[comp.Player2](world, gameState)
 		if err != nil {
 			fmt.Printf("error retrieving player2 component (unit destroyer): %s", err)
 			return false
@@ -98,13 +98,13 @@ func UnitDestroyerSystem(world cardinal.WorldContext) error {
 		player2.RemovalList[uid.UID] = true
 
 		//add removed unit to player2 removal list component
-		if err := cardinal.SetComponent[comp.Player2](world, foundTeam, player2); err != nil {
+		if err := cardinal.SetComponent[comp.Player2](world, gameState, player2); err != nil {
 			fmt.Printf("error updating player2 component (unit destroyer): %s", err)
 			return false
 		}
 
 		//get Spatial Hash
-		CollisionSpartialHash, err := cardinal.GetComponent[comp.SpatialHash](world, foundTeam)
+		CollisionSpartialHash, err := cardinal.GetComponent[comp.SpatialHash](world, gameState)
 		if err != nil {
 			fmt.Printf("error retrieving SpartialHash component on tempSpartialHash (unit destroyer): %s", err)
 			return false

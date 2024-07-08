@@ -10,6 +10,8 @@ import (
 	"pkg.world.dev/world-engine/cardinal/types"
 )
 
+var SpatialGridCellSize = 300
+
 // AddObject adds an object with a radius to the spatial hash grid, considering all cells it may intersect.
 func AddObjectSpatialHash(hash *comp.SpatialHash, objID types.EntityID, x, y float32, radius int, team string) {
 

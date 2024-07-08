@@ -32,15 +32,15 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 			continue
 		}
 
-		//get team state
-		foundTeam, err := getTeamFilterUM(world, MatchID)
+		//get game state
+		gameState, err := getGameStateUM(world, MatchID)
 		if err != nil {
 			fmt.Printf("%v", err)
 			continue
 		}
 
 		//get Spatial Hash
-		CollisionSpartialHash, err := cardinal.GetComponent[comp.SpatialHash](world, foundTeam)
+		CollisionSpartialHash, err := cardinal.GetComponent[comp.SpatialHash](world, gameState)
 		if err != nil {
 			fmt.Printf("error retrieving SpartialHash component on tempSpartialHash (unit movement): %s", err)
 			continue
@@ -256,9 +256,9 @@ func UpdateUnitDistance(world cardinal.WorldContext, id types.EntityID, team *co
 
 	// calculate distance from enemy spawn
 	if team.Team == "Blue" {
-		distance.Distance = math.Sqrt(((float64(position.PositionVectorX) - float64(MapDataRegistry[mapName.MapName].RedBase[0])) * (float64(position.PositionVectorX) - float64(MapDataRegistry[mapName.MapName].RedBase[0]))) + ((float64(position.PositionVectorY) - float64(MapDataRegistry[mapName.MapName].RedBase[1])) * (float64(position.PositionVectorY) - float64(MapDataRegistry[mapName.MapName].RedBase[1]))))
+		distance.Distance = math.Sqrt(((float64(position.PositionVectorX) - float64(MapDataRegistry[mapName.MapName].Bases[1][0])) * (float64(position.PositionVectorX) - float64(MapDataRegistry[mapName.MapName].Bases[1][0]))) + ((float64(position.PositionVectorY) - float64(MapDataRegistry[mapName.MapName].Bases[1][1])) * (float64(position.PositionVectorY) - float64(MapDataRegistry[mapName.MapName].Bases[1][1]))))
 	} else {
-		distance.Distance = math.Sqrt(((float64(position.PositionVectorX) - float64(MapDataRegistry[mapName.MapName].BlueBase[0])) * (float64(position.PositionVectorX) - float64(MapDataRegistry[mapName.MapName].BlueBase[0]))) + ((float64(position.PositionVectorY) - float64(MapDataRegistry[mapName.MapName].BlueBase[1])) * (float64(position.PositionVectorY) - float64(MapDataRegistry[mapName.MapName].BlueBase[1]))))
+		distance.Distance = math.Sqrt(((float64(position.PositionVectorX) - float64(MapDataRegistry[mapName.MapName].Bases[0][0])) * (float64(position.PositionVectorX) - float64(MapDataRegistry[mapName.MapName].Bases[0][0]))) + ((float64(position.PositionVectorY) - float64(MapDataRegistry[mapName.MapName].Bases[0][1])) * (float64(position.PositionVectorY) - float64(MapDataRegistry[mapName.MapName].Bases[0][1]))))
 	}
 	// set distance
 	err := cardinal.SetComponent(world, id, distance)
@@ -327,14 +327,14 @@ func getEnemyComponentsUM(world cardinal.WorldContext, enemyID types.EntityID) (
 	return enemyPosition, enemyRadius, nil
 }
 
-// Returns the Team state
-func getTeamFilterUM(world cardinal.WorldContext, mID *comp.MatchId) (types.EntityID, error) {
+// Returns the Game state
+func getGameStateUM(world cardinal.WorldContext, mID *comp.MatchId) (types.EntityID, error) {
 	//get teamstate to get spatialhash tree
 	teamFilter := cardinal.ComponentFilter[comp.MatchId](func(m comp.MatchId) bool {
 		return m.MatchId == mID.MatchId
 	})
 	foundTeam, err := cardinal.NewSearch().Entity(
-		filter.Exact(TeamFilters())).
+		filter.Exact(GameStateFilters())).
 		Where(teamFilter).First(world)
 
 	if err != nil {

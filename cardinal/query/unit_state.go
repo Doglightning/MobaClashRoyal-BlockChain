@@ -29,12 +29,22 @@ type UnitDetails struct {
 	AttackFrame     int
 }
 
+type StructureDetails struct {
+	UID             int
+	CurrentHP       float32
+	StructureName   string
+	Team            string
+	PositionVectorX float32
+	PositionVectorY float32
+}
+
 type UnitMatchIdRequest struct {
 	MatchId string
 }
 
 type UnitStateResponse struct {
-	Units []UnitDetails
+	Units      []UnitDetails
+	Structures []StructureDetails
 }
 
 func UnitState(world cardinal.WorldContext, req *UnitMatchIdRequest) (*UnitStateResponse, error) {
@@ -42,6 +52,7 @@ func UnitState(world cardinal.WorldContext, req *UnitMatchIdRequest) (*UnitState
 		return m.MatchId == req.MatchId
 	})
 
+	// get the unit states
 	unitSearch := cardinal.NewSearch().Entity(
 		filter.Exact(system.UnitFilters())).
 		Where(matchFilter)
@@ -112,8 +123,58 @@ func UnitState(world cardinal.WorldContext, req *UnitMatchIdRequest) (*UnitState
 		return true // Continue iteration
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error during search: %w", err)
+		return nil, fmt.Errorf("error during unit search (unit state): %w", err)
 	}
 
+	// get the structure states
+	StructureSearch := cardinal.NewSearch().Entity(
+		filter.Exact(system.StructureFilters())).
+		Where(matchFilter)
+
+	err = StructureSearch.Each(world, func(id types.EntityID) bool {
+		structure := StructureDetails{}
+
+		// Fetch Team component
+		team, err := cardinal.GetComponent[comp.Team](world, id)
+		if err != nil {
+			return false
+		}
+		structure.Team = team.Team
+
+		// Fetch uid component
+		uid, err := cardinal.GetComponent[comp.UID](world, id)
+		if err != nil {
+			return false
+		}
+		structure.UID = uid.UID
+
+		// Fetch health component
+		health, err := cardinal.GetComponent[comp.UnitHealth](world, id)
+		if err != nil {
+			return false
+		}
+		structure.CurrentHP = health.CurrentHP
+
+		// Fetch Team component
+		name, err := cardinal.GetComponent[comp.UnitName](world, id)
+		if err != nil {
+			return false
+		}
+		structure.StructureName = name.UnitName
+
+		// Fetch Position component
+		position, err := cardinal.GetComponent[comp.Position](world, id)
+		if err != nil {
+			return false
+		}
+		structure.PositionVectorX = position.PositionVectorX
+		structure.PositionVectorY = position.PositionVectorY
+
+		response.Structures = append(response.Structures, structure)
+		return true
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error during StructureSearch (unit state): %w", err)
+	}
 	return &response, nil
 }

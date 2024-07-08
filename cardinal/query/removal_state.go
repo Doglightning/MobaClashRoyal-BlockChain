@@ -22,13 +22,13 @@ func RemovalState(world cardinal.WorldContext, req *RemovalMatchIdRequest) (*Rem
 	var response RemovalStateResponse
 	var removeList = []int{}
 
-	teamFilter := cardinal.ComponentFilter[comp.MatchId](func(m comp.MatchId) bool {
+	gameFilter := cardinal.ComponentFilter[comp.MatchId](func(m comp.MatchId) bool {
 		return m.MatchId == req.MatchId
 	})
 
-	teamSearch, err := cardinal.NewSearch().Entity(
-		filter.Exact(system.TeamFilters())).
-		Where(teamFilter).First(world)
+	gameState, err := cardinal.NewSearch().Entity(
+		filter.Exact(system.GameStateFilters())).
+		Where(gameFilter).First(world)
 
 	if err != nil {
 		return nil, fmt.Errorf("error searching for team (Removal State Query): %w", err)
@@ -36,7 +36,7 @@ func RemovalState(world cardinal.WorldContext, req *RemovalMatchIdRequest) (*Rem
 
 	if req.Team == "Blue" {
 		// Get Player1 component
-		player1, err := cardinal.GetComponent[comp.Player1](world, teamSearch)
+		player1, err := cardinal.GetComponent[comp.Player1](world, gameState)
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving Player1 component (Removal State Query): %w", err)
 		}
@@ -47,7 +47,7 @@ func RemovalState(world cardinal.WorldContext, req *RemovalMatchIdRequest) (*Rem
 
 	} else {
 		// Get Player1 component
-		player2, err := cardinal.GetComponent[comp.Player2](world, teamSearch)
+		player2, err := cardinal.GetComponent[comp.Player2](world, gameState)
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving Player2 component (Removal State Query): %w", err)
 		}

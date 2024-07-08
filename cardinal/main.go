@@ -33,7 +33,6 @@ func MustInitWorld(w *cardinal.World) {
 		cardinal.RegisterComponent[component.Attack](w),
 		cardinal.RegisterComponent[component.DirectionMap](w),
 		cardinal.RegisterComponent[component.Distance](w),
-		cardinal.RegisterComponent[component.GridUtils](w),
 		cardinal.RegisterComponent[component.MapName](w),
 		cardinal.RegisterComponent[component.MatchId](w),
 		cardinal.RegisterComponent[component.Movespeed](w),
@@ -72,18 +71,19 @@ func MustInitWorld(w *cardinal.World) {
 	// For example, you may want to run the attack system before the regen system
 	// so that the player's HP is subtracted (and player killed if it reaches 0) before HP is regenerated.
 	Must(cardinal.RegisterSystems(w,
-		system.RemoveAllEntitiesSystem,
-		system.MatchSpawnerSystem,
+		system.RemoveAllEntitiesMsgSystem,
+		system.GameStateSpawnerSystem,
 		system.RemovalListSystem,
 		system.UnitSpawnerSystem,
 		system.UnitMovementSystem,
 		system.UnitAttackSystem,
 		system.UnitDestroyerSystem,
+		system.WinCondition,
 	))
 
-	Must(cardinal.RegisterInitSystems(w,
-		system.SpawnMaps,
-	))
+	// Must(cardinal.RegisterInitSystems(w,
+	// 	system.SpawnMaps,
+	// ))
 }
 
 func Must(err ...error) {

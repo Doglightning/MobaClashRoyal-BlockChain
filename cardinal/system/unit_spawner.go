@@ -17,12 +17,12 @@ type UnitType struct {
 	Health       float32
 	Damage       int
 	AttackRate   int //tick based 5 = 5 ticks (100ms tickrate = 500ms attack rate)
+	DamageFrame  int
 	Target       int
 	Speed        float32
 	Cost         int
 	Radius       int
 	AttackRadius int
-	DamageFrame  int
 }
 
 var UnitRegistry = map[string]UnitType{
@@ -38,17 +38,17 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 			matchFilter := cardinal.ComponentFilter[comp.MatchId](func(m comp.MatchId) bool {
 				return m.MatchId == create.Msg.MatchID
 			})
-			teamSearch := cardinal.NewSearch().Entity(
-				filter.Exact(TeamFilters())).
+			gameStateSearch := cardinal.NewSearch().Entity(
+				filter.Exact(GameStateFilters())).
 				Where(matchFilter)
 
-			found, err := teamSearch.First(world)
+			gameState, err := gameStateSearch.First(world)
 
 			if err != nil {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("error searching for match: %w", err)
 			}
 
-			if found == iterators.BadID { // Assuming cardinal.NoEntity represents no result found
+			if gameState == iterators.BadID { // Assuming cardinal.NoEntity represents no result found
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("no match found with ID or missing components: %s", create.Msg.MatchID)
 			}
 
@@ -59,45 +59,21 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 			}
 
 			//get UID
-			tempUID, err := cardinal.GetComponent[comp.UID](world, found)
+			tempUID, err := cardinal.GetComponent[comp.UID](world, gameState)
 			if err != nil {
 				return msg.CreateUnitResult{}, fmt.Errorf("error getting UID: %w", err)
-			}
-
-			//search filter to find map that unit was placed on
-			matchFilter = cardinal.ComponentFilter[comp.MapName](func(m comp.MapName) bool {
-				return m.MapName == create.Msg.MapName
-			})
-			mapSearch := cardinal.NewSearch().Entity(
-				filter.Exact(filter.Component[comp.DirectionMap](), filter.Component[comp.GridUtils](), filter.Component[comp.MapName]())).
-				Where(matchFilter)
-
-			foundMap, err := mapSearch.First(world)
-
-			if err != nil {
-				return msg.CreateUnitResult{Success: false}, fmt.Errorf("error searching for map: %w", err)
-			}
-
-			if foundMap == iterators.BadID { // Assuming cardinal.NoEntity represents no result found
-				return msg.CreateUnitResult{Success: false}, fmt.Errorf("no map found with MapName or missing components: %s", create.Msg.MatchID)
-			}
-
-			//get Map Team endpoint coords
-			tempGridUtils, err := cardinal.GetComponent[comp.GridUtils](world, foundMap)
-			if err != nil {
-				return msg.CreateUnitResult{Success: false}, fmt.Errorf("error getting GridUtils: %w", err)
 			}
 
 			//calculate distance from enemy spawn
 			var tempDistance float64
 			if create.Msg.Team == "Blue" {
-				tempDistance = math.Sqrt(((float64(create.Msg.PositionX) - float64(tempGridUtils.RedX)) * (float64(create.Msg.PositionX) - float64(tempGridUtils.RedX))) + ((float64(create.Msg.PositionY) - float64(tempGridUtils.RedY)) * (float64(create.Msg.PositionY) - float64(tempGridUtils.RedY))))
+				tempDistance = math.Sqrt(((float64(create.Msg.PositionX) - float64(MapDataRegistry[create.Msg.MapName].Bases[1][0])) * (float64(create.Msg.PositionX) - float64(MapDataRegistry[create.Msg.MapName].Bases[1][0]))) + ((float64(create.Msg.PositionY) - float64(MapDataRegistry[create.Msg.MapName].Bases[1][1])) * (float64(create.Msg.PositionY) - float64(MapDataRegistry[create.Msg.MapName].Bases[1][1]))))
 			} else {
-				tempDistance = math.Sqrt(((float64(create.Msg.PositionX) - float64(tempGridUtils.BlueX)) * (float64(create.Msg.PositionX) - float64(tempGridUtils.BlueX))) + ((float64(create.Msg.PositionY) - float64(tempGridUtils.BlueY)) * (float64(create.Msg.PositionY) - float64(tempGridUtils.BlueY))))
+				tempDistance = math.Sqrt(((float64(create.Msg.PositionX) - float64(MapDataRegistry[create.Msg.MapName].Bases[0][0])) * (float64(create.Msg.PositionX) - float64(MapDataRegistry[create.Msg.MapName].Bases[0][0]))) + ((float64(create.Msg.PositionY) - float64(MapDataRegistry[create.Msg.MapName].Bases[0][1])) * (float64(create.Msg.PositionY) - float64(MapDataRegistry[create.Msg.MapName].Bases[0][1]))))
 			}
 
 			//get SpatialHash component from game state
-			SpatialHash, err := cardinal.GetComponent[comp.SpatialHash](world, found)
+			SpatialHash, err := cardinal.GetComponent[comp.SpatialHash](world, gameState)
 			if err != nil {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("error getting SpatialHash component (unit Spawner): %w", err)
 			}
@@ -123,12 +99,12 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 			if errr != nil {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("error creating unit: %w", err)
 			}
-
+			//add unit to spatial hash collision map
 			AddObjectSpatialHash(SpatialHash, entityID, create.Msg.PositionX, create.Msg.PositionY, unitType.Radius, create.Msg.Team)
 
 			//incriment UID
 			tempUID.UID++
-			if err := cardinal.SetComponent[comp.UID](world, found, tempUID); err != nil {
+			if err := cardinal.SetComponent[comp.UID](world, gameState, tempUID); err != nil {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("error updating UID: %w", err)
 			}
 

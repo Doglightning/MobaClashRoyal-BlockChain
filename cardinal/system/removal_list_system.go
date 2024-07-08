@@ -14,13 +14,13 @@ func RemovalListSystem(world cardinal.WorldContext) error {
 		world,
 		func(create cardinal.TxData[msg.RemoveUnitMsg]) (msg.RemoveUnitResult, error) {
 
-			teamFilter := cardinal.ComponentFilter[comp.MatchId](func(m comp.MatchId) bool {
+			gameFilter := cardinal.ComponentFilter[comp.MatchId](func(m comp.MatchId) bool {
 				return m.MatchId == create.Msg.MatchId
 			})
 
-			teamSearch, err := cardinal.NewSearch().Entity(
-				filter.Exact(TeamFilters())).
-				Where(teamFilter).First(world)
+			gameState, err := cardinal.NewSearch().Entity(
+				filter.Exact(GameStateFilters())).
+				Where(gameFilter).First(world)
 
 			if err != nil {
 				return msg.RemoveUnitResult{Succsess: false}, fmt.Errorf("error searching for team (Removal State Query): %w", err)
@@ -28,7 +28,7 @@ func RemovalListSystem(world cardinal.WorldContext) error {
 
 			if create.Msg.Team == "Blue" {
 				// Get Player1 component
-				player1, err := cardinal.GetComponent[comp.Player1](world, teamSearch)
+				player1, err := cardinal.GetComponent[comp.Player1](world, gameState)
 				if err != nil {
 					return msg.RemoveUnitResult{Succsess: false}, fmt.Errorf("error retrieving Player1 component (Removal State Query): %w", err)
 				}
@@ -38,13 +38,13 @@ func RemovalListSystem(world cardinal.WorldContext) error {
 				}
 
 				//add removed unit to player2 removal list component
-				if err := cardinal.SetComponent(world, teamSearch, player1); err != nil {
+				if err := cardinal.SetComponent(world, gameState, player1); err != nil {
 
 					return msg.RemoveUnitResult{Succsess: false}, fmt.Errorf("error updating player1 component (Removal State Query): %w", err)
 				}
 			} else {
 				// Get Player1 component
-				player2, err := cardinal.GetComponent[comp.Player2](world, teamSearch)
+				player2, err := cardinal.GetComponent[comp.Player2](world, gameState)
 				if err != nil {
 					return msg.RemoveUnitResult{Succsess: false}, fmt.Errorf("error retrieving Player2 component (Removal State Query): %w", err)
 				}
@@ -53,7 +53,7 @@ func RemovalListSystem(world cardinal.WorldContext) error {
 					delete(player2.RemovalList, key)
 				}
 				//add removed unit to player2 removal list component
-				if err := cardinal.SetComponent(world, teamSearch, player2); err != nil {
+				if err := cardinal.SetComponent(world, gameState, player2); err != nil {
 					return msg.RemoveUnitResult{Succsess: false}, fmt.Errorf("error updating player2 component (Removal State Query): %w", err)
 				}
 			}
