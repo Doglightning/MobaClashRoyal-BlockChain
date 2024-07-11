@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"pkg.world.dev/world-engine/cardinal"
+	"pkg.world.dev/world-engine/cardinal/iterators"
 	"pkg.world.dev/world-engine/cardinal/search/filter"
 	"pkg.world.dev/world-engine/cardinal/types"
 
@@ -138,4 +139,41 @@ func spawnBasesTSS(world cardinal.WorldContext, matchID string, teamStateID type
 	}
 
 	return nil
+}
+
+func getNextUID(world cardinal.WorldContext, matchID string) (int, error) {
+
+	//create filter for matching ID's
+	matchFilter := cardinal.ComponentFilter[comp.MatchId](func(m comp.MatchId) bool {
+		return m.MatchId == matchID
+	})
+
+	gameStateSearch := cardinal.NewSearch().Entity(
+		filter.Exact(GameStateFilters())).
+		Where(matchFilter)
+
+	gameState, err := gameStateSearch.First(world)
+
+	if err != nil {
+		return 0, fmt.Errorf("error searching for match (team state spawner): %w", err)
+	}
+
+	if gameState == iterators.BadID { // Assuming cardinal.NoEntity represents no result found
+		return 0, fmt.Errorf("no match found with ID or missing components (team state spawner): %s", matchID)
+	}
+
+	UID, err := cardinal.GetComponent[comp.UID](world, gameState)
+	if err != nil {
+		return 0, fmt.Errorf("error getting UID component (team state spawner): %w", err)
+	}
+	returnUID := UID.UID
+
+	UID.UID++
+
+	err = cardinal.SetComponent(world, gameState, UID)
+	if err != nil {
+		return 0, fmt.Errorf("error setting UID component (team state spawner): %w", err)
+	}
+
+	return returnUID, nil
 }

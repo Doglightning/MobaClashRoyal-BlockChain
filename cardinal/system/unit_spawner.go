@@ -12,23 +12,6 @@ import (
 	"MobaClashRoyal/msg"
 )
 
-type UnitType struct {
-	Name         string
-	Health       float32
-	Damage       int
-	AttackRate   int //tick based 5 = 5 ticks (100ms tickrate = 500ms attack rate)
-	DamageFrame  int
-	Target       int
-	Speed        float32
-	Cost         int
-	Radius       int
-	AttackRadius int
-}
-
-var UnitRegistry = map[string]UnitType{
-	"Vampire": {Health: 100, Damage: 13, AttackRate: 10, DamageFrame: 4, Speed: 50, Cost: 50, Radius: 120, AttackRadius: 1400},
-}
-
 // Spawns player units
 func UnitSpawnerSystem(world cardinal.WorldContext) error {
 	return cardinal.EachMessage[msg.CreateUnitMsg, msg.CreateUnitResult](
@@ -93,8 +76,9 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 				comp.MapName{MapName: create.Msg.MapName},
 				comp.Distance{Distance: tempDistance},
 				comp.UnitRadius{UnitRadius: unitType.Radius},
+				comp.AggroRadius{AggroRadius: unitType.AggroRadius},
 				comp.AttackRadius{AttackRadius: unitType.AttackRadius},
-				comp.Attack{Combat: false, Damage: unitType.Damage, Rate: unitType.AttackRate, Frame: 0, DamageFrame: unitType.DamageFrame},
+				comp.Attack{Combat: false, Damage: unitType.Damage, Rate: unitType.AttackRate, Frame: 0, DamageFrame: unitType.DamageFrame, Class: unitType.Class},
 			)
 			if errr != nil {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("error creating unit: %w", err)

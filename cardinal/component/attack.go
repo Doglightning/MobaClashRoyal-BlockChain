@@ -9,6 +9,7 @@ type Attack struct {
 	Frame       int            `json:"frame"`       //current attack frame ex. frame 0-5 for a 5 rate
 	DamageFrame int            `json:"attackframe"` // Frame damage goes off (most animations have a wind down so the dmage goes off in the middle somewhere)
 	Target      types.EntityID `json:"target"`
+	Class       string         `json:"class"`
 }
 
 func (Attack) Name() string {

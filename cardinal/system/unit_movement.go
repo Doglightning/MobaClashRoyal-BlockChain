@@ -26,7 +26,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 	//go through all Unit ID's
 	for _, id := range priorityUnitIDs {
 		//get Unit Components
-		UnitPosition, UnitRadius, UnitAttackRadius, UnitAttack, UnitTeam, UnitMovespeed, MatchID, UnitDistance, mapName, err := GetUnitComponentsUM(world, id)
+		UnitPosition, UnitRadius, UnitAggroRadius, UnitAttackRadius, UnitAttack, UnitTeam, UnitMovespeed, MatchID, UnitDistance, mapName, err := GetUnitComponentsUM(world, id)
 		if err != nil {
 			fmt.Printf("%v", err)
 			continue
@@ -46,30 +46,61 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 			continue
 		}
 
+		secondIfCondition := true
+
 		//if units in combat
 		if UnitAttack.Combat {
 			//get enemyID
 			enemyID := UnitAttack.Target
 			enemyPosition, enemyRadius, errr := getEnemyComponentsUM(world, enemyID)
 			if errr != nil {
-				fmt.Printf("(unit movement): %s", err)
+				fmt.Printf("(unit movement): %s\n", err)
 				continue
 			}
-			err = MoveUnitTowardsEnemyUM(world, id, UnitPosition, float64(enemyPosition.PositionVectorX), float64(enemyPosition.PositionVectorY), enemyRadius.UnitRadius, UnitTeam, UnitMovespeed, CollisionSpartialHash, UnitRadius, UnitDistance, mapName)
+			deltaX := enemyPosition.PositionVectorX - UnitPosition.PositionVectorX
+			deltaY := enemyPosition.PositionVectorY - UnitPosition.PositionVectorY
+			squaredDistance := (deltaX * deltaX) + (deltaY * deltaY)
+			adjustedDistance := math.Sqrt(float64(squaredDistance)) - float64(enemyRadius.UnitRadius) - float64(UnitRadius.UnitRadius)
+
+			//if out of attack range but in aggro range
+			if adjustedDistance > float64(UnitAttackRadius.AttackRadius) && adjustedDistance <= float64(UnitAggroRadius.AggroRadius) {
+				UnitAttack.Combat = false
+				UnitAttack.Frame = 0
+				secondIfCondition = false
+				err = cardinal.SetComponent(world, id, UnitAttack)
+				if err != nil {
+					fmt.Printf("error setting Distance component on tempDistance (unit movement): %v", err)
+					continue
+				}
+				err = MoveUnitTowardsEnemyUM(world, id, UnitPosition, float64(enemyPosition.PositionVectorX), float64(enemyPosition.PositionVectorY), enemyRadius.UnitRadius, UnitTeam, UnitMovespeed, CollisionSpartialHash, UnitRadius, UnitDistance, mapName)
+
+				//if out of both attack and aggro range
+			} else if adjustedDistance > float64(UnitAggroRadius.AggroRadius) {
+				UnitAttack.Combat = false
+				UnitAttack.Frame = 0
+				err = cardinal.SetComponent(world, id, UnitAttack)
+				if err != nil {
+					fmt.Printf("error setting Distance component on tempDistance (unit movement): %v", err)
+					continue
+				}
+
+				//rotate in attack range
+			} else {
+				err = RotateUnitTowardsEnemyUM(world, id, UnitPosition, float64(enemyPosition.PositionVectorX), float64(enemyPosition.PositionVectorY))
+			}
 
 		}
-
 		//if units not in combat
-		if !UnitAttack.Combat {
+		if !UnitAttack.Combat && secondIfCondition {
 			//Check for in range Enemies
-			enemyID, enemyX, enemyY, enemyRadius, found := FindClosestEnemySpatialHash(CollisionSpartialHash, id, UnitPosition.PositionVectorX, UnitPosition.PositionVectorY, UnitAttackRadius.AttackRadius, UnitTeam.Team)
+			enemyID, enemyX, enemyY, enemyRadius, found := FindClosestEnemySpatialHash(CollisionSpartialHash, id, UnitPosition.PositionVectorX, UnitPosition.PositionVectorY, UnitAggroRadius.AggroRadius, UnitTeam.Team)
 			if found {
 				// Calculate squared distance between the unit and the enemy, minus their radii
 				deltaX := enemyX - UnitPosition.PositionVectorX
 				deltaY := enemyY - UnitPosition.PositionVectorY
 				squaredDistance := (deltaX * deltaX) + (deltaY * deltaY)
 				adjustedDistance := math.Sqrt(float64(squaredDistance)) - float64(enemyRadius) - float64(UnitRadius.UnitRadius)
-				if adjustedDistance <= 3 {
+				if adjustedDistance <= float64(UnitAttackRadius.AttackRadius) {
 					UnitAttack.Combat = true
 					UnitAttack.Target = enemyID
 					err = cardinal.SetComponent(world, id, UnitAttack)
@@ -78,9 +109,10 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 						continue
 					}
 
+				} else {
+					err = MoveUnitTowardsEnemyUM(world, id, UnitPosition, float64(enemyX), float64(enemyY), enemyRadius, UnitTeam, UnitMovespeed, CollisionSpartialHash, UnitRadius, UnitDistance, mapName)
 				}
 
-				err = MoveUnitTowardsEnemyUM(world, id, UnitPosition, float64(enemyX), float64(enemyY), enemyRadius, UnitTeam, UnitMovespeed, CollisionSpartialHash, UnitRadius, UnitDistance, mapName)
 			} else {
 				//no enemies found and not in combat, move with direction map.
 
@@ -247,6 +279,29 @@ func MoveUnitTowardsEnemyUM(world cardinal.WorldContext, id types.EntityID, posi
 	return nil
 }
 
+// Moves Unit towards enemy position
+func RotateUnitTowardsEnemyUM(world cardinal.WorldContext, id types.EntityID, position *comp.Position, enemyX float64, enemyY float64) error {
+	// Compute direction vector towards the enemy
+	deltaX := enemyX - float64(position.PositionVectorX)
+	deltaY := enemyY - float64(position.PositionVectorY)
+	magnitude := math.Sqrt(deltaX*deltaX + deltaY*deltaY)
+
+	// Normalize the direction vector
+	directionVectorX := float32(deltaX / magnitude)
+	directionVectorY := float32(deltaY / magnitude)
+
+	position.RotationVectorX = directionVectorX
+	position.RotationVectorY = directionVectorY
+
+	// Set the new position component
+	err := cardinal.SetComponent(world, id, position)
+	if err != nil {
+		return fmt.Errorf("error set component on tempPosition (unit movement/MoveUnitTowardsEnemyUM): %v", err)
+	}
+
+	return nil
+}
+
 // Update units distance from enemy base to help with movement priority queue
 func UpdateUnitDistance(world cardinal.WorldContext, id types.EntityID, team *comp.Team, distance *comp.Distance, position *comp.Position, mapName *comp.MapName) error {
 	_, exists := MapDataRegistry[mapName.MapName]
@@ -273,44 +328,48 @@ func UpdateUnitDistance(world cardinal.WorldContext, id types.EntityID, team *co
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // GetUnitComponents fetches all necessary components related to a unit entity.
-func GetUnitComponentsUM(world cardinal.WorldContext, unitID types.EntityID) (*comp.Position, *comp.UnitRadius, *comp.AttackRadius, *comp.Attack, *comp.Team, *comp.Movespeed, *comp.MatchId, *comp.Distance, *comp.MapName, error) {
+func GetUnitComponentsUM(world cardinal.WorldContext, unitID types.EntityID) (*comp.Position, *comp.UnitRadius, *comp.AggroRadius, *comp.AttackRadius, *comp.Attack, *comp.Team, *comp.Movespeed, *comp.MatchId, *comp.Distance, *comp.MapName, error) {
 	position, err := cardinal.GetComponent[comp.Position](world, unitID)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Position component (Unit Movement): %v", err)
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Position component (Unit Movement): %v", err)
 	}
 	unitRadius, err := cardinal.GetComponent[comp.UnitRadius](world, unitID)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Unit Radius component (Unit Movement): %v", err)
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Unit Radius component (Unit Movement): %v", err)
 	}
-	unitAttackRadius, err := cardinal.GetComponent[comp.AttackRadius](world, unitID)
+	aggroRadius, err := cardinal.GetComponent[comp.AggroRadius](world, unitID)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Unit attack Radius component (Unit Movement): %v", err)
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Unit attack Radius component (Unit Movement): %v", err)
+	}
+	attackRadius, err := cardinal.GetComponent[comp.AttackRadius](world, unitID)
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Unit attack Radius component (Unit Movement): %v", err)
 	}
 	unitAttack, err := cardinal.GetComponent[comp.Attack](world, unitID)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Unit attack component (Unit Movement): %v", err)
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Unit attack component (Unit Movement): %v", err)
 	}
 	team, err := cardinal.GetComponent[comp.Team](world, unitID)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Team component (Unit Movement): %v", err)
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Team component (Unit Movement): %v", err)
 	}
 	movespeed, err := cardinal.GetComponent[comp.Movespeed](world, unitID)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Movespeed component (Unit Movement): %v", err)
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Movespeed component (Unit Movement): %v", err)
 	}
 	matchId, err := cardinal.GetComponent[comp.MatchId](world, unitID)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving MatchId component (Unit Movement): %v", err)
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving MatchId component (Unit Movement): %v", err)
 	}
 	distance, err := cardinal.GetComponent[comp.Distance](world, unitID)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Distance component (Unit Movement): %v", err)
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Distance component (Unit Movement): %v", err)
 	}
 	mapName, err := cardinal.GetComponent[comp.MapName](world, unitID)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Distance component (Unit Movement): %v", err)
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Distance component (Unit Movement): %v", err)
 	}
-	return position, unitRadius, unitAttackRadius, unitAttack, team, movespeed, matchId, distance, mapName, nil
+	return position, unitRadius, aggroRadius, attackRadius, unitAttack, team, movespeed, matchId, distance, mapName, nil
 }
 
 // fetches enemy components

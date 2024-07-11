@@ -46,6 +46,7 @@ func MustInitWorld(w *cardinal.World) {
 		cardinal.RegisterComponent[component.UnitHealth](w),
 		cardinal.RegisterComponent[component.UnitName](w),
 		cardinal.RegisterComponent[component.UnitRadius](w),
+		cardinal.RegisterComponent[component.AggroRadius](w),
 		cardinal.RegisterComponent[component.AttackRadius](w),
 	)
 
@@ -73,11 +74,12 @@ func MustInitWorld(w *cardinal.World) {
 	Must(cardinal.RegisterSystems(w,
 		system.RemoveAllEntitiesMsgSystem,
 		system.GameStateSpawnerSystem,
-		system.RemovalListSystem,
 		system.UnitSpawnerSystem,
 		system.UnitMovementSystem,
+		system.ProjectileMovementSystem,
 		system.UnitAttackSystem,
 		system.UnitDestroyerSystem,
+		system.RemovalListSystem,
 		system.WinCondition,
 	))
 

@@ -13,50 +13,12 @@ func UnitDestroyerSystem(world cardinal.WorldContext) error {
 
 	// Filter for unit with no HP
 	unitFilter := cardinal.ComponentFilter[comp.UnitHealth](func(m comp.UnitHealth) bool {
-		return m.CurrentHP == 0
+		return m.CurrentHP <= 0
 	})
 
 	err := cardinal.NewSearch().Entity(
 		filter.Exact(UnitFilters())).
 		Where(unitFilter).Each(world, func(id types.EntityID) bool {
-
-		////////////////////////////Filter for unit with no HP/////////////////////////////////////////
-		targetFilter := cardinal.ComponentFilter[comp.Attack](func(m comp.Attack) bool {
-			return m.Target == id
-		})
-
-		err := cardinal.NewSearch().Entity(
-			filter.Exact(UnitFilters())).
-			Where(targetFilter).Each(world, func(enemyID types.EntityID) bool {
-
-			//get attack component from enemy
-			EnemyAttack, err := cardinal.GetComponent[comp.Attack](world, enemyID)
-			if err != nil {
-				fmt.Printf("error retrieving enemy attack component (unit destroyer): %s", err)
-				return false
-			}
-
-			EnemyAttack.Combat = false
-			//set attack component with combat = false
-			if err := cardinal.SetComponent[comp.Attack](world, id, EnemyAttack); err != nil {
-				fmt.Printf("error updating attack component (unit destroyer): %s", err)
-				return false
-			}
-
-			return true
-		})
-
-		if err != nil {
-			fmt.Printf("error retrieving unit entities (unit destroyer): %s", err)
-			return false
-		}
-		////////////////////////inner search reminder area////////////////////////////////////////////
-
-		//remove entity
-		if err := cardinal.Remove(world, id); err != nil {
-			fmt.Println("Error removing entity:", err) // Log error if any
-			return false                               // Stop iteration on error
-		}
 
 		MatchID, uid, UnitPosition, UnitRadius, err := getUnitComponentsUD(world, id)
 		if err != nil {
@@ -78,15 +40,6 @@ func UnitDestroyerSystem(world cardinal.WorldContext) error {
 			return false
 		}
 
-		//player1.RemovalList = append(player1.RemovalList, uid.UID)
-		player1.RemovalList[uid.UID] = true
-
-		//add removed unit to player1 removal list component
-		if err := cardinal.SetComponent[comp.Player1](world, gameState, player1); err != nil {
-			fmt.Printf("error updating player1 component (unit destroyer): %s", err)
-			return false
-		}
-
 		//get player2 team state
 		player2, err := cardinal.GetComponent[comp.Player2](world, gameState)
 		if err != nil {
@@ -94,14 +47,62 @@ func UnitDestroyerSystem(world cardinal.WorldContext) error {
 			return false
 		}
 
-		//player2.RemovalList = append(player2.RemovalList, uid.UID)
-		player2.RemovalList[uid.UID] = true
+		////////////////////////////Filter for unit with no HP/////////////////////////////////////////
+		targetFilter := cardinal.ComponentFilter[comp.Attack](func(m comp.Attack) bool {
+			return m.Target == id
+		})
 
-		//add removed unit to player2 removal list component
-		if err := cardinal.SetComponent[comp.Player2](world, gameState, player2); err != nil {
-			fmt.Printf("error updating player2 component (unit destroyer): %s", err)
+		err = cardinal.NewSearch().Entity(
+			filter.Exact(UnitFilters())).
+			Where(targetFilter).Each(world, func(enemyID types.EntityID) bool {
+
+			cardinal.UpdateComponent(world, enemyID, func(attack *comp.Attack) *comp.Attack {
+				if attack == nil {
+					fmt.Printf("error retrieving enemy attack component (unit destroyer): ")
+					return nil
+				}
+				attack.Combat = false
+				attack.Frame = 0
+				return attack
+			})
+
+			return true
+		})
+
+		if err != nil {
+			fmt.Printf("error retrieving unit entities (unit destroyer): %s", err)
 			return false
 		}
+		////////////////////////inner search reminder area////////////////////////////////////////////
+
+		////////////////////////////Projectile Destroyer/////////////////////////////////////////
+
+		err = cardinal.NewSearch().Entity(
+			filter.Exact(ProjectileFilters())).
+			Where(targetFilter).Each(world, func(projectileID types.EntityID) bool {
+
+			//get player1 team state
+			projectileUID, err := cardinal.GetComponent[comp.UID](world, projectileID)
+			if err != nil {
+				fmt.Printf("error retrieving projectile UID component (unit destroyer): %s", err)
+				return false
+			}
+
+			player1.RemovalList[projectileUID.UID] = true
+			player2.RemovalList[projectileUID.UID] = true
+			//remove entity
+			if err := cardinal.Remove(world, projectileID); err != nil {
+				fmt.Println("Error removing entity projectile (unit destroyer):", err)
+				return false
+			}
+			return true
+		})
+
+		if err != nil {
+			fmt.Printf("error retrieving projectile entities (unit destroyer): %s", err)
+			return false
+		}
+		////////////////////////inner search reminder area////////////////////////////////////////////
 
 		//get Spatial Hash
 		CollisionSpartialHash, err := cardinal.GetComponent[comp.SpatialHash](world, gameState)
@@ -110,6 +111,29 @@ func UnitDestroyerSystem(world cardinal.WorldContext) error {
 			return false
 		}
 		RemoveObjectFromSpatialHash(CollisionSpartialHash, id, UnitPosition.PositionVectorX, UnitPosition.PositionVectorY, UnitRadius.UnitRadius)
+
+		//remove entity
+		if err := cardinal.Remove(world, id); err != nil {
+			fmt.Println("Error removing entity:", err) // Log error if any
+			return false                               // Stop iteration on error
+		}
+
+		//player1.RemovalList = append(player1.RemovalList, uid.UID)
+		player1.RemovalList[uid.UID] = true
+		//player2.RemovalList = append(player2.RemovalList, uid.UID)
+		player2.RemovalList[uid.UID] = true
+
+		//add removed unit to player1 removal list component
+		if err := cardinal.SetComponent[comp.Player1](world, gameState, player1); err != nil {
+			fmt.Printf("error updating player1 component (unit destroyer): %s", err)
+			return false
+		}
+
+		//add removed unit to player2 removal list component
+		if err := cardinal.SetComponent[comp.Player2](world, gameState, player2); err != nil {
+			fmt.Printf("error updating player2 component (unit destroyer): %s", err)
+			return false
+		}
 
 		return true
 	})
