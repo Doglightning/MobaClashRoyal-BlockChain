@@ -57,10 +57,8 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 				fmt.Printf("(unit movement): %s\n", err)
 				continue
 			}
-			deltaX := enemyPosition.PositionVectorX - UnitPosition.PositionVectorX
-			deltaY := enemyPosition.PositionVectorY - UnitPosition.PositionVectorY
-			squaredDistance := (deltaX * deltaX) + (deltaY * deltaY)
-			adjustedDistance := math.Sqrt(float64(squaredDistance)) - float64(enemyRadius.UnitRadius) - float64(UnitRadius.UnitRadius)
+
+			adjustedDistance := distanceBetweenTwoPointsVectorMath(float64(UnitPosition.PositionVectorX), float64(UnitPosition.PositionVectorY), float64(enemyPosition.PositionVectorX), float64(enemyPosition.PositionVectorY)) - float64(enemyRadius.UnitRadius) - float64(UnitRadius.UnitRadius)
 
 			//if out of attack range but in aggro range
 			if adjustedDistance > float64(UnitAttackRadius.AttackRadius) && adjustedDistance <= float64(UnitAggroRadius.AggroRadius) {
@@ -97,10 +95,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 			enemyID, enemyX, enemyY, enemyRadius, found := FindClosestEnemySpatialHash(CollisionSpartialHash, id, UnitPosition.PositionVectorX, UnitPosition.PositionVectorY, UnitAggroRadius.AggroRadius, UnitTeam.Team)
 			if found {
 				// Calculate squared distance between the unit and the enemy, minus their radii
-				deltaX := enemyX - UnitPosition.PositionVectorX
-				deltaY := enemyY - UnitPosition.PositionVectorY
-				squaredDistance := (deltaX * deltaX) + (deltaY * deltaY)
-				adjustedDistance := math.Sqrt(float64(squaredDistance)) - float64(enemyRadius) - float64(UnitRadius.UnitRadius)
+				adjustedDistance := distanceBetweenTwoPointsVectorMath(float64(UnitPosition.PositionVectorX), float64(UnitPosition.PositionVectorY), float64(enemyX), float64(enemyY)) - float64(enemyRadius) - float64(UnitRadius.UnitRadius)
 				if adjustedDistance <= float64(UnitAttackRadius.AttackRadius) {
 					UnitAttack.Combat = true
 					UnitAttack.Target = enemyID

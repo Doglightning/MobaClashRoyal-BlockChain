@@ -129,10 +129,10 @@ func CheckCollisionSpatialHashList(hash *comp.SpatialHash, x, y float32, radius 
 	return collidedUnits
 }
 
-func moveToNearestFreeSpaceSpatialHash(hash *comp.SpatialHash, startX, startY, targetX, targetY, radius float32, search string) (newX float32, newY float32) {
+func moveToNearestFreeSpaceBoxSpatialHash(hash *comp.SpatialHash, startX, startY, targetX, targetY, radius float32) (newX float32, newY float32) {
 	deltaX := targetX - startX
 	deltaY := targetY - startY
-	length := float32(math.Hypot(float64(deltaX), float64(deltaY)))
+	length := float32(distanceBetweenTwoPointsVectorMath(float64(startX), float64(startY), float64(targetX), float64(targetY)))
 
 	// Normalize direction vector
 	dirX := deltaX / length
@@ -146,40 +146,97 @@ func moveToNearestFreeSpaceSpatialHash(hash *comp.SpatialHash, startX, startY, t
 	step := length / 8 // or another division factor
 
 	//search in a box the size of the units movement (kinda like a radius but less cpu intensive)
-	if search == "box" {
-		halfWidth := radius / 2 // Half the unit's radius
-		// Center to edge zigzag pattern
-		maxOffset := int(halfWidth / step) // Number of steps from center to edge
 
-		// Search within the square around the line from A to B
-		for d := length; d >= -length; d -= step {
-			// Alternate checking right and left of the center line
-			for offset := 0; offset <= maxOffset; offset++ {
-				offsets := []int{offset, -offset} // Check positive and negative offsets
-				for _, w := range offsets {
-					testX := startX + dirX*d + perpX*float32(w)*step
-					testY := startY + dirY*d + perpY*float32(w)*step
+	halfWidth := radius / 2 // Half the unit's radius
+	// Center to edge zigzag pattern
+	maxOffset := int(halfWidth / step) // Number of steps from center to edge
 
-					// Check if the position is free of collisions
-					if !CheckCollisionSpatialHash(hash, testX, testY, int(radius)) {
-						return testX, testY
-					}
+	// Search within the square around the line from A to B
+	for d := length; d >= -length; d -= step {
+		// Alternate checking right and left of the center line
+		for offset := 0; offset <= maxOffset; offset++ {
+			offsets := []int{offset, -offset} // Check positive and negative offsets
+			for _, w := range offsets {
+				testX := startX + dirX*d + perpX*float32(w)*step
+				testY := startY + dirY*d + perpY*float32(w)*step
+
+				// Check if the position is free of collisions
+				if !CheckCollisionSpatialHash(hash, testX, testY, int(radius)) {
+					return testX, testY
 				}
 			}
 		}
 	}
 
-	// Search along the line from target to start (reverse)
-	if search == "line" {
+	return startX, startY // Stay at the current position if no free spot is found
+}
+
+func moveToNearestFreeSpaceLineSpatialHash(world cardinal.WorldContext, hash *comp.SpatialHash, id types.EntityID, startX, startY, targetX, targetY, radius float32) (newX float32, newY float32) {
+
+	attack, err := cardinal.GetComponent[comp.Attack](world, id)
+	if err != nil {
+		fmt.Printf("error getting attack compoenent (moveToNearestFreeSpaceLineSpatialHash): %v", err)
+		return startX, startY
+	}
+	deltaX := targetX - startX
+	deltaY := targetY - startY
+	length := float32(distanceBetweenTwoPointsVectorMath(float64(startX), float64(startY), float64(targetX), float64(targetY)))
+
+	// Normalize direction vector
+	dirX := deltaX / length
+	dirY := deltaY / length
+
+	// Step size, which can be adjusted as needed
+	step := length / 8 // or another division factor
+
+	if attack.Combat {
+		attackRadius, err := cardinal.GetComponent[comp.AttackRadius](world, id)
+		if err != nil {
+			fmt.Printf("error getting attack redius compoenent (moveToNearestFreeSpaceLineSpatialHash): %v", err)
+			return startX, startY
+		}
+
+		targetRadius, err := cardinal.GetComponent[comp.UnitRadius](world, attack.Target)
+		if err != nil {
+			fmt.Printf("error getting target attack redius compoenent (moveToNearestFreeSpaceLineSpatialHash): %v", err)
+			return startX, startY
+		}
+
+		targetPos, err := cardinal.GetComponent[comp.Position](world, attack.Target)
+		if err != nil {
+			fmt.Printf("error getting target position compoenent (moveToNearestFreeSpaceLineSpatialHash): %v", err)
+			return startX, startY
+		}
+
+		// Search along the line from target to start (reverse)
 		for d := 0.0; d <= float64(length); d += float64(step) {
 			testX := targetX + dirX*float32(d) // Start from target position
 			testY := targetY + dirY*float32(d) // Start from target position
-
 			// Check if the position is free of collisions
 			if !CheckCollisionSpatialHash(hash, testX, testY, int(radius)) {
-				return testX, testY // Return the first free spot found
+				adjustedDistance := distanceBetweenTwoPointsVectorMath(float64(targetPos.PositionVectorX), float64(targetPos.PositionVectorY), float64(testX), float64(testY)) - float64(radius) - float64(targetRadius.UnitRadius)
+				if adjustedDistance <= float64(attackRadius.AttackRadius) {
+					fmt.Printf("adjustedDistance: %f\n", adjustedDistance)
+					return testX, testY // Return the first free spot found
+				}
+
 			}
 		}
+	} else {
+		// Search along the line from target to start (reverse)
+		for d := 0.0; d <= float64(length); d += float64(step) {
+			testX := targetX + dirX*float32(d) // Start from target position
+			testY := targetY + dirY*float32(d) // Start from target position
+			fmt.Printf("adjustedDistance: %t\n", attack.Combat)
+			// Check if the position is free of collisions
+			if !CheckCollisionSpatialHash(hash, testX, testY, int(radius)) {
+
+				fmt.Printf("adjustedDistance: %t\n", attack.Combat)
+				return testX, testY // Return the first free spot found
+
+			}
+		}
+
 	}
 
 	return startX, startY // Stay at the current position if no free spot is found
@@ -218,14 +275,12 @@ func UpdateUnitPositionPushSpatialHash(world cardinal.WorldContext, hash *comp.S
 
 				// Remove the object from its current position
 				RemoveObjectFromSpatialHash(hash, collisionID, enemyPos.PositionVectorX, enemyPos.PositionVectorY, enemyRadius.UnitRadius)
-				targetEnemyX, targetEnemyY := PushUnitDirSpatialHash(collisionID, targetX, targetY, enemyPos.PositionVectorX, enemyPos.PositionVectorY, startX-targetX, startY-targetY, float32(distance/2))
+				targetEnemyX, targetEnemyY := PushUnitDirSpatialHash(collisionID, targetX, targetY, enemyPos.PositionVectorX, enemyPos.PositionVectorY, startX-targetX, startY-targetY, float32(distance))
 
 				// Find an alternative position if the target is occupied
-				if CheckCollisionSpatialHash(hash, targetEnemyX, targetEnemyY, enemyRadius.UnitRadius) {
-					enemyPos.PositionVectorX, enemyPos.PositionVectorY = moveToNearestFreeSpaceSpatialHash(hash, enemyPos.PositionVectorX, enemyPos.PositionVectorY, targetEnemyX, targetEnemyY, float32(enemyRadius.UnitRadius), "line")
-				} else {
-					enemyPos.PositionVectorX, enemyPos.PositionVectorY = targetEnemyX, targetEnemyY
-				}
+
+				enemyPos.PositionVectorX, enemyPos.PositionVectorY = moveToNearestFreeSpaceLineSpatialHash(world, hash, collisionID, enemyPos.PositionVectorX, enemyPos.PositionVectorY, targetEnemyX, targetEnemyY, float32(enemyRadius.UnitRadius))
+
 				// Add the object to the new position
 				AddObjectSpatialHash(hash, collisionID, enemyPos.PositionVectorX, enemyPos.PositionVectorY, enemyRadius.UnitRadius, enemyTeam.Team)
 				err = cardinal.SetComponent(world, collisionID, enemyPos)
@@ -241,7 +296,7 @@ func UpdateUnitPositionPushSpatialHash(world cardinal.WorldContext, hash *comp.S
 	RemoveObjectFromSpatialHash(hash, objID, startX, startY, radius)
 	// Find an alternative position if the target is occupied
 	if CheckCollisionSpatialHash(hash, targetX, targetY, radius) {
-		targetX, targetY = moveToNearestFreeSpaceSpatialHash(hash, startX, startY, targetX, targetY, float32(radius), "box")
+		targetX, targetY = moveToNearestFreeSpaceBoxSpatialHash(hash, startX, startY, targetX, targetY, float32(radius))
 	}
 
 	// Add the object to the new position
