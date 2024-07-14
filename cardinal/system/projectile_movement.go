@@ -40,10 +40,11 @@ func ProjectileMovementSystem(world cardinal.WorldContext) error {
 			return false
 		}
 
-		//get enemy Position compoenent
-		enemyPosition, err := cardinal.GetComponent[comp.Position](world, projectileAttack.Target)
+		oldPos := &comp.Position{PositionVectorX: projectilePosition.PositionVectorX, PositionVectorY: projectilePosition.PositionVectorY}
+
+		enemyPosition, _, err := getEnemyComponentsUM(world, projectileAttack.Target)
 		if err != nil {
-			fmt.Printf("error retrieving enemy Position component (projectile movement): %s", err)
+			fmt.Printf("(projectile Movement): %s\n", err)
 			return false
 		}
 
@@ -60,14 +61,6 @@ func ProjectileMovementSystem(world cardinal.WorldContext) error {
 		newPosX := projectilePosition.PositionVectorX + directionVectorX*projectileMovespeed.CurrentMS
 		newPosY := projectilePosition.PositionVectorY + directionVectorY*projectileMovespeed.CurrentMS
 
-		// // Ensure the unit does not overshoot the target position
-		// if (directionVectorX > 0 && newPosX > enemyPosition.PositionVectorX) || (directionVectorX < 0 && newPosX < enemyPosition.PositionVectorX) {
-		// 	newPosX = enemyPosition.PositionVectorX
-		// }
-		// if (directionVectorY > 0 && newPosY > enemyPosition.PositionVectorY) || (directionVectorY < 0 && newPosY < enemyPosition.PositionVectorY) {
-		// 	newPosY = enemyPosition.PositionVectorY
-		// }
-
 		projectilePosition.PositionVectorX = newPosX
 		projectilePosition.PositionVectorY = newPosY
 		projectilePosition.RotationVectorX = directionVectorX
@@ -80,6 +73,18 @@ func ProjectileMovementSystem(world cardinal.WorldContext) error {
 			return false
 		}
 
+		//has projectile entered enemy radius?
+		if hasPassedEnemy(oldPos, projectilePosition, enemyPosition) {
+			//update attack component in combat
+			projectileAttack.Combat = true
+			err = cardinal.SetComponent(world, projectileID, projectileAttack)
+			if err != nil {
+				fmt.Printf("error set attack compoenent on projectileID (projectile movement): %v", err)
+				return false
+			}
+
+		}
+
 		return true
 	})
 
@@ -89,4 +94,17 @@ func ProjectileMovementSystem(world cardinal.WorldContext) error {
 	}
 
 	return nil
+}
+
+// hasPassedEnemy checks if the projectile has passed directly over the enemy's position.
+func hasPassedEnemy(oldPos *comp.Position, newPos *comp.Position, enemyPos *comp.Position) bool {
+	// Vectors from old and new positions to the enemy's position
+	oldToEnemy := comp.Position{PositionVectorX: enemyPos.PositionVectorX - oldPos.PositionVectorX, PositionVectorY: enemyPos.PositionVectorY - oldPos.PositionVectorY}
+	newToEnemy := comp.Position{PositionVectorX: enemyPos.PositionVectorX - newPos.PositionVectorX, PositionVectorY: enemyPos.PositionVectorY - newPos.PositionVectorY}
+
+	// Dot product of vectors from old and new positions to enemy's position
+	oldDot := float64(oldToEnemy.PositionVectorX)*float64(newToEnemy.PositionVectorX) + float64(oldToEnemy.PositionVectorY)*float64(newToEnemy.PositionVectorY)
+
+	// If the dot product is negative, the direction relative to the enemy has changed, meaning the projectile has passed the enemy
+	return oldDot < 0
 }

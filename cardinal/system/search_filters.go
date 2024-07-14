@@ -18,6 +18,6 @@ func StructureFilters() (filter.ComponentWrapper, filter.ComponentWrapper, filte
 	return filter.Component[comp.MatchId](), filter.Component[comp.UID](), filter.Component[comp.Team](), filter.Component[comp.UnitHealth](), filter.Component[comp.UnitName](), filter.Component[comp.MapName](), filter.Component[comp.Position](), filter.Component[comp.UnitRadius]()
 }
 
-func ProjectileFilters() (filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper) {
-	return filter.Component[comp.MatchId](), filter.Component[comp.UID](), filter.Component[comp.UnitName](), filter.Component[comp.Movespeed](), filter.Component[comp.Position](), filter.Component[comp.MapName](), filter.Component[comp.Attack]()
+func ProjectileFilters() (filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper) {
+	return filter.Component[comp.MatchId](), filter.Component[comp.UID](), filter.Component[comp.UnitName](), filter.Component[comp.Movespeed](), filter.Component[comp.Position](), filter.Component[comp.MapName](), filter.Component[comp.Attack](), filter.Component[comp.Destroyed]()
 }

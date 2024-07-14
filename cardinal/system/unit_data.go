@@ -16,18 +16,15 @@ type UnitType struct {
 }
 
 var UnitRegistry = map[string]UnitType{
-	"Vampire":    {Class: "melee", Health: 100, Damage: 13, AttackRate: 10, DamageFrame: 4, Speed: 50, Cost: 50, Radius: 120, AggroRadius: 1400, AttackRadius: 3},
-	"ArcherLady": {Class: "range", Health: 75, Damage: 40, AttackRate: 33, DamageFrame: 20, Speed: 50, Cost: 50, Radius: 120, AggroRadius: 1400, AttackRadius: 1200},
+	"Vampire":    {Class: "melee", Health: 100, Damage: 15, AttackRate: 10, DamageFrame: 4, Speed: 50, Cost: 50, Radius: 80, AggroRadius: 1400, AttackRadius: 10},
+	"ArcherLady": {Class: "range", Health: 75, Damage: 35, AttackRate: 30, DamageFrame: 20, Speed: 50, Cost: 50, Radius: 50, AggroRadius: 1400, AttackRadius: 1200},
 }
 
 type ProjectileType struct {
-	Name    string
-	Speed   float32
-	xOffset float32
-	yOffset float32
-	zOffset float32
+	Name  string
+	Speed float32
 }
 
 var ProjectileRegistry = map[string]ProjectileType{
-	"ArcherLady": {Name: "ArcherLadyArrow", Speed: 90, xOffset: 0, yOffset: 0, zOffset: 0},
+	"ArcherLady": {Name: "ArcherLadyArrow", Speed: 150},
 }

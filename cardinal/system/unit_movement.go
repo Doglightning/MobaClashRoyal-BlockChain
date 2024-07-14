@@ -72,8 +72,9 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 					fmt.Printf("error setting Distance component on tempDistance (unit movement): %v", err)
 					continue
 				}
-				err = MoveUnitTowardsEnemyUM(world, id, UnitPosition, float64(enemyPosition.PositionVectorX), float64(enemyPosition.PositionVectorY), enemyRadius.UnitRadius, UnitTeam, UnitMovespeed, CollisionSpartialHash, UnitRadius, UnitDistance, mapName)
-
+				if UnitMovespeed.CurrentMS > 0 {
+					err = MoveUnitTowardsEnemyUM(world, id, UnitPosition, float64(enemyPosition.PositionVectorX), float64(enemyPosition.PositionVectorY), enemyRadius.UnitRadius, UnitTeam, UnitMovespeed, CollisionSpartialHash, UnitRadius, UnitDistance, mapName)
+				}
 				//if out of both attack and aggro range
 			} else if adjustedDistance > float64(UnitAggroRadius.AggroRadius) {
 				UnitAttack.Combat = false
@@ -110,13 +111,16 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 					}
 
 				} else {
-					err = MoveUnitTowardsEnemyUM(world, id, UnitPosition, float64(enemyX), float64(enemyY), enemyRadius, UnitTeam, UnitMovespeed, CollisionSpartialHash, UnitRadius, UnitDistance, mapName)
+					if UnitMovespeed.CurrentMS > 0 {
+						err = MoveUnitTowardsEnemyUM(world, id, UnitPosition, float64(enemyX), float64(enemyY), enemyRadius, UnitTeam, UnitMovespeed, CollisionSpartialHash, UnitRadius, UnitDistance, mapName)
+					}
 				}
 
 			} else {
 				//no enemies found and not in combat, move with direction map.
-
-				err = MoveUnitDirectionMapUM(world, id, UnitPosition, UnitTeam, UnitMovespeed, CollisionSpartialHash, UnitRadius, UnitDistance, mapName)
+				if UnitMovespeed.CurrentMS > 0 {
+					err = MoveUnitDirectionMapUM(world, id, UnitPosition, UnitTeam, UnitMovespeed, CollisionSpartialHash, UnitRadius, UnitDistance, mapName)
+				}
 			}
 
 		}
@@ -214,7 +218,7 @@ func MoveUnitDirectionMapUM(world cardinal.WorldContext, id types.EntityID, posi
 	position.PositionVectorX = position.PositionVectorX + (position.RotationVectorX * movespeed.CurrentMS)
 	position.PositionVectorY = position.PositionVectorY + (position.RotationVectorY * movespeed.CurrentMS)
 
-	position.PositionVectorX, position.PositionVectorY = UpdateUnitPositionSpatialHash(collisionSpartialHash, id, tempX, tempY, position.PositionVectorX, position.PositionVectorY, radius.UnitRadius, team.Team)
+	position.PositionVectorX, position.PositionVectorY = UpdateUnitPositionPushSpatialHash(world, collisionSpartialHash, id, tempX, tempY, position.PositionVectorX, position.PositionVectorY, radius.UnitRadius, team.Team, movespeed.CurrentMS)
 
 	err := cardinal.SetComponent(world, id, position)
 	if err != nil {
@@ -260,7 +264,7 @@ func MoveUnitTowardsEnemyUM(world cardinal.WorldContext, id types.EntityID, posi
 	}
 
 	// Update position in spatial hash
-	position.PositionVectorX, position.PositionVectorY = UpdateUnitPositionSpatialHash(collisionSpartialHash, id, position.PositionVectorX, position.PositionVectorY, newPosX, newPosY, radius.UnitRadius, team.Team)
+	position.PositionVectorX, position.PositionVectorY = UpdateUnitPositionPushSpatialHash(world, collisionSpartialHash, id, position.PositionVectorX, position.PositionVectorY, newPosX, newPosY, radius.UnitRadius, team.Team, movespeed.CurrentMS)
 
 	position.RotationVectorX = directionVectorX
 	position.RotationVectorY = directionVectorY
