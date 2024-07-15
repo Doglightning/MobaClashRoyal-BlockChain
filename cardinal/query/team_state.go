@@ -53,7 +53,7 @@ func TeamState(world cardinal.WorldContext, req *MatchIdRequest) (*TeamStateResp
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving Player2 component: %w", err)
 	}
-	response.Player2 = player2.Nickname2
+	response.Player2 = player2.Nickname
 
 	return &response, nil
 }

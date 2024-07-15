@@ -45,7 +45,7 @@ func GameStateSpawnerSystem(world cardinal.WorldContext) error {
 					return msg.CreateMatchResult{Success: false}, fmt.Errorf("error adding Player2 component: %w", err)
 				}
 
-				err = cardinal.SetComponent(world, matchFound, &comp.Player2{Nickname2: create.Tx.PersonaTag, RemovalList: make(map[int]bool)})
+				err = cardinal.SetComponent(world, matchFound, &comp.Player2{Nickname: create.Tx.PersonaTag, RemovalList: make(map[int]bool)})
 				if err != nil {
 					err = cardinal.RemoveComponentFrom[comp.Player2](world, matchFound)
 					if err != nil {
