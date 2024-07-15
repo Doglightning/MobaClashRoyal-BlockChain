@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"pkg.world.dev/world-engine/cardinal"
+	"pkg.world.dev/world-engine/cardinal/iterators"
 	"pkg.world.dev/world-engine/cardinal/search/filter"
 )
 
@@ -18,20 +19,25 @@ type RemovalStateResponse struct {
 	Units []int
 }
 
+// get a list of all units to be removed for a player to maintian replication
 func RemovalState(world cardinal.WorldContext, req *RemovalMatchIdRequest) (*RemovalStateResponse, error) {
 	var response RemovalStateResponse
 	var removeList = []int{}
 
-	gameFilter := cardinal.ComponentFilter(func(m comp.MatchId) bool {
+	//find gameState using matchID
+	matchFilter := cardinal.ComponentFilter(func(m comp.MatchId) bool {
 		return m.MatchId == req.MatchId
 	})
 
 	gameState, err := cardinal.NewSearch().Entity(
 		filter.Exact(system.GameStateFilters())).
-		Where(gameFilter).First(world)
+		Where(matchFilter).First(world)
 
 	if err != nil {
 		return nil, fmt.Errorf("error searching for team (Removal State Query): %w", err)
+	}
+	if gameState == iterators.BadID {
+		return nil, fmt.Errorf("no match found with ID or missing components: %s", req.MatchId)
 	}
 
 	if req.Team == "Blue" {
@@ -40,7 +46,7 @@ func RemovalState(world cardinal.WorldContext, req *RemovalMatchIdRequest) (*Rem
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving Player1 component (Removal State Query): %w", err)
 		}
-
+		//get the remove list component for Player1
 		for key := range player1.RemovalList {
 			removeList = append(removeList, key)
 		}
@@ -51,7 +57,7 @@ func RemovalState(world cardinal.WorldContext, req *RemovalMatchIdRequest) (*Rem
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving Player2 component (Removal State Query): %w", err)
 		}
-
+		//get the remove list component for Player2
 		for key := range player2.RemovalList {
 			removeList = append(removeList, key)
 		}
