@@ -28,7 +28,7 @@ func UnitAttackSystem(world cardinal.WorldContext) error {
 
 		if unitAttack.Frame == unitAttack.DamageFrame {
 			if unitAttack.Class == "melee" {
-				enemyHealth, err := cardinal.GetComponent[comp.UnitHealth](world, unitAttack.Target)
+				enemyHealth, err := cardinal.GetComponent[comp.Health](world, unitAttack.Target)
 				if err != nil {
 					fmt.Printf("error getting enemy Health component (Unit Attack): %v", err)
 					return false

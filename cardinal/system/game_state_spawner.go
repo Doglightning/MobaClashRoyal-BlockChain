@@ -97,7 +97,7 @@ func spawnBasesTSS(world cardinal.WorldContext, matchID string, teamStateID type
 		comp.MapName{MapName: mapName},
 		comp.UnitName{UnitName: "Base"},
 		comp.Team{Team: "Blue"},
-		comp.UnitHealth{CurrentHP: StructureDataRegistry["Base"].Health, MaxHP: StructureDataRegistry["Base"].Health},
+		comp.Health{CurrentHP: StructureDataRegistry["Base"].Health, MaxHP: StructureDataRegistry["Base"].Health},
 		comp.Position{PositionVectorX: float32(MapDataRegistry[mapName].Bases[0][0]), PositionVectorY: float32(MapDataRegistry[mapName].Bases[0][1])},
 		comp.UnitRadius{UnitRadius: StructureDataRegistry["Base"].Radius},
 	)
@@ -119,7 +119,7 @@ func spawnBasesTSS(world cardinal.WorldContext, matchID string, teamStateID type
 		comp.MapName{MapName: mapName},
 		comp.UnitName{UnitName: "Base"},
 		comp.Team{Team: "Red"},
-		comp.UnitHealth{CurrentHP: StructureDataRegistry["Base"].Health, MaxHP: StructureDataRegistry["Base"].Health},
+		comp.Health{CurrentHP: StructureDataRegistry["Base"].Health, MaxHP: StructureDataRegistry["Base"].Health},
 		comp.Position{PositionVectorX: float32(MapDataRegistry[mapName].Bases[1][0]), PositionVectorY: float32(MapDataRegistry[mapName].Bases[1][1])},
 		comp.UnitRadius{UnitRadius: StructureDataRegistry["Base"].Radius},
 	)

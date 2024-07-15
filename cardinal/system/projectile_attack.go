@@ -26,7 +26,7 @@ func ProjectileAttackSystem(world cardinal.WorldContext) error {
 			return false
 		}
 
-		enemyHealth, err := cardinal.GetComponent[comp.UnitHealth](world, projectileAttack.Target)
+		enemyHealth, err := cardinal.GetComponent[comp.Health](world, projectileAttack.Target)
 		if err != nil {
 			fmt.Printf("error getting enemy Health component (projectile Attack): %v", err)
 			return false

@@ -83,7 +83,7 @@ func UnitState(world cardinal.WorldContext, req *UnitMatchIdRequest) (*UnitState
 		unit.Team = team.Team
 
 		// Fetch Health component
-		health, err := cardinal.GetComponent[comp.UnitHealth](world, id)
+		health, err := cardinal.GetComponent[comp.Health](world, id)
 		if err != nil {
 			return false
 		}
@@ -164,7 +164,7 @@ func UnitState(world cardinal.WorldContext, req *UnitMatchIdRequest) (*UnitState
 		structure.UID = uid.UID
 
 		// Fetch health component
-		health, err := cardinal.GetComponent[comp.UnitHealth](world, id)
+		health, err := cardinal.GetComponent[comp.Health](world, id)
 		if err != nil {
 			return false
 		}

@@ -190,7 +190,7 @@ func moveToNearestFreeSpaceLineSpatialHash(world cardinal.WorldContext, hash *co
 	step := length / 8 // or another division factor
 
 	if attack.Combat {
-		attackRadius, err := cardinal.GetComponent[comp.AttackRadius](world, id)
+		attack, err := cardinal.GetComponent[comp.Attack](world, id)
 		if err != nil {
 			fmt.Printf("error getting attack redius compoenent (moveToNearestFreeSpaceLineSpatialHash): %v", err)
 			return startX, startY
@@ -215,7 +215,7 @@ func moveToNearestFreeSpaceLineSpatialHash(world cardinal.WorldContext, hash *co
 			// Check if the position is free of collisions
 			if !CheckCollisionSpatialHash(hash, testX, testY, int(radius)) {
 				adjustedDistance := distanceBetweenTwoPointsVectorMath(float64(targetPos.PositionVectorX), float64(targetPos.PositionVectorY), float64(testX), float64(testY)) - float64(radius) - float64(targetRadius.UnitRadius)
-				if adjustedDistance <= float64(attackRadius.AttackRadius) {
+				if adjustedDistance <= float64(attack.AttackRadius) {
 					fmt.Printf("adjustedDistance: %f\n", adjustedDistance)
 					return testX, testY // Return the first free spot found
 				}

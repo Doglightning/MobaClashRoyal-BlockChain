@@ -12,7 +12,7 @@ import (
 func WinCondition(world cardinal.WorldContext) error {
 
 	// Filter for unit with no HP
-	unitFilter := cardinal.ComponentFilter[comp.UnitHealth](func(m comp.UnitHealth) bool {
+	unitFilter := cardinal.ComponentFilter[comp.Health](func(m comp.Health) bool {
 		return m.CurrentHP == 0
 	})
 

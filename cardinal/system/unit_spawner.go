@@ -70,15 +70,13 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 				comp.UID{UID: tempUID.UID},
 				comp.UnitName{UnitName: create.Msg.UnitType},
 				comp.Team{Team: create.Msg.Team},
-				comp.UnitHealth{CurrentHP: unitType.Health, MaxHP: unitType.Health},
+				comp.Health{CurrentHP: unitType.Health, MaxHP: unitType.Health},
 				comp.Movespeed{CurrentMS: unitType.Speed},
 				comp.Position{PositionVectorX: create.Msg.PositionX, PositionVectorY: create.Msg.PositionY, PositionVectorZ: create.Msg.PositionZ, RotationVectorX: create.Msg.RotationX, RotationVectorY: create.Msg.RotationY, RotationVectorZ: create.Msg.RotationZ},
 				comp.MapName{MapName: create.Msg.MapName},
 				comp.Distance{Distance: tempDistance},
 				comp.UnitRadius{UnitRadius: unitType.Radius},
-				comp.AggroRadius{AggroRadius: unitType.AggroRadius},
-				comp.AttackRadius{AttackRadius: unitType.AttackRadius},
-				comp.Attack{Combat: false, Damage: unitType.Damage, Rate: unitType.AttackRate, Frame: 0, DamageFrame: unitType.DamageFrame, Class: unitType.Class},
+				comp.Attack{Combat: false, Damage: unitType.Damage, Rate: unitType.AttackRate, Frame: 0, DamageFrame: unitType.DamageFrame, Class: unitType.Class, AttackRadius: unitType.AttackRadius, AggroRadius: unitType.AggroRadius},
 			)
 			if errr != nil {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("error creating unit: %w", err)

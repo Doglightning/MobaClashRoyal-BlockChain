@@ -44,11 +44,9 @@ func MustInitWorld(w *cardinal.World) {
 		cardinal.RegisterComponent[component.SpatialHash](w),
 		cardinal.RegisterComponent[component.Team](w),
 		cardinal.RegisterComponent[component.UID](w),
-		cardinal.RegisterComponent[component.UnitHealth](w),
+		cardinal.RegisterComponent[component.Health](w),
 		cardinal.RegisterComponent[component.UnitName](w),
 		cardinal.RegisterComponent[component.UnitRadius](w),
-		cardinal.RegisterComponent[component.AggroRadius](w),
-		cardinal.RegisterComponent[component.AttackRadius](w),
 	)
 
 	// Register messages (user action)
