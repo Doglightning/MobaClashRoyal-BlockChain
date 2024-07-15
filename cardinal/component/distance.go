@@ -1,7 +1,7 @@
 package component
 
 type Distance struct {
-	Distance float64 `json:"distnace"`
+	Distance float32 `json:"distnace"`
 }
 
 func (Distance) Name() string {

@@ -48,11 +48,11 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 			}
 
 			//calculate distance from enemy spawn
-			var tempDistance float64
+			var tempDistance float32
 			if create.Msg.Team == "Blue" {
-				tempDistance = math.Sqrt(((float64(create.Msg.PositionX) - float64(MapDataRegistry[create.Msg.MapName].Bases[1][0])) * (float64(create.Msg.PositionX) - float64(MapDataRegistry[create.Msg.MapName].Bases[1][0]))) + ((float64(create.Msg.PositionY) - float64(MapDataRegistry[create.Msg.MapName].Bases[1][1])) * (float64(create.Msg.PositionY) - float64(MapDataRegistry[create.Msg.MapName].Bases[1][1]))))
+				tempDistance = float32(math.Sqrt(((float64(create.Msg.PositionX) - float64(MapDataRegistry[create.Msg.MapName].Bases[1][0])) * (float64(create.Msg.PositionX) - float64(MapDataRegistry[create.Msg.MapName].Bases[1][0]))) + ((float64(create.Msg.PositionY) - float64(MapDataRegistry[create.Msg.MapName].Bases[1][1])) * (float64(create.Msg.PositionY) - float64(MapDataRegistry[create.Msg.MapName].Bases[1][1])))))
 			} else {
-				tempDistance = math.Sqrt(((float64(create.Msg.PositionX) - float64(MapDataRegistry[create.Msg.MapName].Bases[0][0])) * (float64(create.Msg.PositionX) - float64(MapDataRegistry[create.Msg.MapName].Bases[0][0]))) + ((float64(create.Msg.PositionY) - float64(MapDataRegistry[create.Msg.MapName].Bases[0][1])) * (float64(create.Msg.PositionY) - float64(MapDataRegistry[create.Msg.MapName].Bases[0][1]))))
+				tempDistance = float32(math.Sqrt(((float64(create.Msg.PositionX) - float64(MapDataRegistry[create.Msg.MapName].Bases[0][0])) * (float64(create.Msg.PositionX) - float64(MapDataRegistry[create.Msg.MapName].Bases[0][0]))) + ((float64(create.Msg.PositionY) - float64(MapDataRegistry[create.Msg.MapName].Bases[0][1])) * (float64(create.Msg.PositionY) - float64(MapDataRegistry[create.Msg.MapName].Bases[0][1])))))
 			}
 
 			//get SpatialHash component from game state

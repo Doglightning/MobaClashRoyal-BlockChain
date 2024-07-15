@@ -136,7 +136,7 @@ func PriorityUnitMovement(world cardinal.WorldContext) ([]types.EntityID, error)
 	// UnitData struct to store both the EntityID and its Distance for sorting
 	type UnitData struct {
 		ID       types.EntityID
-		Distance float64
+		Distance float32
 	}
 
 	// Search all units
@@ -310,9 +310,9 @@ func UpdateUnitDistance(world cardinal.WorldContext, id types.EntityID, team *co
 
 	// calculate distance from enemy spawn
 	if team.Team == "Blue" {
-		distance.Distance = math.Sqrt(((float64(position.PositionVectorX) - float64(MapDataRegistry[mapName.MapName].Bases[1][0])) * (float64(position.PositionVectorX) - float64(MapDataRegistry[mapName.MapName].Bases[1][0]))) + ((float64(position.PositionVectorY) - float64(MapDataRegistry[mapName.MapName].Bases[1][1])) * (float64(position.PositionVectorY) - float64(MapDataRegistry[mapName.MapName].Bases[1][1]))))
+		distance.Distance = float32(math.Sqrt(((float64(position.PositionVectorX) - float64(MapDataRegistry[mapName.MapName].Bases[1][0])) * (float64(position.PositionVectorX) - float64(MapDataRegistry[mapName.MapName].Bases[1][0]))) + ((float64(position.PositionVectorY) - float64(MapDataRegistry[mapName.MapName].Bases[1][1])) * (float64(position.PositionVectorY) - float64(MapDataRegistry[mapName.MapName].Bases[1][1])))))
 	} else {
-		distance.Distance = math.Sqrt(((float64(position.PositionVectorX) - float64(MapDataRegistry[mapName.MapName].Bases[0][0])) * (float64(position.PositionVectorX) - float64(MapDataRegistry[mapName.MapName].Bases[0][0]))) + ((float64(position.PositionVectorY) - float64(MapDataRegistry[mapName.MapName].Bases[0][1])) * (float64(position.PositionVectorY) - float64(MapDataRegistry[mapName.MapName].Bases[0][1]))))
+		distance.Distance = float32(math.Sqrt(((float64(position.PositionVectorX) - float64(MapDataRegistry[mapName.MapName].Bases[0][0])) * (float64(position.PositionVectorX) - float64(MapDataRegistry[mapName.MapName].Bases[0][0]))) + ((float64(position.PositionVectorY) - float64(MapDataRegistry[mapName.MapName].Bases[0][1])) * (float64(position.PositionVectorY) - float64(MapDataRegistry[mapName.MapName].Bases[0][1])))))
 	}
 	// set distance
 	err := cardinal.SetComponent(world, id, distance)
