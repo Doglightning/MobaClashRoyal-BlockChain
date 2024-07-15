@@ -21,17 +21,17 @@ type TeamStateResponse struct {
 	Player2 string
 }
 
+// gets which player each team is on
 func TeamState(world cardinal.WorldContext, req *MatchIdRequest) (*TeamStateResponse, error) {
-	matchFilter := cardinal.ComponentFilter[comp.MatchId](func(m comp.MatchId) bool {
+	var response TeamStateResponse
+
+	//find team based on matchID
+	matchFilter := cardinal.ComponentFilter(func(m comp.MatchId) bool {
 		return m.MatchId == req.MatchId
 	})
-
-	var response TeamStateResponse
-	gameSearch := cardinal.NewSearch().Entity(
+	gameState, err := cardinal.NewSearch().Entity(
 		filter.Exact(system.GameStateFilters())).
-		Where(matchFilter)
-
-	gameState, err := gameSearch.First(world)
+		Where(matchFilter).First(world)
 
 	if err != nil {
 		return nil, fmt.Errorf("error searching for match: %w", err)
