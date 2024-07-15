@@ -22,7 +22,7 @@ func RemovalState(world cardinal.WorldContext, req *RemovalMatchIdRequest) (*Rem
 	var response RemovalStateResponse
 	var removeList = []int{}
 
-	gameFilter := cardinal.ComponentFilter[comp.MatchId](func(m comp.MatchId) bool {
+	gameFilter := cardinal.ComponentFilter(func(m comp.MatchId) bool {
 		return m.MatchId == req.MatchId
 	})
 
