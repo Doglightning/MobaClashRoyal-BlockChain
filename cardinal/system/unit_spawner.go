@@ -45,10 +45,16 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 
 			//calculate distance from enemy spawn
 			var tempDistance float32
+
+			//check map exsists in registy
+			mapData, exists := MapDataRegistry[create.Msg.MapName]
+			if !exists {
+				return msg.CreateUnitResult{Success: false}, fmt.Errorf("error key for MapDataRegistry does not exsist (unit_spawner.go)")
+			}
 			if create.Msg.Team == "Blue" {
-				tempDistance = float32(distanceBetweenTwoPoints(float64(MapDataRegistry[create.Msg.MapName].Bases[1][0]), float64(MapDataRegistry[create.Msg.MapName].Bases[1][1]), float64(create.Msg.PositionX), float64(create.Msg.PositionY)))
+				tempDistance = distanceBetweenTwoPoints(float32(mapData.Bases[1][0]), float32(mapData.Bases[1][1]), create.Msg.PositionX, create.Msg.PositionY)
 			} else {
-				tempDistance = float32(distanceBetweenTwoPoints(float64(MapDataRegistry[create.Msg.MapName].Bases[0][0]), float64(MapDataRegistry[create.Msg.MapName].Bases[0][1]), float64(create.Msg.PositionX), float64(create.Msg.PositionY)))
+				tempDistance = distanceBetweenTwoPoints(float32(mapData.Bases[0][0]), float32(mapData.Bases[0][1]), create.Msg.PositionX, create.Msg.PositionY)
 			}
 
 			//get collision Hash component from game state

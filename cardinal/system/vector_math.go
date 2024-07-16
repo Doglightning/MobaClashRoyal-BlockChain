@@ -27,6 +27,6 @@ func dotProduct(x1, y1, x2, y2 float32) float32 {
 }
 
 // Function to calculate distance between two points
-func distanceBetweenTwoPoints(x1, y1, x2, y2 float64) float64 {
-	return math.Sqrt(math.Pow(x2-x1, 2) + math.Pow(y2-y1, 2))
+func distanceBetweenTwoPoints(x1, y1, x2, y2 float32) float32 {
+	return float32(math.Sqrt(math.Pow(float64(x2-x1), 2) + math.Pow(float64(y2-y1), 2)))
 }
