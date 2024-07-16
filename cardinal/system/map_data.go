@@ -1,5 +1,7 @@
 package system
 
+var SpatialGridCellSize = 300
+
 type MapData struct {
 	StartX    int `json:"startX"`
 	StartY    int `json:"startY"`
@@ -23,8 +25,3 @@ type StructureData struct {
 var StructureDataRegistry = map[string]StructureData{
 	"Base": {Health: 200, Radius: 240},
 }
-
-// func getMapData(mapName string) (mapData MapData, exists bool) {
-// 	mapData, exists = MapDataRegistry[mapName]
-// 	return mapData, exists
-// }

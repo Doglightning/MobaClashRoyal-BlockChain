@@ -12,82 +12,92 @@ import (
 	"MobaClashRoyal/msg"
 )
 
-//var SpatialGridCellSize = 300
-
-// Spawns a new match entity.
+// Spawns Game state for a new match.
+// called by create_match.go msg.
 func GameStateSpawnerSystem(world cardinal.WorldContext) error {
-	return cardinal.EachMessage[msg.CreateMatchMsg, msg.CreateMatchResult](
-		world,
-		//iterate over every create match msgs
+	return cardinal.EachMessage(world,
 		func(create cardinal.TxData[msg.CreateMatchMsg]) (msg.CreateMatchResult, error) {
 			//create filter for matching ID's
-			matchFilter := cardinal.ComponentFilter[comp.MatchId](func(m comp.MatchId) bool {
+			matchFilter := cardinal.ComponentFilter(func(m comp.MatchId) bool {
 				return m.MatchId == create.Msg.MatchID
 			})
 
-			// Search for existing matches
+			// Search for existing matches.
 			existingMatchSearch := cardinal.NewSearch().Entity(filter.Contains(filter.Component[comp.MatchId]())).Where(matchFilter)
 			count, err := existingMatchSearch.Count(world)
 			if err != nil {
-				return msg.CreateMatchResult{Success: false}, fmt.Errorf("error during search: %w", err)
+				return msg.CreateMatchResult{Success: false}, fmt.Errorf("error during search (game_state_spawner.go): %w", err)
 			}
 
-			if count > 0 {
-				// If a match is found, add the Player2 component to the existing entity
-				matchFound, err := existingMatchSearch.First(world)
+			// No match found.
+			if count == 0 {
+				//Create new gamestate
+				teamStateID, err := cardinal.Create(world,
+					comp.MatchId{MatchId: create.Msg.MatchID},
+					comp.UID{UID: 0},
+					comp.Player1{Nickname: create.Tx.PersonaTag, RemovalList: make(map[int]bool)},
+					comp.SpatialHash{Cells: make(map[string]comp.SpatialCell), CellSize: SpatialGridCellSize, StartX: float32(MapDataRegistry[create.Msg.MapName].StartX), StartY: float32(MapDataRegistry[create.Msg.MapName].StartY)},
+				)
 
 				if err != nil {
-					return msg.CreateMatchResult{Success: false}, fmt.Errorf("error adding Player2 component: %w", err)
+					return msg.CreateMatchResult{Success: false}, fmt.Errorf("error creating match (game_state_spawner.go): %w", err)
 				}
 
-				err = cardinal.AddComponentTo[comp.Player2](world, matchFound)
+				// get spatial hash for collision map
+				hash, err := cardinal.GetComponent[comp.SpatialHash](world, teamStateID)
 				if err != nil {
-					return msg.CreateMatchResult{Success: false}, fmt.Errorf("error adding Player2 component: %w", err)
+					return msg.CreateMatchResult{Success: false}, fmt.Errorf("error getting hash component (game_state_spawner.go): %w", err)
 				}
 
-				err = cardinal.SetComponent(world, matchFound, &comp.Player2{Nickname: create.Tx.PersonaTag, RemovalList: make(map[int]bool)})
+				//spawn bases
+				err = spawnBasesGSS(world, create.Msg.MatchID, teamStateID, create.Msg.MapName, hash)
 				if err != nil {
-					err = cardinal.RemoveComponentFrom[comp.Player2](world, matchFound)
-					if err != nil {
-						return msg.CreateMatchResult{Success: false}, fmt.Errorf("error adding Player2 component: %w", err)
-					}
-					return msg.CreateMatchResult{Success: false}, fmt.Errorf("error adding Player2 component: %w", err)
+					return msg.CreateMatchResult{Success: false}, err
 				}
 
-				return msg.CreateMatchResult{Success: true}, nil
+				return msg.CreateMatchResult{Success: true}, nil // end logic for player1
 			}
 
-			//create a new match
-			teamStateID, err := cardinal.Create(world, comp.MatchId{MatchId: create.Msg.MatchID}, comp.UID{UID: 0}, comp.Player1{Nickname: create.Tx.PersonaTag, RemovalList: make(map[int]bool)}, comp.SpatialHash{Cells: make(map[string]comp.SpatialCell), CellSize: SpatialGridCellSize, StartX: float32(MapDataRegistry[create.Msg.MapName].StartX), StartY: float32(MapDataRegistry[create.Msg.MapName].StartY)})
+			// If a match is found, add the Player2 component to the existing entity
+			matchFound, err := existingMatchSearch.First(world)
+
 			if err != nil {
-				return msg.CreateMatchResult{Success: false}, fmt.Errorf("error creating match: %w", err)
+				return msg.CreateMatchResult{Success: false}, fmt.Errorf("error adding Player2 component (game_state_spawner.go): %w", err)
 			}
 
-			hash, err := cardinal.GetComponent[comp.SpatialHash](world, teamStateID)
+			//add player2 component
+			err = cardinal.AddComponentTo[comp.Player2](world, matchFound)
 			if err != nil {
-				return msg.CreateMatchResult{Success: false}, fmt.Errorf("error getting hash component (team state spawner): %w", err)
+				return msg.CreateMatchResult{Success: false}, fmt.Errorf("error adding Player2 component (game_state_spawner.go): %w", err)
 			}
 
-			//spawn bases
-			err = spawnBasesTSS(world, create.Msg.MatchID, teamStateID, create.Msg.MapName, hash)
+			//set player2 compoenent
+			err = cardinal.SetComponent(world, matchFound, &comp.Player2{Nickname: create.Tx.PersonaTag, RemovalList: make(map[int]bool)})
 			if err != nil {
-				return msg.CreateMatchResult{Success: false}, err
+				// if error remove the empty player2 component
+				err = cardinal.RemoveComponentFrom[comp.Player2](world, matchFound)
+				if err != nil {
+					return msg.CreateMatchResult{Success: false}, fmt.Errorf("error adding Player2 component (game_state_spawner.go): %w", err)
+				}
+				return msg.CreateMatchResult{Success: false}, fmt.Errorf("error adding Player2 component (game_state_spawner.go): %w", err)
 			}
 
 			return msg.CreateMatchResult{Success: true}, nil
+
 		})
 }
 
 // spawns bases and towers for both teams
-func spawnBasesTSS(world cardinal.WorldContext, matchID string, teamStateID types.EntityID, mapName string, spatialHash *comp.SpatialHash) error {
-	//get UID
-	uid, err := cardinal.GetComponent[comp.UID](world, teamStateID)
-	if err != nil {
-		return fmt.Errorf("error getting UID component (team state spawner): %w", err)
+func spawnBasesGSS(world cardinal.WorldContext, matchID string, teamStateID types.EntityID, mapName string, spatialHash *comp.SpatialHash) error {
+	// check that map name exists in map registry
+	if _, exsist := MapDataRegistry[mapName]; !exsist {
+		return fmt.Errorf("map does not exist in MapDataRegistry (game_state_spawner.go/spawnBasesGSS)")
 	}
 
-	if _, exsist := MapDataRegistry[mapName]; !exsist {
-		return fmt.Errorf("map does not exsist in MapDataRegistry (team state spawner): %w", err)
+	//get UID component
+	uid, err := cardinal.GetComponent[comp.UID](world, teamStateID)
+	if err != nil {
+		return fmt.Errorf("error getting UID component (game_state_spawner.go/spawnBasesGSS): %w", err)
 	}
 
 	//spawn Blue Base
@@ -103,10 +113,10 @@ func spawnBasesTSS(world cardinal.WorldContext, matchID string, teamStateID type
 	)
 
 	if err != nil {
-		return fmt.Errorf("error creating blue base (team state spawner): %w", err)
+		return fmt.Errorf("error creating blue base ((game_state_spawner.go/spawnBasesGSS)): %w", err)
 	}
 
-	//add unit to spatial hash collision map
+	//add structure to spatial hash collision map
 	AddObjectSpatialHash(spatialHash, baseID, float32(MapDataRegistry[mapName].Bases[0][0]), float32(MapDataRegistry[mapName].Bases[0][1]), StructureDataRegistry["Base"].Radius, "Blue")
 
 	//incriment UID
@@ -125,17 +135,18 @@ func spawnBasesTSS(world cardinal.WorldContext, matchID string, teamStateID type
 	)
 
 	if err != nil {
-		return fmt.Errorf("error creating red base (team state spawner): %w", err)
+		return fmt.Errorf("error creating red base (team state spawner (game_state_spawner.go/spawnBasesGSS): %w", err)
 	}
 
-	//add unit to spatial hash collision map
+	//add structure to spatial hash collision map
 	AddObjectSpatialHash(spatialHash, baseID, float32(MapDataRegistry[mapName].Bases[1][0]), float32(MapDataRegistry[mapName].Bases[1][1]), StructureDataRegistry["Base"].Radius, "Red")
 
 	//incriment UID
 	uid.UID++
 
+	//set UID in game state
 	if err := cardinal.SetComponent[comp.UID](world, teamStateID, uid); err != nil {
-		return fmt.Errorf("error updating UID (team state spawner): %w", err)
+		return fmt.Errorf("error updating UID (team state spawner (game_state_spawner.go/spawnBasesGSS): %w", err)
 	}
 
 	return nil
@@ -143,7 +154,7 @@ func spawnBasesTSS(world cardinal.WorldContext, matchID string, teamStateID type
 
 func getNextUID(world cardinal.WorldContext, matchID string) (int, error) {
 
-	//create filter for matching ID's
+	//create filter for matchID to get game state
 	matchFilter := cardinal.ComponentFilter[comp.MatchId](func(m comp.MatchId) bool {
 		return m.MatchId == matchID
 	})
@@ -151,28 +162,29 @@ func getNextUID(world cardinal.WorldContext, matchID string) (int, error) {
 	gameStateSearch := cardinal.NewSearch().Entity(
 		filter.Exact(GameStateFilters())).
 		Where(matchFilter)
-
+	//game state
 	gameState, err := gameStateSearch.First(world)
 
 	if err != nil {
-		return 0, fmt.Errorf("error searching for match (team state spawner): %w", err)
+		return 0, fmt.Errorf("error searching for match (getNextUID): %w", err)
 	}
 
-	if gameState == iterators.BadID { // Assuming cardinal.NoEntity represents no result found
-		return 0, fmt.Errorf("no match found with ID or missing components (team state spawner): %s", matchID)
+	if gameState == iterators.BadID {
+		return 0, fmt.Errorf("no match found with ID or missing components (getNextUID): %s", matchID)
 	}
 
+	//get UID compoenent
 	UID, err := cardinal.GetComponent[comp.UID](world, gameState)
 	if err != nil {
-		return 0, fmt.Errorf("error getting UID component (team state spawner): %w", err)
+		return 0, fmt.Errorf("error getting UID component (getNextUID): %w", err)
 	}
 	returnUID := UID.UID
-
+	//increment UID
 	UID.UID++
-
+	//Set updated UID component
 	err = cardinal.SetComponent(world, gameState, UID)
 	if err != nil {
-		return 0, fmt.Errorf("error setting UID component (team state spawner): %w", err)
+		return 0, fmt.Errorf("error setting UID component (getNextUID): %w", err)
 	}
 
 	return returnUID, nil
