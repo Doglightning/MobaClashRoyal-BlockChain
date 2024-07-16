@@ -189,3 +189,20 @@ func getNextUID(world cardinal.WorldContext, matchID string) (int, error) {
 
 	return returnUID, nil
 }
+
+// fetches unit components needed for spatial hash removal
+func getPlayerComponentsGSS(world cardinal.WorldContext, id types.EntityID) (p1 *comp.Player1, p2 *comp.Player2, err error) {
+	//get player1 component
+	p1, err = cardinal.GetComponent[comp.Player1](world, id)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error retrieving player1 component (getPlayerComponentsGSS): %s", err)
+	}
+
+	// get player2 components
+	p2, err = cardinal.GetComponent[comp.Player2](world, id)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error retrieving player2 component (getPlayerComponentsGSS): %s", err)
+	}
+
+	return p1, p2, nil
+}
