@@ -9,64 +9,57 @@ import (
 	"pkg.world.dev/world-engine/cardinal/types"
 )
 
+// Destroys projectiles whos destroyed compoenent is marked true
 func ProjectileDestroyerSystem(world cardinal.WorldContext) error {
 
 	// Filter for destoryed projectile
-	destroyedFilter := cardinal.ComponentFilter[comp.Destroyed](func(m comp.Destroyed) bool {
+	destroyedFilter := cardinal.ComponentFilter(func(m comp.Destroyed) bool {
 		return m.Destroyed
 	})
-
+	//go over each destroyed projectile id
 	err := cardinal.NewSearch().Entity(
 		filter.Exact(ProjectileFilters())).
 		Where(destroyedFilter).Each(world, func(id types.EntityID) bool {
 
+		//get matchid and uid of projectile
 		MatchID, uid, err := getProjectileComponentsPD(world, id)
 		if err != nil {
 			fmt.Printf("%v", err)
 			return false
 		}
 
-		//get team state
+		//get game state
 		gameState, err := getGameStateUM(world, MatchID)
 		if err != nil {
-			fmt.Printf("%v", err)
+			fmt.Printf("(projectile_destroyer.go) - %v", err)
 			return false
 		}
 
-		//get player1 team state
-		player1, err := cardinal.GetComponent[comp.Player1](world, gameState)
-		if err != nil {
-			fmt.Printf("error retrieving player1 component (projectile destroyer): %s", err)
-			return false
-		}
+		//add projectile id to player1 removal list
+		cardinal.UpdateComponent(world, gameState, func(player1 *comp.Player1) *comp.Player1 {
+			if player1 == nil {
+				fmt.Printf("error retrieving player1 component (projectile_destroyer.go)")
+				return nil
+			}
+			//player1.RemovalList = append(player1.RemovalList, uid.UID)
+			player1.RemovalList[uid.UID] = true
+			return player1
+		})
 
-		//get player2 team state
-		player2, err := cardinal.GetComponent[comp.Player2](world, gameState)
-		if err != nil {
-			fmt.Printf("error retrieving player2 component (projectile destroyer): %s", err)
-			return false
-		}
+		//add projectile id to player2 removal list
+		cardinal.UpdateComponent(world, gameState, func(player2 *comp.Player2) *comp.Player2 {
+			if player2 == nil {
+				fmt.Printf("error retrieving player1 component (projectile_destroyer.go)")
+				return nil
+			}
+			//player1.RemovalList = append(player1.RemovalList, uid.UID)
+			player2.RemovalList[uid.UID] = true
+			return player2
+		})
 
-		//remove entity
+		//remove projectile
 		if err := cardinal.Remove(world, id); err != nil {
-			fmt.Println("Error removing entity:", err) // Log error if any
-			return false                               // Stop iteration on error
-		}
-
-		//player1.RemovalList = append(player1.RemovalList, uid.UID)
-		player1.RemovalList[uid.UID] = true
-		//player2.RemovalList = append(player2.RemovalList, uid.UID)
-		player2.RemovalList[uid.UID] = true
-
-		//add removed unit to player1 removal list component
-		if err := cardinal.SetComponent[comp.Player1](world, gameState, player1); err != nil {
-			fmt.Printf("error updating player1 component (projectile destroyer): %s", err)
-			return false
-		}
-
-		//add removed unit to player2 removal list component
-		if err := cardinal.SetComponent[comp.Player2](world, gameState, player2); err != nil {
-			fmt.Printf("error updating player2 component (projectile destroyer): %s", err)
+			fmt.Println("Error removing entity (projectile_destroyer.go):", err)
 			return false
 		}
 
@@ -74,7 +67,7 @@ func ProjectileDestroyerSystem(world cardinal.WorldContext) error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("error retrieving unit entities (projectile destroyer): %w", err)
+		return fmt.Errorf("error retrieving unit entities (projectile_destroyer.go): %w", err)
 	}
 
 	return nil
@@ -85,11 +78,11 @@ func getProjectileComponentsPD(world cardinal.WorldContext, id types.EntityID) (
 
 	matchID, err = cardinal.GetComponent[comp.MatchId](world, id)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error retrieving MatchID component (projectile destroyer): %v", err)
+		return nil, nil, fmt.Errorf("error retrieving MatchID component (getProjectileComponentsPD): %v", err)
 	}
 	uid, err = cardinal.GetComponent[comp.UID](world, id)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error retrieving UID component (projectile destroyer): %v", err)
+		return nil, nil, fmt.Errorf("error retrieving UID component (getProjectileComponentsPD): %v", err)
 	}
 	return matchID, uid, nil
 }
