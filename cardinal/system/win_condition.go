@@ -9,32 +9,25 @@ import (
 	"pkg.world.dev/world-engine/cardinal/types"
 )
 
+// conditions on game to win
 func WinCondition(world cardinal.WorldContext) error {
-
-	// Filter for unit with no HP
-	unitFilter := cardinal.ComponentFilter[comp.Health](func(m comp.Health) bool {
+	// Filter for no health
+	healthFilter := cardinal.ComponentFilter(func(m comp.Health) bool {
 		return m.CurrentHP == 0
 	})
-
+	//check all structures with no health
 	err := cardinal.NewSearch().Entity(
 		filter.Exact(StructureFilters())).
-		Where(unitFilter).Each(world, func(id types.EntityID) bool {
+		Where(healthFilter).Each(world, func(id types.EntityID) bool {
 
-		//get structure health
+		//get structure matchID
 		matchID, err := cardinal.GetComponent[comp.MatchId](world, id)
 		if err != nil {
 			fmt.Printf("error getting matchID component (win condition): %s\n", err)
 			return false
 		}
+		//remove all entites
 		RemoveAllEntitiesSystem(world, matchID.MatchId)
-
-		_, err = cardinal.Create(world,
-			comp.MatchId{MatchId: matchID.MatchId},
-		)
-		if err != nil {
-			fmt.Printf("error getting matchID component (win condition): %s\n", err)
-			return false
-		}
 
 		return true
 	})
