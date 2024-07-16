@@ -9,53 +9,53 @@ import (
 	"pkg.world.dev/world-engine/cardinal/search/filter"
 )
 
+// Given a list of units to remove from player removal list on game state.
+// marks that client for that player has removed from their end.
+// called with removal_list_msg.go
 func RemovalListSystem(world cardinal.WorldContext) error {
-	return cardinal.EachMessage[msg.RemoveUnitMsg, msg.RemoveUnitResult](
-		world,
+	return cardinal.EachMessage(world,
 		func(create cardinal.TxData[msg.RemoveUnitMsg]) (msg.RemoveUnitResult, error) {
-
-			gameFilter := cardinal.ComponentFilter[comp.MatchId](func(m comp.MatchId) bool {
+			//filter for matchID
+			matchFilter := cardinal.ComponentFilter(func(m comp.MatchId) bool {
 				return m.MatchId == create.Msg.MatchId
 			})
-
+			//find game state
 			gameState, err := cardinal.NewSearch().Entity(
 				filter.Exact(GameStateFilters())).
-				Where(gameFilter).First(world)
-
+				Where(matchFilter).First(world)
 			if err != nil {
-				return msg.RemoveUnitResult{Succsess: false}, fmt.Errorf("error searching for team (Removal State Query): %w", err)
+				return msg.RemoveUnitResult{Succsess: false}, fmt.Errorf("error searching for team (Removal_list_system.go): %w", err)
 			}
 
+			//if blue team
 			if create.Msg.Team == "Blue" {
-				// Get Player1 component
-				player1, err := cardinal.GetComponent[comp.Player1](world, gameState)
-				if err != nil {
-					return msg.RemoveUnitResult{Succsess: false}, fmt.Errorf("error retrieving Player1 component (Removal State Query): %w", err)
-				}
-
-				for _, key := range create.Msg.RemovalList {
-					delete(player1.RemovalList, key)
-				}
-
-				//add removed unit to player2 removal list component
-				if err := cardinal.SetComponent(world, gameState, player1); err != nil {
-
-					return msg.RemoveUnitResult{Succsess: false}, fmt.Errorf("error updating player1 component (Removal State Query): %w", err)
-				}
+				//remove all ids from msg in removal list for player1
+				cardinal.UpdateComponent(world, gameState, func(player1 *comp.Player1) *comp.Player1 {
+					if player1 == nil {
+						fmt.Printf("error retrieving player1 component (Removal_list_system.go)")
+						return nil
+					}
+					// for each id in msg
+					for _, key := range create.Msg.RemovalList {
+						//remove id key from list
+						delete(player1.RemovalList, key)
+					}
+					return player1
+				})
 			} else {
-				// Get Player1 component
-				player2, err := cardinal.GetComponent[comp.Player2](world, gameState)
-				if err != nil {
-					return msg.RemoveUnitResult{Succsess: false}, fmt.Errorf("error retrieving Player2 component (Removal State Query): %w", err)
-				}
-
-				for _, key := range create.Msg.RemovalList {
-					delete(player2.RemovalList, key)
-				}
-				//add removed unit to player2 removal list component
-				if err := cardinal.SetComponent(world, gameState, player2); err != nil {
-					return msg.RemoveUnitResult{Succsess: false}, fmt.Errorf("error updating player2 component (Removal State Query): %w", err)
-				}
+				//remove all ids from msg in removal list for player2
+				cardinal.UpdateComponent(world, gameState, func(player2 *comp.Player2) *comp.Player2 {
+					if player2 == nil {
+						fmt.Printf("error retrieving player1 component (Removal_list_system.go)")
+						return nil
+					}
+					// for each id in msg
+					for _, key := range create.Msg.RemovalList {
+						//remove id key from list
+						delete(player2.RemovalList, key)
+					}
+					return player2
+				})
 			}
 
 			return msg.RemoveUnitResult{Succsess: true}, nil
