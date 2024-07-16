@@ -86,7 +86,7 @@ func hasPassedEnemyPM(oldPos *comp.Position, newPos *comp.Position, enemyPos *co
 	newToEnemy := comp.Position{PositionVectorX: enemyPos.PositionVectorX - newPos.PositionVectorX, PositionVectorY: enemyPos.PositionVectorY - newPos.PositionVectorY}
 
 	// Dot product of vectors from old and new positions to enemy's position
-	dotProduct := oldToEnemy.PositionVectorX*newToEnemy.PositionVectorX + oldToEnemy.PositionVectorY*newToEnemy.PositionVectorY
+	dotProduct := dotProduct(oldToEnemy.PositionVectorX, oldToEnemy.PositionVectorY, newToEnemy.PositionVectorX, newToEnemy.PositionVectorY)
 
 	// If the dot product is negative, the direction relative to the enemy has changed, meaning the projectile has passed the enemy
 	return dotProduct < 0
