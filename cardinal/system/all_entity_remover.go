@@ -11,32 +11,30 @@ import (
 	"MobaClashRoyal/msg"
 )
 
-// RemoveAllEntitiesSystem removes all entities associated with a given MatchId based on a MSG.
+// RemoveAllEntitiesSystem removes all entities associated with a given MatchId when recieve remove_all_entities.go msg
 func RemoveAllEntitiesMsgSystem(world cardinal.WorldContext) error {
-	return cardinal.EachMessage[msg.RemoveAllEntitiesMsg, msg.RemoveAllEntitiesResult](
-		world,
+	return cardinal.EachMessage(world,
 		func(create cardinal.TxData[msg.RemoveAllEntitiesMsg]) (msg.RemoveAllEntitiesResult, error) {
 			// Create a filter to match entities with the specified MatchId.
-			matchFilter := cardinal.ComponentFilter[comp.MatchId](func(m comp.MatchId) bool {
+			matchFilter := cardinal.ComponentFilter(func(m comp.MatchId) bool {
 				return m.MatchId == create.Msg.MatchID
 			})
-
 			entitySearch := cardinal.NewSearch().Entity(
 				filter.Contains(filter.Component[comp.MatchId]())).
 				Where(matchFilter)
 
-			// Attempt to remove each entity found that matches the filter.
+			// for each ID remove entity based on MatchID search
 			err := entitySearch.Each(world, func(id types.EntityID) bool {
-
+				//remove entity
 				if err := cardinal.Remove(world, id); err != nil {
-					fmt.Println("Error removing entity:", err) // Log error if any
-					return false                               // Stop iteration on error
+					fmt.Println("Error removing entity (all entity remover/RemoveAllEntitiesMsgSystem):", err)
+					return false
 				}
-				return true // Continue if successful
+				return true
 			})
 
 			if err != nil {
-				return msg.RemoveAllEntitiesResult{Success: false}, fmt.Errorf("error during entity removal: %w", err)
+				return msg.RemoveAllEntitiesResult{Success: false}, fmt.Errorf("error during entity removal (all entity remover/RemoveAllEntitiesMsgSystem): %w", err)
 			}
 
 			return msg.RemoveAllEntitiesResult{Success: true}, nil
@@ -47,26 +45,25 @@ func RemoveAllEntitiesMsgSystem(world cardinal.WorldContext) error {
 func RemoveAllEntitiesSystem(world cardinal.WorldContext, matchID string) error {
 
 	// Create a filter to match entities with the specified MatchId.
-	matchFilter := cardinal.ComponentFilter[comp.MatchId](func(m comp.MatchId) bool {
+	matchFilter := cardinal.ComponentFilter(func(m comp.MatchId) bool {
 		return m.MatchId == matchID
 	})
-
 	entitySearch := cardinal.NewSearch().Entity(
 		filter.Contains(filter.Component[comp.MatchId]())).
 		Where(matchFilter)
 
-	// Attempt to remove each entity found that matches the filter.
+	// for each ID remove entity based on MatchID search
 	err := entitySearch.Each(world, func(id types.EntityID) bool {
-
+		//remove entity
 		if err := cardinal.Remove(world, id); err != nil {
-			fmt.Println("Error removing entity:", err) // Log error if any
-			return false                               // Stop iteration on error
+			fmt.Println("Error removing entity (all entity remover/RemoveAllEntitiesSystem):", err)
+			return false
 		}
-		return true // Continue if successful
+		return true
 	})
 
 	if err != nil {
-		return fmt.Errorf("error during entity removal: %w", err)
+		return fmt.Errorf("error during entity removal (all entity remover/RemoveAllEntitiesSystem): %w", err)
 	}
 
 	return nil
