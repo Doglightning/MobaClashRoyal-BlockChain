@@ -9,55 +9,54 @@ import (
 	"pkg.world.dev/world-engine/cardinal/types"
 )
 
+// system to deal with units attacking each other
 func UnitAttackSystem(world cardinal.WorldContext) error {
-
-	// Filter for current map
-	unitFilter := cardinal.ComponentFilter[comp.Attack](func(m comp.Attack) bool {
+	// Filter for in combat
+	combatFilter := cardinal.ComponentFilter(func(m comp.Attack) bool {
 		return m.Combat
 	})
-
+	//for every unit in combats id
 	err := cardinal.NewSearch().Entity(
 		filter.Exact(UnitFilters())).
-		Where(unitFilter).Each(world, func(id types.EntityID) bool {
-
-		unitAttack, err := cardinal.GetComponent[comp.Attack](world, id)
+		Where(combatFilter).Each(world, func(id types.EntityID) bool {
+		// get unit attack component
+		unitAtk, err := cardinal.GetComponent[comp.Attack](world, id)
 		if err != nil {
-			fmt.Printf("error retrieving unitAttack component (Unit Attack): %v", err)
+			fmt.Printf("error retrieving unit Attack component (Unit_Attack.go): %v", err)
 			return false
 		}
 
-		if unitAttack.Frame == unitAttack.DamageFrame {
-			if unitAttack.Class == "melee" {
-				enemyHealth, err := cardinal.GetComponent[comp.Health](world, unitAttack.Target)
-				if err != nil {
-					fmt.Printf("error getting enemy Health component (Unit Attack): %v", err)
-					return false
-				}
-				enemyHealth.CurrentHP -= float32(unitAttack.Damage)
-				if enemyHealth.CurrentHP < 0 {
-					enemyHealth.CurrentHP = 0
-				}
-				err = cardinal.SetComponent(world, unitAttack.Target, enemyHealth)
-				if err != nil {
-					fmt.Printf("error setting Health component (Unit Attack): %v", err)
-					return false
-				}
+		//if unit is in its damage frame
+		if unitAtk.Frame == unitAtk.DamageFrame {
+			if unitAtk.Class == "melee" { //if melee
+				//reduce health by units attack damage
+				cardinal.UpdateComponent(world, unitAtk.Target, func(health *comp.Health) *comp.Health {
+					if health == nil {
+						fmt.Printf("error retrieving Health component (Unit_Attack.go)")
+						return nil
+					}
+					health.CurrentHP -= float32(unitAtk.Damage)
+					if health.CurrentHP < 0 {
+						health.CurrentHP = 0 //never have negative health
+					}
+					return health
+				})
 			}
 
-			if unitAttack.Class == "range" {
-
+			if unitAtk.Class == "range" { //if range
+				//get units component
 				unitPosition, matchID, mapName, unitName, err := GetUnitComponentsUA(world, id)
 				if err != nil {
 					fmt.Printf("%v", err)
 					return false
 				}
-
+				//get next uid
 				UID, err := getNextUID(world, matchID.MatchId)
 				if err != nil {
-					fmt.Printf("(Unit Attack): %v", err)
+					fmt.Printf("(Unit_Attack.go): %v", err)
 					return false
 				}
-
+				//create projectile entity
 				cardinal.Create(world,
 					comp.MatchId{MatchId: matchID.MatchId},
 					comp.UID{UID: UID},
@@ -65,30 +64,27 @@ func UnitAttackSystem(world cardinal.WorldContext) error {
 					comp.Movespeed{CurrentMS: ProjectileRegistry[unitName.UnitName].Speed},
 					comp.Position{PositionVectorX: unitPosition.PositionVectorX, PositionVectorY: unitPosition.PositionVectorY, PositionVectorZ: unitPosition.PositionVectorZ, RotationVectorX: unitPosition.RotationVectorX, RotationVectorY: unitPosition.RotationVectorY, RotationVectorZ: unitPosition.RotationVectorZ},
 					comp.MapName{MapName: mapName.MapName},
-					comp.Attack{Target: unitAttack.Target, Class: "projectile", Damage: unitAttack.Damage},
+					comp.Attack{Target: unitAtk.Target, Class: "projectile", Damage: unitAtk.Damage},
 					comp.Destroyed{Destroyed: false},
 				)
 			}
 		}
-
-		if unitAttack.Frame >= unitAttack.Rate {
-			unitAttack.Frame = -1
+		//if our attack frame is at the attack rate reset
+		if unitAtk.Frame >= unitAtk.Rate {
+			unitAtk.Frame = -1
 		}
-
-		unitAttack.Frame++
-
-		if err := cardinal.SetComponent[comp.Attack](world, id, unitAttack); err != nil {
-			fmt.Printf("error updating attack component (unit attack): %s", err)
+		unitAtk.Frame++
+		// set updated attack component
+		if err := cardinal.SetComponent(world, id, unitAtk); err != nil {
+			fmt.Printf("error updating attack component (Unit_Attack.go): %s", err)
 			return false
 		}
-
 		return true
 	})
 
 	if err != nil {
-		return fmt.Errorf("error retrieving unit entities (unit attack): %w", err)
+		return fmt.Errorf("error retrieving unit entities (Unit_Attack.go): %w", err)
 	}
-
 	return nil
 }
 
@@ -96,22 +92,22 @@ func UnitAttackSystem(world cardinal.WorldContext) error {
 func GetUnitComponentsUA(world cardinal.WorldContext, unitID types.EntityID) (*comp.Position, *comp.MatchId, *comp.MapName, *comp.UnitName, error) {
 	position, err := cardinal.GetComponent[comp.Position](world, unitID)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("error retrieving Position component (unit attack): %v", err)
+		return nil, nil, nil, nil, fmt.Errorf("error retrieving Position component (Unit_Attack.go): %v", err)
 	}
 
 	matchId, err := cardinal.GetComponent[comp.MatchId](world, unitID)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("error retrieving MatchId component (unit attack): %v", err)
+		return nil, nil, nil, nil, fmt.Errorf("error retrieving MatchId component (Unit_Attack.go): %v", err)
 	}
 
 	mapName, err := cardinal.GetComponent[comp.MapName](world, unitID)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("error retrieving Distance component (unit attack): %v", err)
+		return nil, nil, nil, nil, fmt.Errorf("error retrieving Distance component (Unit_Attack.go): %v", err)
 	}
 
 	unitName, err := cardinal.GetComponent[comp.UnitName](world, unitID)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("error retrieving UnitName component (unit attack): %v", err)
+		return nil, nil, nil, nil, fmt.Errorf("error retrieving UnitName component (Unit_Attack.go): %v", err)
 	}
 	return position, matchId, mapName, unitName, nil
 }
