@@ -52,7 +52,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 		if UnitAttack.Combat {
 			//get enemyID
 			enemyID := UnitAttack.Target
-			enemyPosition, enemyRadius, errr := getEnemyComponentsUM(world, enemyID)
+			enemyPosition, enemyRadius, errr := getTargetComponentsUM(world, enemyID)
 			if errr != nil {
 				fmt.Printf("(unit movement): %s\n", err)
 				continue
@@ -363,8 +363,8 @@ func GetUnitComponentsUM(world cardinal.WorldContext, unitID types.EntityID) (*c
 	return position, unitRadius, unitAttack, team, movespeed, matchId, distance, mapName, nil
 }
 
-// fetches enemy components
-func getEnemyComponentsUM(world cardinal.WorldContext, enemyID types.EntityID) (enemyPosition *comp.Position, enemyRadius *comp.UnitRadius, err error) {
+// fetches target components
+func getTargetComponentsUM(world cardinal.WorldContext, enemyID types.EntityID) (enemyPosition *comp.Position, enemyRadius *comp.UnitRadius, err error) {
 
 	enemyPosition, err = cardinal.GetComponent[comp.Position](world, enemyID)
 	if err != nil {
