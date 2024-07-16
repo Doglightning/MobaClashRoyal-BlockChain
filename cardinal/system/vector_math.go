@@ -30,3 +30,12 @@ func dotProduct(x1, y1, x2, y2 float32) float32 {
 func distanceBetweenTwoPoints(x1, y1, x2, y2 float32) float32 {
 	return float32(math.Sqrt(math.Pow(float64(x2-x1), 2) + math.Pow(float64(y2-y1), 2)))
 }
+
+func directionVectorBetweenTwoPoints(x1, y1, x2, y2 float32) (float32, float32) {
+	// Compute direction vector towards the enemy
+	deltaX := x2 - x1
+	deltaY := y2 - y1
+	magnitude := float32(math.Sqrt(math.Pow(float64(deltaX), 2) + math.Pow(float64(deltaY), 2)))
+
+	return deltaX / magnitude, deltaY / magnitude
+}

@@ -2,7 +2,6 @@ package system
 
 import (
 	"fmt"
-	"math"
 	"sort"
 
 	"pkg.world.dev/world-engine/cardinal"
@@ -227,13 +226,7 @@ func MoveUnitDirectionMapUM(world cardinal.WorldContext, id types.EntityID, posi
 // Moves Unit towards enemy position
 func MoveUnitTowardsEnemyUM(world cardinal.WorldContext, id types.EntityID, position *comp.Position, enemyX float32, enemyY float32, enemyRadius int, team *comp.Team, movespeed *comp.Movespeed, collisionSpartialHash *comp.SpatialHash, radius *comp.UnitRadius, distance *comp.Distance, mapName *comp.MapName) error {
 	// Compute direction vector towards the enemy
-	deltaX := enemyX - position.PositionVectorX
-	deltaY := enemyY - position.PositionVectorY
-	magnitude := float32(math.Sqrt(float64(deltaX*deltaX + deltaY*deltaY)))
-
-	// Normalize the direction vector
-	position.RotationVectorX = deltaX / magnitude
-	position.RotationVectorY = deltaY / magnitude
+	position.RotationVectorX, position.RotationVectorY = directionVectorBetweenTwoPoints(position.PositionVectorX, position.PositionVectorY, enemyX, enemyY)
 
 	// Compute new position based on movespeed and direction
 	newPosX := position.PositionVectorX + position.RotationVectorX*movespeed.CurrentMS
@@ -272,13 +265,7 @@ func MoveUnitTowardsEnemyUM(world cardinal.WorldContext, id types.EntityID, posi
 // rotate Unit towards enemy position
 func RotateUnitTowardsEnemyUM(world cardinal.WorldContext, id types.EntityID, position *comp.Position, enemyX float32, enemyY float32) error {
 	// Compute direction vector towards the enemy
-	deltaX := enemyX - position.PositionVectorX
-	deltaY := enemyY - position.PositionVectorY
-	magnitude := float32(math.Sqrt(float64(deltaX*deltaX + deltaY*deltaY)))
-
-	// Normalize the direction vector
-	position.RotationVectorX = deltaX / magnitude
-	position.RotationVectorY = deltaY / magnitude
+	position.RotationVectorX, position.RotationVectorY = directionVectorBetweenTwoPoints(position.PositionVectorX, position.PositionVectorY, enemyX, enemyY)
 
 	// Set the new position component
 	err := cardinal.SetComponent(world, id, position)
@@ -298,9 +285,9 @@ func UpdateUnitDistance(world cardinal.WorldContext, id types.EntityID, team *co
 
 	// calculate distance from enemy spawn
 	if team.Team == "Blue" {
-		distance.Distance = float32(math.Sqrt(((float64(position.PositionVectorX) - float64(mapData.Bases[1][0])) * (float64(position.PositionVectorX) - float64(mapData.Bases[1][0]))) + ((float64(position.PositionVectorY) - float64(mapData.Bases[1][1])) * (float64(position.PositionVectorY) - float64(mapData.Bases[1][1])))))
+		distance.Distance = distanceBetweenTwoPoints(float32(mapData.Bases[1][0]), float32(mapData.Bases[1][1]), position.PositionVectorX, position.PositionVectorY)
 	} else {
-		distance.Distance = float32(math.Sqrt(((float64(position.PositionVectorX) - float64(mapData.Bases[0][0])) * (float64(position.PositionVectorX) - float64(mapData.Bases[0][0]))) + ((float64(position.PositionVectorY) - float64(mapData.Bases[0][1])) * (float64(position.PositionVectorY) - float64(mapData.Bases[0][1])))))
+		distance.Distance = distanceBetweenTwoPoints(float32(mapData.Bases[0][0]), float32(mapData.Bases[0][1]), position.PositionVectorX, position.PositionVectorY)
 	}
 	// set distance
 	err := cardinal.SetComponent(world, id, distance)
