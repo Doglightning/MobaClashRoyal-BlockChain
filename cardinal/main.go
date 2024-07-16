@@ -62,7 +62,7 @@ func MustInitWorld(w *cardinal.World) {
 	// NOTE: You must register your queries here for it to be accessible.
 	Must(
 		cardinal.RegisterQuery[query.MatchIdRequest, query.TeamStateResponse](w, "team-state", query.TeamState),
-		cardinal.RegisterQuery[query.UnitMatchIdRequest, query.UnitStateResponse](w, "unit-state", query.UnitState),
+		cardinal.RegisterQuery[query.UnitMatchIdRequest, query.UnitStateResponse](w, "game-state", query.GameState),
 		cardinal.RegisterQuery[query.RemovalMatchIdRequest, query.RemovalStateResponse](w, "removal-state", query.RemovalState),
 	)
 

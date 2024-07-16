@@ -12,6 +12,16 @@ import (
 	"pkg.world.dev/world-engine/cardinal"
 )
 
+type UnitMatchIdRequest struct {
+	MatchId string
+}
+
+type UnitStateResponse struct {
+	Units       []UnitDetails
+	Structures  []StructureDetails
+	Projectiles []ProjectileDetails
+}
+
 type UnitDetails struct {
 	Team            string
 	CurrentHP       float32
@@ -49,29 +59,41 @@ type StructureDetails struct {
 	PositionVectorY float32
 }
 
-type UnitMatchIdRequest struct {
-	MatchId string
-}
+func GameState(world cardinal.WorldContext, req *UnitMatchIdRequest) (*UnitStateResponse, error) {
+	var response UnitStateResponse
 
-type UnitStateResponse struct {
-	Units       []UnitDetails
-	Structures  []StructureDetails
-	Projectiles []ProjectileDetails
-}
-
-func UnitState(world cardinal.WorldContext, req *UnitMatchIdRequest) (*UnitStateResponse, error) {
-
-	////////////////////////////////////////Unit State//////////////////////////////////////////////////////////////////////////////
-	matchFilter := cardinal.ComponentFilter[comp.MatchId](func(m comp.MatchId) bool {
+	//filter for entities with matchID
+	matchFilter := cardinal.ComponentFilter(func(m comp.MatchId) bool {
 		return m.MatchId == req.MatchId
 	})
 
-	// get the unit states
+	//get unit state updates
+	response, err := unitStateGS(world, matchFilter, response)
+	if err != nil {
+		return nil, err
+	}
+	//get structure state updates
+	response, err = structureStateGS(world, matchFilter, response)
+	if err != nil {
+		return nil, err
+	}
+
+	//get projectile state updates
+	response, err = projectileStateGS(world, matchFilter, response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+// get all units states
+func unitStateGS(world cardinal.WorldContext, matchFilter cardinal.FilterFn, response UnitStateResponse) (UnitStateResponse, error) {
+	// get each unit
 	unitSearch := cardinal.NewSearch().Entity(
 		filter.Exact(system.UnitFilters())).
 		Where(matchFilter)
 
-	var response UnitStateResponse
 	err := unitSearch.Each(world, func(id types.EntityID) bool {
 		unit := UnitDetails{}
 
@@ -113,7 +135,7 @@ func UnitState(world cardinal.WorldContext, req *UnitMatchIdRequest) (*UnitState
 		// Fetch UID component
 		uid, err := cardinal.GetComponent[comp.UID](world, id) // Assuming UID is a component; adjust as needed
 		if err != nil {
-			return false // Stop iteration on error
+			return false
 		}
 		unit.UID = uid.UID
 
@@ -137,16 +159,20 @@ func UnitState(world cardinal.WorldContext, req *UnitMatchIdRequest) (*UnitState
 		return true // Continue iteration
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error during unit search (unit state): %w", err)
+		return response, fmt.Errorf("error during unit search (unit state/unitStateGS): %w", err)
 	}
 
-	////////////////////////////////////////Structure State//////////////////////////////////////////////////////////////////////////////
-	// get the structure states
+	return response, nil
+}
+
+// get all projectile states
+func structureStateGS(world cardinal.WorldContext, matchFilter cardinal.FilterFn, response UnitStateResponse) (UnitStateResponse, error) {
+	// get the structure id's
 	StructureSearch := cardinal.NewSearch().Entity(
 		filter.Exact(system.StructureFilters())).
 		Where(matchFilter)
 
-	err = StructureSearch.Each(world, func(id types.EntityID) bool {
+	err := StructureSearch.Each(world, func(id types.EntityID) bool {
 		structure := StructureDetails{}
 
 		// Fetch Team component
@@ -189,17 +215,19 @@ func UnitState(world cardinal.WorldContext, req *UnitMatchIdRequest) (*UnitState
 		return true
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error during StructureSearch (unit state): %w", err)
+		return response, fmt.Errorf("error during StructureSearch (unit state/structureStateGS): %w", err)
 	}
+	return response, nil
+}
 
-	////////////////////////////////////////Projectile State//////////////////////////////////////////////////////////////////////////////
-
-	// get the projectile states
+// get all structure states
+func projectileStateGS(world cardinal.WorldContext, matchFilter cardinal.FilterFn, response UnitStateResponse) (UnitStateResponse, error) {
+	// get the projectile id's
 	ProjectileSearch := cardinal.NewSearch().Entity(
 		filter.Exact(system.ProjectileFilters())).
 		Where(matchFilter)
 
-	err = ProjectileSearch.Each(world, func(id types.EntityID) bool {
+	err := ProjectileSearch.Each(world, func(id types.EntityID) bool {
 		projectile := ProjectileDetails{}
 
 		// Fetch uid component
@@ -233,8 +261,7 @@ func UnitState(world cardinal.WorldContext, req *UnitMatchIdRequest) (*UnitState
 		return true
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error during StructureSearch (unit state): %w", err)
+		return response, fmt.Errorf("error during StructureSearch (unit state/projectileStateGS): %w", err)
 	}
-
-	return &response, nil
+	return response, nil
 }
