@@ -22,11 +22,11 @@ import "math"
 // 	return 0, 0 // Return zero vector if magnitude is zero to prevent division by zero
 // }
 
-// func dotProductVectorMath(x1, y1, x2, y2 float32) float32 {
-// 	return float32(x1*x2 + y1*y2)
-// }
+func dotProduct(x1, y1, x2, y2 float32) float32 {
+	return float32(x1*x2 + y1*y2)
+}
 
 // Function to calculate distance between two points
-func distanceBetweenTwoPointsVectorMath(x1, y1, x2, y2 float64) float64 {
+func distanceBetweenTwoPoints(x1, y1, x2, y2 float64) float64 {
 	return math.Sqrt(math.Pow(x2-x1, 2) + math.Pow(y2-y1, 2))
 }

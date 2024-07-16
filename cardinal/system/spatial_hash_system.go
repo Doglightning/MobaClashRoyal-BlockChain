@@ -130,7 +130,7 @@ func CheckCollisionSpatialHashList(hash *comp.SpatialHash, x, y float32, radius 
 func moveToNearestFreeSpaceBoxSpatialHash(hash *comp.SpatialHash, startX, startY, targetX, targetY, radius float32) (newX float32, newY float32) {
 	deltaX := targetX - startX
 	deltaY := targetY - startY
-	length := float32(distanceBetweenTwoPointsVectorMath(float64(startX), float64(startY), float64(targetX), float64(targetY)))
+	length := float32(distanceBetweenTwoPoints(float64(startX), float64(startY), float64(targetX), float64(targetY)))
 
 	// Normalize direction vector
 	dirX := deltaX / length
@@ -178,7 +178,7 @@ func moveToNearestFreeSpaceLineSpatialHash(world cardinal.WorldContext, hash *co
 	}
 	deltaX := targetX - startX
 	deltaY := targetY - startY
-	length := float32(distanceBetweenTwoPointsVectorMath(float64(startX), float64(startY), float64(targetX), float64(targetY)))
+	length := float32(distanceBetweenTwoPoints(float64(startX), float64(startY), float64(targetX), float64(targetY)))
 
 	// Normalize direction vector
 	dirX := deltaX / length
@@ -212,7 +212,7 @@ func moveToNearestFreeSpaceLineSpatialHash(world cardinal.WorldContext, hash *co
 			testY := targetY + dirY*float32(d) // Start from target position
 			// Check if the position is free of collisions
 			if !CheckCollisionSpatialHash(hash, testX, testY, int(radius)) {
-				adjustedDistance := distanceBetweenTwoPointsVectorMath(float64(targetPos.PositionVectorX), float64(targetPos.PositionVectorY), float64(testX), float64(testY)) - float64(radius) - float64(targetRadius.UnitRadius)
+				adjustedDistance := distanceBetweenTwoPoints(float64(targetPos.PositionVectorX), float64(targetPos.PositionVectorY), float64(testX), float64(testY)) - float64(radius) - float64(targetRadius.UnitRadius)
 				if adjustedDistance <= float64(attack.AttackRadius) {
 					fmt.Printf("adjustedDistance: %f\n", adjustedDistance)
 					return testX, testY // Return the first free spot found
