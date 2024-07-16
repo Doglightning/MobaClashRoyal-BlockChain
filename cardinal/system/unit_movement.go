@@ -6,7 +6,6 @@ import (
 	"sort"
 
 	"pkg.world.dev/world-engine/cardinal"
-	"pkg.world.dev/world-engine/cardinal/iterators"
 	"pkg.world.dev/world-engine/cardinal/search/filter"
 	"pkg.world.dev/world-engine/cardinal/types"
 
@@ -33,7 +32,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 		}
 
 		//get game state
-		gameState, err := getGameStateUM(world, MatchID)
+		gameState, err := getGameStateGSS(world, MatchID)
 		if err != nil {
 			fmt.Printf("%v", err)
 			continue
@@ -375,26 +374,4 @@ func getTargetComponentsUM(world cardinal.WorldContext, enemyID types.EntityID) 
 		return nil, nil, fmt.Errorf("error retrieving enemy Radius component (Unit Movement): %v", err)
 	}
 	return enemyPosition, enemyRadius, nil
-}
-
-// Returns the Game state
-func getGameStateUM(world cardinal.WorldContext, mID *comp.MatchId) (types.EntityID, error) {
-	//get teamstate to get spatialhash tree
-	teamFilter := cardinal.ComponentFilter[comp.MatchId](func(m comp.MatchId) bool {
-		return m.MatchId == mID.MatchId
-	})
-	foundTeam, err := cardinal.NewSearch().Entity(
-		filter.Exact(GameStateFilters())).
-		Where(teamFilter).First(world)
-
-	if err != nil {
-
-		fmt.Printf("error searching for match (unit movement): %s", err)
-		return foundTeam, err
-	}
-
-	if foundTeam == iterators.BadID { // Assuming cardinal.NoEntity represents no result found
-		return foundTeam, fmt.Errorf("no match found with ID or missing components (unit movement): %s", mID.MatchId)
-	}
-	return foundTeam, nil
 }

@@ -206,3 +206,25 @@ func getPlayerComponentsGSS(world cardinal.WorldContext, id types.EntityID) (p1 
 
 	return p1, p2, nil
 }
+
+// Returns the Game state
+func getGameStateGSS(world cardinal.WorldContext, mID *comp.MatchId) (types.EntityID, error) {
+	//get teamstate to get spatialhash tree
+	teamFilter := cardinal.ComponentFilter[comp.MatchId](func(m comp.MatchId) bool {
+		return m.MatchId == mID.MatchId
+	})
+	foundTeam, err := cardinal.NewSearch().Entity(
+		filter.Exact(GameStateFilters())).
+		Where(teamFilter).First(world)
+
+	if err != nil {
+
+		fmt.Printf("error searching for match (unit movement): %s", err)
+		return foundTeam, err
+	}
+
+	if foundTeam == iterators.BadID { // Assuming cardinal.NoEntity represents no result found
+		return foundTeam, fmt.Errorf("no match found with ID or missing components (unit movement): %s", mID.MatchId)
+	}
+	return foundTeam, nil
+}

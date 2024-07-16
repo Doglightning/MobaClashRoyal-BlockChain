@@ -29,7 +29,7 @@ func ProjectileDestroyerSystem(world cardinal.WorldContext) error {
 		}
 
 		//get game state
-		gameState, err := getGameStateUM(world, MatchID)
+		gameState, err := getGameStateGSS(world, MatchID)
 		if err != nil {
 			fmt.Printf("(projectile_destroyer.go) - %v", err)
 			return false
