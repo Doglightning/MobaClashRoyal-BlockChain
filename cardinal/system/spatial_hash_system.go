@@ -186,11 +186,17 @@ func moveToNearestFreeSpaceBoxSpatialHash(hash *comp.SpatialHash, startX, startY
 }
 
 // find closest free point between points B to A
-func moveToNearestFreeSpaceLineSpatialHash(world cardinal.WorldContext, hash *comp.SpatialHash, id types.EntityID, startX, startY, targetX, targetY, radius float32) (newX float32, newY float32) {
+func pushTowardsEnemySpatialHash(world cardinal.WorldContext, hash *comp.SpatialHash, id types.EntityID, startX, startY, targetX, targetY float32, radius int, distance float32, team *comp.Team) (newX float32, newY float32) {
 	//get attack component
 	atk, err := cardinal.GetComponent[comp.Attack](world, id)
 	if err != nil {
 		fmt.Printf("error getting attack compoenent (moveToNearestFreeSpaceLineSpatialHash): %v", err)
+		return startX, startY
+	}
+	//get mapname  component
+	mapName, err := cardinal.GetComponent[comp.MapName](world, id)
+	if err != nil {
+		fmt.Printf("error getting map name compoenent (moveToNearestFreeSpaceLineSpatialHash): %v", err)
 		return startX, startY
 	}
 	//get length
@@ -221,7 +227,7 @@ func moveToNearestFreeSpaceLineSpatialHash(world cardinal.WorldContext, hash *co
 			// Check if the position is free of collisions
 			if !CheckCollisionSpatialHash(hash, testX, testY, int(radius)) {
 				//distance - unit and target radius'
-				adjustedDistance := distanceBetweenTwoPoints(targetPos.PositionVectorX, targetPos.PositionVectorY, testX, testY) - radius - float32(targetRadius.UnitRadius)
+				adjustedDistance := distanceBetweenTwoPoints(targetPos.PositionVectorX, targetPos.PositionVectorY, testX, testY) - float32(radius) - float32(targetRadius.UnitRadius)
 				//if within attack range
 				if adjustedDistance <= float32(atk.AttackRadius) {
 					return testX, testY // Return the first free spot found
@@ -229,13 +235,19 @@ func moveToNearestFreeSpaceLineSpatialHash(world cardinal.WorldContext, hash *co
 			}
 		}
 	} else {
-		//not in cobat
+		//not in combat
 		// Search along the line from target to start (reverse)
 		for d := float32(0); d <= length; d += float32(step) {
 			testX := targetX + dirX*float32(d) // Start from target position
 			testY := targetY + dirY*float32(d) // Start from target position
+			tempPos, err := MoveUnitDirectionMapUM(&comp.Position{PositionVectorX: testX, PositionVectorY: testY}, team, distance/4, mapName)
+			if err != nil {
+				fmt.Printf("(moveToNearestFreeSpaceLineSpatialHash): %v", err)
+				return startX, startY
+			}
+			testX, testY = closestFreeSpaceBetweenTwoPointsSpatialHash(hash, testX, testY, tempPos.PositionVectorX, tempPos.PositionVectorY, radius)
 			// Check if the position is free of collisions
-			if !CheckCollisionSpatialHash(hash, testX, testY, int(radius)) {
+			if !CheckCollisionSpatialHash(hash, testX, testY, radius) {
 				return testX, testY // Return the first free spot found
 			}
 		}
@@ -243,64 +255,33 @@ func moveToNearestFreeSpaceLineSpatialHash(world cardinal.WorldContext, hash *co
 	return startX, startY // Stay at the current position if no free spot is found
 }
 
-// attempts to move the unit to a new position.
-// Can push units or walk around.
-func UpdateUnitPositionPushSpatialHash(world cardinal.WorldContext, hash *comp.SpatialHash, objID types.EntityID, startX, startY, targetX, targetY float32, radius int, team string, distance float32) (newtargetX, newtargetY float32) {
-	//list of all units colliding with at target position
-	collisionList := CheckCollisionSpatialHashList(hash, targetX, targetY, radius)
+// find closest free point between points B to A
+func closestFreeSpaceBetweenTwoPointsSpatialHash(hash *comp.SpatialHash, startX, startY, targetX, targetY float32, radius int) (newX float32, newY float32) {
 
-	//try to push blocking units
-	if len(collisionList) > 0 {
-		for _, collisionID := range collisionList {
-			//skip if collides with self
-			if collisionID == objID {
-				continue
-			}
-			//get targets team
-			targetTeam, err := cardinal.GetComponent[comp.Team](world, collisionID)
-			if err != nil {
-				fmt.Printf("error getting targets team compoenent (UpdateUnitPositionPushSpatialHash): %v", err)
-				continue
-			}
-			//if unit is ally push
-			if targetTeam.Team == team {
-				//get targets posisiton and radius components
-				targetPos, targetRadius, err := getTargetComponentsUM(world, collisionID)
-				if err != nil {
-					fmt.Printf("(UpdateUnitPositionPushSpatialHash): %v", err)
-					continue
-				}
+	//get length
+	deltaX := targetX - startX
+	deltaY := targetY - startY
+	length := distanceBetweenTwoPoints(startX, startY, targetX, targetY)
 
-				// Remove the object from its current position in collision hash
-				RemoveObjectFromSpatialHash(hash, collisionID, targetPos.PositionVectorX, targetPos.PositionVectorY, targetRadius.UnitRadius)
-				//location to push unit to
-				newTargetX, newTargetY := PushUnitDirSpatialHash(collisionID, targetX, targetY, targetPos.PositionVectorX, targetPos.PositionVectorY, startX-targetX, startY-targetY, float32(distance))
+	// Normalize direction vector
+	dirX := deltaX / length
+	dirY := deltaY / length
 
-				// Find an alternative position if the target is occupied
-				targetPos.PositionVectorX, targetPos.PositionVectorY = moveToNearestFreeSpaceLineSpatialHash(world, hash, collisionID, targetPos.PositionVectorX, targetPos.PositionVectorY, newTargetX, newTargetY, float32(targetRadius.UnitRadius))
+	// Step size, which can be adjusted as needed
+	step := length / 8
 
-				// Add the objects position to collosion hash
-				AddObjectSpatialHash(hash, collisionID, targetPos.PositionVectorX, targetPos.PositionVectorY, targetRadius.UnitRadius, targetTeam.Team)
-				//set collided units new position component
-				err = cardinal.SetComponent(world, collisionID, targetPos)
-				if err != nil {
-					fmt.Printf("error setting target pos component (UpdateUnitPositionPushSpatialHash): %v", err)
-					continue
-				}
-			}
+	//not in cobat
+	// Search along the line from target to start (reverse)
+	for d := float32(0); d <= length; d += float32(step) {
+		testX := targetX + dirX*float32(d) // Start from target position
+		testY := targetY + dirY*float32(d) // Start from target position
+		// Check if the position is free of collisions
+		if !CheckCollisionSpatialHash(hash, testX, testY, int(radius)) {
+			return testX, testY // Return the first free spot found
 		}
 	}
 
-	// Remove the object from its current position
-	RemoveObjectFromSpatialHash(hash, objID, startX, startY, radius)
-	// Find an alternative position if the target is occupied
-	if CheckCollisionSpatialHash(hash, targetX, targetY, radius) {
-		//walk around blocking unit
-		targetX, targetY = moveToNearestFreeSpaceBoxSpatialHash(hash, startX, startY, targetX, targetY, float32(radius))
-	}
-	// Add the object to the new position
-	AddObjectSpatialHash(hash, objID, targetX, targetY, radius, team)
-	return targetX, targetY
+	return startX, startY // Stay at the current position if no free spot is found
 }
 
 // push a unit when they collide
