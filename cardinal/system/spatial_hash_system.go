@@ -140,24 +140,28 @@ func CheckCollisionSpatialHashList(hash *comp.SpatialHash, x, y float32, radius 
 }
 
 // find closest free point between points B to A
-func pushTowardsEnemySpatialHash(world cardinal.WorldContext, hash *comp.SpatialHash, id types.EntityID, startX, startY, targetX, targetY float32, radius int, distance float32, team *comp.Team) (newX float32, newY float32) {
+func pushTowardsEnemySpatialHash(world cardinal.WorldContext, hash *comp.SpatialHash, id types.EntityID, startX, startY, targetX, targetY float32, radius int, distance float32, team *comp.Team) (float32, float32) {
 	//get attack component
 	atk, err := cardinal.GetComponent[comp.Attack](world, id)
 	if err != nil {
 		fmt.Printf("error getting attack compoenent (moveToNearestFreeSpaceLineSpatialHash): %v", err)
 		return startX, startY
 	}
-	//get mapname  component
-	mapName, err := cardinal.GetComponent[comp.MapName](world, id)
-	if err != nil {
-		fmt.Printf("error getting map name compoenent (moveToNearestFreeSpaceLineSpatialHash): %v", err)
-		return startX, startY
-	}
+	// //get mapname  component
+	// mapName, err := cardinal.GetComponent[comp.MapName](world, id)
+	// if err != nil {
+	// 	fmt.Printf("error getting map name compoenent (moveToNearestFreeSpaceLineSpatialHash): %v", err)
+	// 	return startX, startY
+	// }
 	//get length
 	deltaX := targetX - startX
 	deltaY := targetY - startY
 	length := distanceBetweenTwoPoints(startX, startY, targetX, targetY)
 
+	if length == 0 {
+		fmt.Printf("length Dividing by 0 (pushTowardsEnemySpatialHash)\n")
+		return startX, startY
+	}
 	// Normalize direction vector
 	dirX := deltaX / length
 	dirY := deltaY / length
@@ -179,7 +183,7 @@ func pushTowardsEnemySpatialHash(world cardinal.WorldContext, hash *comp.Spatial
 			testX := targetX + dirX*float32(d) // Start from target position
 			testY := targetY + dirY*float32(d) // Start from target position
 			// Check if the position is free of collisions
-			if !CheckCollisionSpatialHash(hash, testX, testY, int(radius)) {
+			if !CheckCollisionSpatialHash(hash, testX, testY, radius) {
 				//distance - unit and target radius'
 				adjustedDistance := distanceBetweenTwoPoints(targetPos.PositionVectorX, targetPos.PositionVectorY, testX, testY) - float32(radius) - float32(targetRadius.UnitRadius)
 				//if within attack range
@@ -194,12 +198,6 @@ func pushTowardsEnemySpatialHash(world cardinal.WorldContext, hash *comp.Spatial
 		for d := float32(0); d <= length; d += float32(step) {
 			testX := targetX + dirX*float32(d) // Start from target position
 			testY := targetY + dirY*float32(d) // Start from target position
-			tempPos, err := moveUnitDirectionMap(&comp.Position{PositionVectorX: testX, PositionVectorY: testY}, team, distance/4, mapName)
-			if err != nil {
-				fmt.Printf("(moveToNearestFreeSpaceLineSpatialHash): %v", err)
-				return startX, startY
-			}
-			testX, testY = closestFreeSpaceBetweenTwoPointsSpatialHash(hash, testX, testY, tempPos.PositionVectorX, tempPos.PositionVectorY, radius)
 			// Check if the position is free of collisions
 			if !CheckCollisionSpatialHash(hash, testX, testY, radius) {
 				return testX, testY // Return the first free spot found

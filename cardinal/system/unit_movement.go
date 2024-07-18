@@ -327,8 +327,8 @@ func pushBlockingUnit(world cardinal.WorldContext, hash *comp.SpatialHash, objID
 				//newTargetX, newTargetY := pushUnitDirection(targetX, targetY, targetPos.PositionVectorX, targetPos.PositionVectorY, startX-targetX, startY-targetY, distance)
 				newTargetX, newTargetY := pushUnitDirection(targetX, targetY, targetPos.PositionVectorX, targetPos.PositionVectorY, targetPos.RotationVectorX, targetPos.RotationVectorY, distance)
 				targetPos.PositionVectorX, targetPos.PositionVectorY = pushTowardsEnemySpatialHash(world, hash, collisionID, targetPos.PositionVectorX, targetPos.PositionVectorY, newTargetX, newTargetY, targetRadius.UnitRadius, distance, targetTeam)
-
 				// Add the objects position to collosion hash
+
 				AddObjectSpatialHash(hash, collisionID, targetPos.PositionVectorX, targetPos.PositionVectorY, targetRadius.UnitRadius, targetTeam.Team)
 				//set collided units new position component
 				if err = cardinal.SetComponent(world, collisionID, targetPos); err != nil {
