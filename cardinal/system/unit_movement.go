@@ -1,6 +1,7 @@
 package system
 
 import (
+	"container/list"
 	"fmt"
 	"math"
 	"sort"
@@ -268,6 +269,62 @@ func moveUnitDirectionMap(position *comp.Position, team *comp.Team, movespeed fl
 	return position, nil
 }
 
+// FindClosestEnemy performs a BFS search from the unit's position outward within the attack radius.
+func FindClosestEnemySpatialHash(hash *comp.SpatialHash, objID types.EntityID, startX, startY float32, attackRadius int, team string) (types.EntityID, float32, float32, int, bool) {
+	queue := list.New()                                                              //queue of cells to check
+	visited := make(map[string]bool)                                                 //cells checked
+	queue.PushBack(&comp.Position{PositionVectorX: startX, PositionVectorY: startY}) //insert starting position to queue
+	minDist := float32(attackRadius * attackRadius)                                  // Using squared distance to avoid sqrt calculations.
+	closestEnemy := types.EntityID(0)
+	closestX, closestY := float32(0), float32(0)
+	closestRadius := int(0)
+	foundEnemy := false
+
+	//while units in queue
+	for queue.Len() > 0 {
+		pos := queue.Remove(queue.Front()).(*comp.Position) // remove first Item
+		x, y := pos.PositionVectorX, pos.PositionVectorY
+		cellX, cellY := calculateSpatialHash(hash, x, y) //Find the hash key for grid size
+		hashKey := fmt.Sprintf("%d,%d", cellX, cellY)    //create key
+
+		// Prevent re-checking the same cell
+		if _, found := visited[hashKey]; found {
+			continue
+		}
+		visited[hashKey] = true
+
+		if cell, exists := hash.Cells[hashKey]; exists { //if unit found in cell
+			for i, id := range cell.UnitIDs { //go over each unit in cell
+				if cell.Team[i] != team && id != objID { //if unit in cell is enemy and not self
+					distSq := (cell.PositionsX[i]-startX)*(cell.PositionsX[i]-startX) + (cell.PositionsY[i]-startY)*(cell.PositionsY[i]-startY) - float32(cell.Radii[i]*cell.Radii[i])
+					//if distance is smaller then closest unit found so far
+					if distSq < minDist {
+						minDist = distSq
+						closestEnemy = id
+						closestX, closestY = cell.PositionsX[i], cell.PositionsY[i]
+						closestRadius = cell.Radii[i]
+						foundEnemy = true
+					}
+				}
+			}
+		}
+
+		// Add neighboring cells to the queue if within range
+		if !foundEnemy {
+			for dx := -hash.CellSize; dx <= hash.CellSize; dx += hash.CellSize {
+				for dy := -hash.CellSize; dy <= hash.CellSize; dy += hash.CellSize {
+					nx, ny := x+float32(dx), y+float32(dy)
+					//check if new cell being added is still within attack range
+					if (nx-startX)*(nx-startX)+(ny-startY)*(ny-startY) <= float32(attackRadius*attackRadius) {
+						queue.PushBack(&comp.Position{PositionVectorX: nx, PositionVectorY: ny}) // add to queue
+					}
+				}
+			}
+		}
+	}
+	return closestEnemy, closestX, closestY, closestRadius, foundEnemy
+}
+
 // Moves Unit towards enemy position
 func moveUnitTowardsEnemy(position *comp.Position, enemyX float32, enemyY float32, enemyRadius int, movespeed *comp.Movespeed, radius *comp.UnitRadius) *comp.Position {
 	// Compute direction vector towards the enemy
@@ -326,7 +383,8 @@ func pushBlockingUnit(world cardinal.WorldContext, hash *comp.SpatialHash, objID
 				//location to push unit to
 				//newTargetX, newTargetY := pushUnitDirection(targetX, targetY, targetPos.PositionVectorX, targetPos.PositionVectorY, startX-targetX, startY-targetY, distance)
 				newTargetX, newTargetY := pushUnitDirection(targetX, targetY, targetPos.PositionVectorX, targetPos.PositionVectorY, targetPos.RotationVectorX, targetPos.RotationVectorY, distance)
-				targetPos.PositionVectorX, targetPos.PositionVectorY = pushTowardsEnemySpatialHash(world, hash, collisionID, targetPos.PositionVectorX, targetPos.PositionVectorY, newTargetX, newTargetY, targetRadius.UnitRadius, distance, targetTeam)
+				//find closest non occupide location between target location and currnt location
+				targetPos.PositionVectorX, targetPos.PositionVectorY = pushFromPtBtoA(world, hash, collisionID, targetPos.PositionVectorX, targetPos.PositionVectorY, newTargetX, newTargetY, targetRadius.UnitRadius)
 				// Add the objects position to collosion hash
 
 				AddObjectSpatialHash(hash, collisionID, targetPos.PositionVectorX, targetPos.PositionVectorY, targetRadius.UnitRadius, targetTeam.Team)
@@ -380,6 +438,74 @@ func pushUnitDirection(posX1, posY1, posX2, posY2, dirX2, dirY2, distance float3
 	targetX = posX2 + dirX*distance
 	targetY = posY2 + dirY*distance
 	return targetX, targetY
+}
+
+// find closest free point between points B to A
+func pushFromPtBtoA(world cardinal.WorldContext, hash *comp.SpatialHash, id types.EntityID, startX, startY, targetX, targetY float32, radius int) (float32, float32) {
+	//get attack component
+	atk, err := cardinal.GetComponent[comp.Attack](world, id)
+	if err != nil {
+		fmt.Printf("error getting attack compoenent (moveToNearestFreeSpaceLineSpatialHash): %v", err)
+		return startX, startY
+	}
+	// //get mapname  component
+	// mapName, err := cardinal.GetComponent[comp.MapName](world, id)
+	// if err != nil {
+	// 	fmt.Printf("error getting map name compoenent (moveToNearestFreeSpaceLineSpatialHash): %v", err)
+	// 	return startX, startY
+	// }
+	//get length
+	deltaX := targetX - startX
+	deltaY := targetY - startY
+	length := distanceBetweenTwoPoints(startX, startY, targetX, targetY)
+
+	if length == 0 {
+		fmt.Printf("length Dividing by 0 (pushTowardsEnemySpatialHash)\n")
+		return startX, startY
+	}
+	// Normalize direction vector
+	dirX := deltaX / length
+	dirY := deltaY / length
+
+	// Step size, which can be adjusted as needed
+	step := length / 8
+
+	// if in combat must be a posisiton still in attack range of enemy
+	if atk.Combat {
+		//get target components
+		targetPos, targetRadius, err := getTargetComponentsUM(world, atk.Target)
+		if err != nil {
+			fmt.Printf("(moveToNearestFreeSpaceLineSpatialHash): %v", err)
+			return startX, startY
+		}
+
+		// Search along the line from target to start (reverse)
+		for d := float32(0); d <= length; d += float32(step) {
+			testX := targetX + dirX*float32(d) // Start from target position
+			testY := targetY + dirY*float32(d) // Start from target position
+			// Check if the position is free of collisions
+			if !CheckCollisionSpatialHash(hash, testX, testY, radius) {
+				//distance - unit and target radius'
+				adjustedDistance := distanceBetweenTwoPoints(targetPos.PositionVectorX, targetPos.PositionVectorY, testX, testY) - float32(radius) - float32(targetRadius.UnitRadius)
+				//if within attack range
+				if adjustedDistance <= float32(atk.AttackRadius) {
+					return testX, testY // Return the first free spot found
+				}
+			}
+		}
+	} else {
+		//not in combat
+		// Search along the line from target to start (reverse)
+		for d := float32(0); d <= length; d += float32(step) {
+			testX := targetX + dirX*float32(d) // Start from target position
+			testY := targetY + dirY*float32(d) // Start from target position
+			// Check if the position is free of collisions
+			if !CheckCollisionSpatialHash(hash, testX, testY, radius) {
+				return testX, testY // Return the first free spot found
+			}
+		}
+	}
+	return startX, startY // Stay at the current position if no free spot is found
 }
 
 // walks around blocking unit if exsists to closest free space
