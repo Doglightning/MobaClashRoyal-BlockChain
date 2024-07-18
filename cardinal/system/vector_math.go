@@ -14,16 +14,20 @@ import "math"
 // 	return x * scalar, y * scalar
 // }
 
-// func normalize(x, y float32) (float32, float32) {
-// 	mag := math.Sqrt(float64(x*x + y*y))
-// 	if mag > 0 {
-// 		return x / float32(mag), y / float32(mag)
-// 	}
-// 	return 0, 0 // Return zero vector if magnitude is zero to prevent division by zero
-// }
+func normalize(x, y float32) (float32, float32) {
+	mag := math.Sqrt(float64(x*x + y*y))
+	if mag > 0 {
+		return x / float32(mag), y / float32(mag)
+	}
+	return 0, 0 // Return zero vector if magnitude is zero to prevent division by zero
+}
 
 func dotProduct(x1, y1, x2, y2 float32) float32 {
 	return float32(x1*x2 + y1*y2)
+}
+
+func crossProduct(x1, y1, x2, y2 float32) float32 {
+	return x1*y2 - y1*x2
 }
 
 // Function to calculate distance between two points

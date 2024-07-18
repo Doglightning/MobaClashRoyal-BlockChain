@@ -139,52 +139,6 @@ func CheckCollisionSpatialHashList(hash *comp.SpatialHash, x, y float32, radius 
 	return collidedUnits
 }
 
-// creates a box between start and target point and checks all points from target to start finding first open position.
-// box length is distance from start to target
-// box width is radius*2
-func moveToNearestFreeSpaceBoxSpatialHash(hash *comp.SpatialHash, startX, startY, targetX, targetY, radius float32) (newX float32, newY float32) {
-	//get length
-	deltaX := targetX - startX
-	deltaY := targetY - startY
-	length := distanceBetweenTwoPoints(startX, startY, targetX, targetY)
-
-	// Normalize direction vector
-	dirX := deltaX / length
-	dirY := deltaY / length
-
-	// Perpendicular vector (normalized)
-	perpX := -dirY
-	perpY := dirX
-
-	// Step size, which can be adjusted as needed
-	step := length / 8 // or another division factor
-
-	// Half the unit's radius
-	halfWidth := radius / 2
-
-	// Center to edge zigzag pattern
-	maxOffset := int(halfWidth / step) // Number of steps from center to edge
-
-	// Search within the square around the line from A to B
-	for d := length; d >= -length; d -= step {
-		// Alternate checking right and left of the center line
-		for offset := 0; offset <= maxOffset; offset++ {
-			offsets := []int{offset, -offset} // Check positive and negative offsets
-			for _, w := range offsets {
-				testX := startX + dirX*d + perpX*float32(w)*step
-				testY := startY + dirY*d + perpY*float32(w)*step
-
-				// Check if the position is free of collisions
-				if !CheckCollisionSpatialHash(hash, testX, testY, int(radius)) {
-					return testX, testY
-				}
-			}
-		}
-	}
-
-	return startX, startY // Stay at the current position if no free spot is found
-}
-
 // find closest free point between points B to A
 func pushTowardsEnemySpatialHash(world cardinal.WorldContext, hash *comp.SpatialHash, id types.EntityID, startX, startY, targetX, targetY float32, radius int, distance float32, team *comp.Team) (newX float32, newY float32) {
 	//get attack component
@@ -240,7 +194,7 @@ func pushTowardsEnemySpatialHash(world cardinal.WorldContext, hash *comp.Spatial
 		for d := float32(0); d <= length; d += float32(step) {
 			testX := targetX + dirX*float32(d) // Start from target position
 			testY := targetY + dirY*float32(d) // Start from target position
-			tempPos, err := MoveUnitDirectionMapUM(&comp.Position{PositionVectorX: testX, PositionVectorY: testY}, team, distance/4, mapName)
+			tempPos, err := moveUnitDirectionMap(&comp.Position{PositionVectorX: testX, PositionVectorY: testY}, team, distance/4, mapName)
 			if err != nil {
 				fmt.Printf("(moveToNearestFreeSpaceLineSpatialHash): %v", err)
 				return startX, startY
@@ -282,38 +236,6 @@ func closestFreeSpaceBetweenTwoPointsSpatialHash(hash *comp.SpatialHash, startX,
 	}
 
 	return startX, startY // Stay at the current position if no free spot is found
-}
-
-// push a unit when they collide
-// simulates if position 1 hits position 2 like a billards ball and bounces the position 2 to our new target returns
-func PushUnitDirSpatialHash(enemyID types.EntityID, posX1, posY1, posX2, posY2, dirX, dirY, distance float32) (targetX, targetY float32) {
-	deltaX := posX1 - posX2
-	deltaY := posY1 - posY2
-	length := float32(math.Sqrt(float64(deltaX*deltaX) + float64(deltaY*deltaY))) // Magnitude of the vector
-	if length == 0 {                                                              // Avoid division by zero
-		fmt.Println("Collision at the same position, no movement. (PushUnitDirSpatialHash)")
-		return posX2, posY2 // Return the current position of the second ball
-	}
-	// Calculate the normal vector
-	normalX := deltaX / length
-	normalY := deltaY / length
-
-	// Calculate the dot product of the incoming vector and the normal
-	dotProduct := dotProduct(dirX, dirY, normalX, normalY)
-
-	// Apply the reflection formula
-	newDirX := dirX - 2*dotProduct*normalX
-	newDirY := dirY - 2*dotProduct*normalY
-
-	// Normalize the resulting direction vector
-	finalLength := float32(math.Sqrt(float64(newDirX*newDirX + newDirY*newDirY)))
-	newDirX /= finalLength
-	newDirY /= finalLength
-
-	//move position 2 in the direction of newDir by the input distance
-	targetX = posX2 + newDirX*distance
-	targetY = posY2 + newDirY*distance
-	return targetX, targetY
 }
 
 // intersect determines if two circles intersect.
