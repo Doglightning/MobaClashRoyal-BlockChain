@@ -77,7 +77,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 					tempX := uPos.PositionVectorX //Store Original X and Y
 					tempY := uPos.PositionVectorY
 					//move towards enemy
-					uPos = moveUnitTowardsEnemy(uPos, ePos.PositionVectorX, ePos.PositionVectorY, eRadius.UnitRadius, uMs, uRadius)
+					uPos = moveUnitTowardsEnemy(uPos, ePos.PositionVectorX, ePos.PositionVectorY, eRadius.UnitRadius, uMs.CurrentMS, uRadius.UnitRadius)
 					//attempt to push blocking units
 					pushBlockingUnit(world, collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, uMs.CurrentMS)
 					//move unit.  walk around blocking units
@@ -136,7 +136,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 						// //Store Original X and Y
 						tempX := uPos.PositionVectorX
 						tempY := uPos.PositionVectorY
-						uPos = moveUnitTowardsEnemy(uPos, eX, eY, eRadius, uMs, uRadius)
+						uPos = moveUnitTowardsEnemy(uPos, eX, eY, eRadius, uMs.CurrentMS, uRadius.UnitRadius)
 						//attempt to push blocking units
 						pushBlockingUnit(world, collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, uMs.CurrentMS)
 						//move unit.  walk around blocking units
@@ -326,16 +326,16 @@ func FindClosestEnemySpatialHash(hash *comp.SpatialHash, objID types.EntityID, s
 }
 
 // Moves Unit towards enemy position
-func moveUnitTowardsEnemy(position *comp.Position, enemyX float32, enemyY float32, enemyRadius int, movespeed *comp.Movespeed, radius *comp.UnitRadius) *comp.Position {
+func moveUnitTowardsEnemy(position *comp.Position, enemyX float32, enemyY float32, enemyRadius int, movespeed float32, radius int) *comp.Position {
 	// Compute direction vector towards the enemy
 	position.RotationVectorX, position.RotationVectorY = directionVectorBetweenTwoPoints(position.PositionVectorX, position.PositionVectorY, enemyX, enemyY)
 
 	// Compute new position based on movespeed and direction
-	position.PositionVectorX = position.PositionVectorX + position.RotationVectorX*movespeed.CurrentMS
-	position.PositionVectorY = position.PositionVectorY + position.RotationVectorY*movespeed.CurrentMS
+	position.PositionVectorX = position.PositionVectorX + position.RotationVectorX*movespeed
+	position.PositionVectorY = position.PositionVectorY + position.RotationVectorY*movespeed
 
 	// Calculate the stopping distance (combined radii of the unit and enemy plus 1 pixel for separation)
-	stoppingDistance := radius.UnitRadius + enemyRadius + 1
+	stoppingDistance := radius + enemyRadius + 1
 	// Calculate the target position to move towards, stopping 1 pixel outside the enemy's radius
 	targetX := enemyX - position.RotationVectorX*float32(stoppingDistance)
 	targetY := enemyY - position.RotationVectorY*float32(stoppingDistance)
@@ -483,14 +483,11 @@ func pushFromPtBtoA(world cardinal.WorldContext, hash *comp.SpatialHash, id type
 		for d := float32(0); d <= length; d += float32(step) {
 			testX := targetX + dirX*float32(d) // Start from target position
 			testY := targetY + dirY*float32(d) // Start from target position
+			//move unit towards even outside radius
+			test := moveUnitTowardsEnemy(&comp.Position{PositionVectorX: testX, PositionVectorY: testY}, targetPos.PositionVectorX, targetPos.PositionVectorY, targetRadius.UnitRadius, length, radius)
 			// Check if the position is free of collisions
-			if !CheckCollisionSpatialHash(hash, testX, testY, radius) {
-				//distance - unit and target radius'
-				adjustedDistance := distanceBetweenTwoPoints(targetPos.PositionVectorX, targetPos.PositionVectorY, testX, testY) - float32(radius) - float32(targetRadius.UnitRadius)
-				//if within attack range
-				if adjustedDistance <= float32(atk.AttackRadius) {
-					return testX, testY // Return the first free spot found
-				}
+			if !CheckCollisionSpatialHash(hash, test.PositionVectorX, test.PositionVectorY, radius) {
+				return test.PositionVectorX, test.PositionVectorY // Return the first free spot found
 			}
 		}
 	} else {
