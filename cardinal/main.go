@@ -75,6 +75,7 @@ func MustInitWorld(w *cardinal.World) {
 		system.GameStateSpawnerSystem,
 		system.UnitSpawnerSystem,
 		system.UnitMovementSystem,
+		system.CombatCheckSystem,
 		system.ProjectileMovementSystem,
 		system.ProjectileAttackSystem,
 		system.UnitAttackSystem,
