@@ -73,16 +73,17 @@ func MustInitWorld(w *cardinal.World) {
 	Must(cardinal.RegisterSystems(w,
 		system.RemoveAllEntitiesMsgSystem,
 		system.GameStateSpawnerSystem,
-		system.UnitSpawnerSystem,
-		system.UnitMovementSystem,
-		system.CombatCheckSystem,
+
+		system.UnitSpawnerSystem,  //spawn phase
+		system.UnitMovementSystem, //move phase
 		system.ProjectileMovementSystem,
-		system.ProjectileAttackSystem,
+		system.CombatCheckSystem,      //pre attack phase
+		system.ProjectileAttackSystem, //attack phase
 		system.UnitAttackSystem,
-		system.ProjectileDestroyerSystem,
+		system.ProjectileDestroyerSystem, //destroy phase
 		system.UnitDestroyerSystem,
-		system.RemovalListSystem,
-		system.WinCondition,
+		system.RemovalListSystem, //client replication
+		system.WinCondition,      // game over
 	))
 
 	// Must(cardinal.RegisterInitSystems(w,
