@@ -28,6 +28,13 @@ func UnitAttackSystem(world cardinal.WorldContext) error {
 
 		//if unit is in its damage frame
 		if unitAtk.Frame == unitAtk.DamageFrame {
+			//get special power component
+			unitSp, err := cardinal.GetComponent[comp.Sp](world, id)
+			if err != nil {
+				fmt.Printf("error retrieving special power component (Unit_Attack.go): %v", err)
+				return false
+			}
+
 			if unitAtk.Class == "melee" { //if melee
 				//reduce health by units attack damage
 				cardinal.UpdateComponent(world, unitAtk.Target, func(health *comp.Health) *comp.Health {
@@ -68,6 +75,21 @@ func UnitAttackSystem(world cardinal.WorldContext) error {
 					comp.Destroyed{Destroyed: false},
 				)
 			}
+			//if our CurrentSp is at the MaxSp threshhold
+			if unitSp.CurrentSp >= unitSp.MaxSp {
+				unitSp.CurrentSp = 0
+			} else {
+				unitSp.CurrentSp += unitSp.SpRate //increase sp after attack
+				// make sure we are not over MaxSp
+				if unitSp.CurrentSp >= unitSp.MaxSp {
+					unitSp.CurrentSp = unitSp.MaxSp
+				}
+			}
+			// set updated attack component
+			if err := cardinal.SetComponent(world, id, unitSp); err != nil {
+				fmt.Printf("error updating special power component (Unit_Attack.go): %s", err)
+				return false
+			}
 		}
 		//if our attack frame is at the attack rate reset
 		if unitAtk.Frame >= unitAtk.Rate {
@@ -79,6 +101,7 @@ func UnitAttackSystem(world cardinal.WorldContext) error {
 			fmt.Printf("error updating attack component (Unit_Attack.go): %s", err)
 			return false
 		}
+
 		return true
 	})
 

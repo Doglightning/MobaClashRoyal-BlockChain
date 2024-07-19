@@ -37,6 +37,7 @@ type UnitDetails struct {
 	UnitName        string
 	Combat          bool
 	AttackFrame     int
+	CurrentSp       int
 }
 
 type ProjectileDetails struct {
@@ -153,6 +154,13 @@ func unitStateGS(world cardinal.WorldContext, matchFilter cardinal.FilterFn, res
 		}
 		unit.Combat = unitAttack.Combat
 		unit.AttackFrame = unitAttack.Frame
+
+		// Fetch SP component
+		unitSp, err := cardinal.GetComponent[comp.Sp](world, id)
+		if err != nil {
+			return false
+		}
+		unit.CurrentSp = unitSp.CurrentSp
 
 		// Append the gathered data to the response
 		response.Units = append(response.Units, unit)
