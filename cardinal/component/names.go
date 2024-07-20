@@ -21,5 +21,5 @@ func (MapName) Name() string {
 }
 
 func (SpName) Name() string {
-	return "Sp"
+	return "SpName"
 }

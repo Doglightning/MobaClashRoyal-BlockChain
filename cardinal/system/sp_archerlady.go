@@ -8,29 +8,55 @@ import (
 	"pkg.world.dev/world-engine/cardinal/types"
 )
 
+var numArrows int = 5
+var arrowSeperationDegree float64 = 30
+
 func archerLadyAttack(world cardinal.WorldContext, id types.EntityID) error {
-	unitPosition, matchID, mapName, err := GetSpComponentsAL(world, id)
+	uPos, matchID, mapName, err := GetSpComponentsAL(world, id)
 	if err != nil {
 		return fmt.Errorf("%v", err)
 	}
-	//get next uid
-	UID, err := getNextUID(world, matchID.MatchId)
-	if err != nil {
-		return fmt.Errorf("(archerLadyAttack): %v - ", err)
+
+	vectors := generateVectors(uPos.RotationVectorX, uPos.RotationVectorY, arrowSeperationDegree, numArrows)
+
+	for i := 0; i < numArrows; i++ {
+
+		//get next uid
+		UID, err := getNextUID(world, matchID.MatchId)
+		if err != nil {
+			return fmt.Errorf("(archerLadyAttack): %v - ", err)
+		}
+		//create projectile entity
+		cardinal.Create(world,
+			comp.MatchId{MatchId: matchID.MatchId},
+			comp.UID{UID: UID},
+			comp.SpName{SpName: "ArcherLadySp"},
+			comp.Movespeed{CurrentMS: ProjectileRegistry["ArcherLadySp"].Speed},
+			comp.Position{PositionVectorX: uPos.PositionVectorX, PositionVectorY: uPos.PositionVectorY, PositionVectorZ: uPos.PositionVectorZ, RotationVectorX: vectors[i][0], RotationVectorY: vectors[i][1], RotationVectorZ: uPos.RotationVectorZ},
+			comp.MapName{MapName: mapName.MapName},
+			comp.Damage{Damage: ProjectileRegistry["ArcherLadySp"].Damage},
+			comp.Destroyed{Destroyed: false},
+		)
 	}
-	//create projectile entity
-	cardinal.Create(world,
-		comp.MatchId{MatchId: matchID.MatchId},
-		comp.UID{UID: UID},
-		comp.SpName{SpName: "ArcherLadyArrow"},
-		comp.Movespeed{CurrentMS: ProjectileRegistry["ArcherLadyArrow"].Speed},
-		comp.Position{PositionVectorX: unitPosition.PositionVectorX, PositionVectorY: unitPosition.PositionVectorY, PositionVectorZ: unitPosition.PositionVectorZ, RotationVectorX: unitPosition.RotationVectorX, RotationVectorY: unitPosition.RotationVectorY, RotationVectorZ: unitPosition.RotationVectorZ},
-		comp.MapName{MapName: mapName.MapName},
-		comp.Damage{Damage: ProjectileRegistry["ArcherLadyArrow"].Damage},
-		comp.Destroyed{Destroyed: false},
-	)
 
 	return err
+}
+
+// generateVectors generates evenly distributed vectors within a given angle around the central vector
+// dirX, dirY: central Direction vector (normalized)
+// angle: angle between vectors
+// count: Number of vectors
+func generateVectors(dirX, dirY float32, angle float64, count int) [][]float32 {
+	halfAngle := angle / 2
+	stepAngle := angle / float64(count-1)
+
+	vectors := make([][]float32, count)
+	for i := 0; i < count; i++ {
+		currentAngle := -halfAngle + stepAngle*float64(i)
+		rotatedX, rotatedY := rotateVectorDegrees(dirX, dirY, currentAngle)
+		vectors[i] = []float32{rotatedX, rotatedY}
+	}
+	return vectors
 }
 
 // GetSpComponentsAL fetches all necessary components related to a sp entity.

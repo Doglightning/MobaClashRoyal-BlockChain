@@ -17,9 +17,10 @@ type UnitMatchIdRequest struct {
 }
 
 type UnitStateResponse struct {
-	Units       []UnitDetails
-	Structures  []StructureDetails
-	Projectiles []ProjectileDetails
+	Units         []UnitDetails
+	Structures    []StructureDetails
+	Projectiles   []ProjectileDetails
+	SpecialPowers []SpDetails
 }
 
 type UnitDetails struct {
@@ -41,6 +42,17 @@ type UnitDetails struct {
 }
 
 type ProjectileDetails struct {
+	UID             int
+	Name            string
+	PositionVectorX float32
+	PositionVectorY float32
+	PositionVectorZ float32
+	RotationVectorX float32
+	RotationVectorY float32
+	RotationVectorZ float32
+}
+
+type SpDetails struct {
 	UID             int
 	Name            string
 	PositionVectorX float32
@@ -81,6 +93,12 @@ func GameState(world cardinal.WorldContext, req *UnitMatchIdRequest) (*UnitState
 
 	//get projectile state updates
 	response, err = projectileStateGS(world, matchFilter, response)
+	if err != nil {
+		return nil, err
+	}
+
+	//get special power state updates
+	response, err = SpStateGS(world, matchFilter, response)
 	if err != nil {
 		return nil, err
 	}
@@ -270,6 +288,52 @@ func projectileStateGS(world cardinal.WorldContext, matchFilter cardinal.FilterF
 	})
 	if err != nil {
 		return response, fmt.Errorf("error during StructureSearch (unit state/projectileStateGS): %w", err)
+	}
+	return response, nil
+}
+
+// get all Special power states
+func SpStateGS(world cardinal.WorldContext, matchFilter cardinal.FilterFn, response UnitStateResponse) (UnitStateResponse, error) {
+	// get the projectile id's
+	SpSearch := cardinal.NewSearch().Entity(
+		filter.Contains(filter.Component[comp.SpName]())).
+		Where(matchFilter)
+
+	err := SpSearch.Each(world, func(id types.EntityID) bool {
+		sp := SpDetails{}
+
+		// Fetch uid component
+		uid, err := cardinal.GetComponent[comp.UID](world, id)
+		if err != nil {
+			return false
+		}
+		sp.UID = uid.UID
+
+		// Fetch name component
+		name, err := cardinal.GetComponent[comp.SpName](world, id)
+		if err != nil {
+			return false
+		}
+		sp.Name = name.SpName
+
+		// Fetch Position component
+		position, err := cardinal.GetComponent[comp.Position](world, id)
+		if err != nil {
+			return false
+		}
+		sp.PositionVectorX = position.PositionVectorX
+		sp.PositionVectorY = position.PositionVectorY
+		sp.PositionVectorZ = position.PositionVectorZ
+
+		sp.RotationVectorX = position.RotationVectorX
+		sp.RotationVectorY = position.RotationVectorY
+		sp.RotationVectorZ = position.RotationVectorZ
+
+		response.SpecialPowers = append(response.SpecialPowers, sp)
+		return true
+	})
+	if err != nil {
+		return response, fmt.Errorf("error during  spSearch (unit state/SpStateGS): %w", err)
 	}
 	return response, nil
 }
