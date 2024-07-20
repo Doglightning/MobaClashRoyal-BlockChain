@@ -18,7 +18,7 @@ func ProjectileDestroyerSystem(world cardinal.WorldContext) error {
 	})
 	//go over each destroyed projectile id
 	err := cardinal.NewSearch().Entity(
-		filter.Exact(ProjectileFilters())).
+		filter.Contains()).
 		Where(destroyedFilter).Each(world, func(id types.EntityID) bool {
 
 		//get matchid and uid of projectile
