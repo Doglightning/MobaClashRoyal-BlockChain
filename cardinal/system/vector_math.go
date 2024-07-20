@@ -45,7 +45,8 @@ func directionVectorBetweenTwoPoints(x1, y1, x2, y2 float32) (float32, float32) 
 }
 
 // rotate returns a new vector, rotated by the given angle (in degrees)
-func rotateVectorRadian(dirX, dirY float32, radian float64) (float32, float32) {
+func rotateVectorRadian(dirX, dirY float32, angle float64) (float32, float32) {
+	radian := angle * math.Pi / 180
 	cosTheta := float32(math.Cos(radian))
 	sinTheta := float32(math.Sin(radian))
 	return dirX*cosTheta - dirY*sinTheta, dirX*sinTheta + dirY*cosTheta
