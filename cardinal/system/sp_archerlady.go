@@ -23,8 +23,8 @@ type archerLadySP struct {
 func NewArcherLadySP() *archerLadySP {
 	return &archerLadySP{
 		Name:                  "ArcherLadySP",
-		NumArrows:             5,
-		ArrowSeparationDegree: 25,
+		NumArrows:             6,
+		ArrowSeparationDegree: 20,
 		Distance:              1600,
 		Speed:                 150,
 		RadiusArrows:          150,
