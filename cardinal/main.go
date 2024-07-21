@@ -83,6 +83,7 @@ func MustInitWorld(w *cardinal.World) {
 		system.CombatCheckSystem,      //pre attack phase
 		system.ProjectileAttackSystem, //attack phase
 		system.UnitAttackSystem,
+		system.SpUpdater,
 		system.ProjectileDestroyerSystem, //destroy phase
 		system.UnitDestroyerSystem,
 		system.RemovalListSystem, //client replication
