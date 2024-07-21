@@ -27,12 +27,11 @@ var UnitRegistry = map[string]UnitType{
 }
 
 type ProjectileType struct {
-	Name   string
-	Speed  float32
-	Damage int
+	Name  string
+	Speed float32
 }
 
 // registry of all projectiles in game
 var ProjectileRegistry = map[string]ProjectileType{
-	"ArcherLady": {Name: "ArcherLadyArrow", Speed: 150, Damage: 30},
+	"ArcherLady": {Name: "ArcherLadyArrow", Speed: 150},
 }

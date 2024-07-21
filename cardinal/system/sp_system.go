@@ -20,7 +20,7 @@ func SpUpdater(world cardinal.WorldContext) error {
 			return false
 		}
 
-		if spName.SpName == "ArcherLady" {
+		if spName.SpName == "ArcherLadySP" {
 			err = archerLadyUpdate(world, id)
 			if err != nil {
 				fmt.Printf("%v", err)
@@ -29,7 +29,7 @@ func SpUpdater(world cardinal.WorldContext) error {
 
 		}
 
-		if spName.SpName == "Vampire" {
+		if spName.SpName == "VampireSP" {
 			fmt.Println("hello")
 		}
 
@@ -44,7 +44,6 @@ func spSpawner(world cardinal.WorldContext, id types.EntityID, name string) erro
 	var err error
 	if name == "ArcherLady" {
 		err = archerLadySpawn(world, id)
-
 	}
 
 	if name == "Vampire" {

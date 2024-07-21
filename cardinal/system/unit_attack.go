@@ -87,7 +87,7 @@ func UnitAttackSystem(world cardinal.WorldContext) error {
 						comp.Movespeed{CurrentMS: ProjectileRegistry[unitName.UnitName].Speed},
 						comp.Position{PositionVectorX: unitPosition.PositionVectorX, PositionVectorY: unitPosition.PositionVectorY, PositionVectorZ: unitPosition.PositionVectorZ, RotationVectorX: unitPosition.RotationVectorX, RotationVectorY: unitPosition.RotationVectorY, RotationVectorZ: unitPosition.RotationVectorZ},
 						comp.MapName{MapName: mapName.MapName},
-						comp.Attack{Target: unitAtk.Target, Class: "projectile", Damage: ProjectileRegistry[unitName.UnitName].Damage},
+						comp.Attack{Target: unitAtk.Target, Class: "projectile", Damage: UnitRegistry[unitName.UnitName].Damage},
 						comp.Destroyed{Destroyed: false},
 					)
 				}
