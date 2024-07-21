@@ -219,12 +219,37 @@ func getGameStateGSS(world cardinal.WorldContext, mID *comp.MatchId) (types.Enti
 
 	if err != nil {
 
-		fmt.Printf("error searching for match (unit movement): %s", err)
+		fmt.Printf("error searching for match (game state spawner): %s", err)
 		return foundTeam, err
 	}
 
 	if foundTeam == iterators.BadID { // Assuming cardinal.NoEntity represents no result found
-		return foundTeam, fmt.Errorf("no match found with ID or missing components (unit movement): %s", mID.MatchId)
+		return foundTeam, fmt.Errorf("no match found with ID or missing components (game state spawner): %s", mID.MatchId)
 	}
 	return foundTeam, nil
+}
+
+// Returns the collision hash
+func getCollisionHashGSS(world cardinal.WorldContext, mID *comp.MatchId) (*comp.SpatialHash, error) {
+	//get teamstate to get spatialhash tree
+	teamFilter := cardinal.ComponentFilter[comp.MatchId](func(m comp.MatchId) bool {
+		return m.MatchId == mID.MatchId
+	})
+	foundTeam, err := cardinal.NewSearch().Entity(
+		filter.Exact(GameStateFilters())).
+		Where(teamFilter).First(world)
+
+	if err != nil {
+		return nil, fmt.Errorf("error searching for match (game state spawner): %w", err)
+	}
+
+	if foundTeam == iterators.BadID { // Assuming cardinal.NoEntity represents no result found
+		return nil, fmt.Errorf("no match found with ID or missing components (game state spawner): %s", mID.MatchId)
+	}
+
+	collisionHash, err := cardinal.GetComponent[comp.SpatialHash](world, foundTeam)
+	if err != nil {
+		return nil, fmt.Errorf("collision hash not found (game state spawner): %w", err)
+	}
+	return collisionHash, nil
 }
