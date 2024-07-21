@@ -47,7 +47,7 @@ func spSpawner(world cardinal.WorldContext, id types.EntityID, name string) erro
 	}
 
 	if name == "Vampire" {
-		fmt.Println("hello")
+		err = vampireSpawn(world, id)
 	}
 	return err
 }
