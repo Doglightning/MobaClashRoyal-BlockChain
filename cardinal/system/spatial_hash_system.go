@@ -144,6 +144,34 @@ func intersectSpatialHash(x1, y1 float32, r1 int, x2, y2 float32, r2 int) bool {
 	return distSq <= radiusSumSq
 }
 
+// checkLineIntersectionSpatialHash calculates if the moving line intersects with the circle.
+func checkLineIntersectionSpatialHash(startX, startY, endX, endY, circleCenterX, circleCenterY float32, radius int) bool {
+	// Step 1: Calculate direction vector of the line
+	dirX := endX - startX
+	dirY := endY - startY
+
+	// Step 2: Calculate the vector from start point to the circle's center
+	toCircleX := circleCenterX - startX
+	toCircleY := circleCenterY - startY
+
+	// Prevent division by zero if the line is actually a point
+	dirLengthSquared := dirX*dirX + dirY*dirY
+	if dirLengthSquared == 0 {
+		return math.Sqrt(float64(toCircleX*toCircleX+toCircleY*toCircleY)) <= float64(radius)
+	}
+
+	// Step 3: Project toCircle onto direction
+	t := (toCircleX*dirX + toCircleY*dirY) / dirLengthSquared
+	closestX := startX + t*dirX
+	closestY := startY + t*dirY
+
+	// Step 4: Calculate the distance from the closest point on the line to the circle's center
+	distance := math.Sqrt(float64((closestX-circleCenterX)*(closestX-circleCenterX) + (closestY-circleCenterY)*(closestY-circleCenterY)))
+
+	// Step 5: Check if the distance is less than the radius and the projection falls within the segment
+	return distance <= float64(radius) && t >= 0 && t <= 1
+}
+
 // normalizes a coord to the maps partition size
 // used for hash key
 func calculateSpatialHash(hash *comp.SpatialHash, x, y float32) (int, int) {
