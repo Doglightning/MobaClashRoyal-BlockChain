@@ -9,6 +9,14 @@ type Sp struct {
 	Animation string `json:"Animation"`
 }
 
+type SpEntity struct {
+	SpName string `json:"SpName"`
+}
+
 func (Sp) Name() string {
 	return "Sp"
+}
+
+func (SpEntity) Name() string {
+	return "SpEntity"
 }

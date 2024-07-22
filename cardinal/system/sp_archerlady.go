@@ -63,6 +63,7 @@ func archerLadySpawn(world cardinal.WorldContext, id types.EntityID) error {
 			comp.Distance{Distance: archerLady.Distance},
 			comp.Team{Team: team.Team},
 			comp.UnitRadius{UnitRadius: archerLady.RadiusArrows},
+			comp.SpEntity{SpName: archerLady.Name},
 		)
 	}
 

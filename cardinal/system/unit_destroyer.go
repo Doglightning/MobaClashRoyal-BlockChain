@@ -59,6 +59,14 @@ func UnitDestroyerSystem(world cardinal.WorldContext) error {
 			return false
 		}
 
+		//for app special powers targettting self
+
+		err = destroySPTargetingSelfUD(world, targetFilter)
+		if err != nil {
+			fmt.Printf("(unit_destroyer.go) %v", err)
+			return false
+		}
+
 		//get collision Hash
 		CollisionSpartialHash, err := cardinal.GetComponent[comp.SpatialHash](world, gameState)
 		if err != nil {
@@ -145,6 +153,26 @@ func destroyProjectilesTargetingSelfUD(world cardinal.WorldContext, targetFilter
 	})
 	if err != nil {
 		return fmt.Errorf("error retrieving projectile entities (destroyProjectilesTargetingSelfUD): %s", err)
+	}
+	return nil
+}
+
+// for each Special power targeting targetFilter, destroy
+func destroySPTargetingSelfUD(world cardinal.WorldContext, targetFilter cardinal.FilterFn) error {
+	//for each targetting sp
+	err := cardinal.NewSearch().Entity(
+		filter.Contains(filter.Component[comp.SpEntity]())).
+		Where(targetFilter).Each(world, func(spID types.EntityID) bool {
+
+		//remove entity
+		if err := cardinal.Remove(world, spID); err != nil {
+			fmt.Printf("Error removing entity sp (unit_destroyer.go): %v", err)
+			return false
+		}
+		return true
+	})
+	if err != nil {
+		return fmt.Errorf("error retrieving sp entities (destroyProjectilesTargetingSelfUD): %s", err)
 	}
 	return nil
 }

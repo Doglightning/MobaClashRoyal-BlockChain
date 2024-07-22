@@ -24,42 +24,41 @@ func NewVampireSP() *vampireSP {
 
 func vampireUpdateSP(world cardinal.WorldContext, id types.EntityID) error {
 	vampire := NewVampireSP()
+
+	targetID, err := cardinal.GetComponent[comp.Attack](world, id)
+	if err != nil {
+		return fmt.Errorf("error getting attack comp (sp_vampire.go): %w", err)
+	}
+
+	targetHP, err := cardinal.GetComponent[comp.Health](world, targetID.Target)
+	if err != nil {
+		return fmt.Errorf("error getting health comp (sp_vampire.go): %w", err)
+	}
+
+	if targetHP.CurrentHP != 0 { // do not heal because unit will never die if its always healing at 0
+		targetHP.CurrentHP += vampire.healAmount
+		if targetHP.CurrentHP > UnitRegistry["Vampire"].Health {
+			targetHP.CurrentHP = UnitRegistry["Vampire"].Health
+		}
+
+		if err := cardinal.SetComponent(world, targetID.Target, targetHP); err != nil {
+			return fmt.Errorf("error setting target health comp (sp_vampire.go): %w", err)
+		}
+	}
+
 	healCount, err := cardinal.GetComponent[comp.IntTracker](world, id)
 	if err != nil {
 		return fmt.Errorf("error retrieving int tracker component (sp_vampire.go): %w", err)
 	}
-	fmt.Println("hi")
-	if healCount.Num < vampire.healCount {
-		healCount.Num += 1
-		err = cardinal.SetComponent(world, id, healCount)
-		if err != nil {
-			return fmt.Errorf("error setting int tracker component (sp_vampire.go): %w", err)
+	healCount.Num += 1
+	if healCount.Num >= vampire.healCount {
+		// remove entity
+		if err := cardinal.Remove(world, id); err != nil {
+			return fmt.Errorf("error removing entity sp (sp_vampire.go): %w", err)
 		}
-
-		//reduce health by units attack damage
-		err = cardinal.UpdateComponent(world, id, func(health *comp.Health) *comp.Health {
-			if health == nil {
-				fmt.Printf("error retrieving Health component (sp_vampire.go)")
-				return nil
-			}
-			if health.CurrentHP == 0 { // do not heal because unit will never die if its always healing at 0
-				return nil
-			}
-
-			health.CurrentHP += vampire.healAmount
-			if health.CurrentHP > UnitRegistry["vampire"].Health {
-				health.CurrentHP = UnitRegistry["vampire"].Health
-			}
-			return health
-		})
-
-		if err != nil {
-			return err
-		}
-
-		err := cardinal.SetComponent[comp.IntTracker](world, id, healCount)
-		if err != nil {
-			return fmt.Errorf("error setting int tracker component (sp_vampire.go): %w", err)
+	} else {
+		if err := cardinal.SetComponent(world, id, healCount); err != nil {
+			return fmt.Errorf("error setting heal count (sp_vampire.go): %w", err)
 		}
 	}
 
@@ -90,32 +89,23 @@ func vampireSpawnSP(world cardinal.WorldContext, id types.EntityID) error {
 		return err
 	}
 
-	err = cardinal.UpdateComponent(world, id, func(tracker *comp.IntTracker) *comp.IntTracker {
-		if tracker == nil {
-			fmt.Printf("error getting int tracker component (sp_vampire.go): ")
-			return nil
-		}
-		tracker.Num = 0
-		return tracker
-	})
+	matchID, err := cardinal.GetComponent[comp.MatchId](world, id)
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting matchID comp (sp_vampire.go): %w", err)
 	}
+
+	UID, err := getNextUID(world, matchID.MatchId)
+	if err != nil {
+		return fmt.Errorf("(sp_vampire.go): %v - ", err)
+	}
+	//create projectile entity
+	cardinal.Create(world,
+		comp.MatchId{MatchId: matchID.MatchId},
+		comp.UID{UID: UID},
+		comp.SpEntity{SpName: "VampireSP"},
+		comp.IntTracker{Num: 0},
+		comp.Attack{Target: id},
+	)
 
 	return err
-}
-
-// add Sp component to vampire unit
-func vampireInitSP(world cardinal.WorldContext, id types.EntityID) error {
-
-	err := cardinal.AddComponentTo[comp.IntTracker](world, id)
-	if err != nil {
-		return fmt.Errorf("error adding init component (sp_vampire.go): %w", err)
-	}
-
-	err = cardinal.SetComponent(world, id, &comp.IntTracker{Num: 0})
-	if err != nil {
-		return fmt.Errorf("error setting init component (sp_vampire.go): %w", err)
-	}
-	return nil
 }

@@ -85,11 +85,6 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 			if err != nil {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("error creating unit (unit_spawner.go): %w", err)
 			}
-			//add Special power related components to unit
-			err = spInit(world, entityID, create.Msg.UnitType)
-			if err != nil {
-				return msg.CreateUnitResult{Success: false}, fmt.Errorf("(unit_spawner.go) -  %w", err)
-			}
 
 			//add unit to collision hash collision map
 			AddObjectSpatialHash(SpatialHash, entityID, create.Msg.PositionX, create.Msg.PositionY, unitType.Radius, create.Msg.Team)

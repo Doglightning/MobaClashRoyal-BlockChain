@@ -44,6 +44,7 @@ func MustInitWorld(w *cardinal.World) {
 		cardinal.RegisterComponent[component.SpatialCell](w),
 		cardinal.RegisterComponent[component.SpatialHash](w),
 		cardinal.RegisterComponent[component.Sp](w),
+		cardinal.RegisterComponent[component.SpEntity](w),
 		cardinal.RegisterComponent[component.SpName](w),
 		cardinal.RegisterComponent[component.Team](w),
 		cardinal.RegisterComponent[component.UID](w),

@@ -11,16 +11,17 @@ import (
 
 // updates all SP's spawned
 func SpUpdater(world cardinal.WorldContext) error {
+
 	err := cardinal.NewSearch().Entity(
-		filter.Contains(filter.Component[comp.SpName]())).Each(world, func(id types.EntityID) bool {
+		filter.Contains(filter.Component[comp.SpEntity]())).Each(world, func(id types.EntityID) bool {
 		//get sp name
-		spName, err := cardinal.GetComponent[comp.SpName](world, id)
+		spEntity, err := cardinal.GetComponent[comp.SpEntity](world, id)
 		if err != nil {
 			fmt.Printf("error getting sp name component (SpUpdater): %v", err)
 			return false
 		}
 
-		if spName.SpName == "ArcherLadySP" {
+		if spEntity.SpName == "ArcherLadySP" {
 			err = archerLadyUpdate(world, id)
 			if err != nil {
 				fmt.Printf("%v", err)
@@ -29,7 +30,7 @@ func SpUpdater(world cardinal.WorldContext) error {
 
 		}
 
-		if spName.SpName == "VampireSP" {
+		if spEntity.SpName == "VampireSP" {
 			err = vampireUpdateSP(world, id)
 			if err != nil {
 				fmt.Printf("%v", err)
@@ -52,20 +53,6 @@ func spSpawner(world cardinal.WorldContext, id types.EntityID, name string) erro
 
 	if name == "Vampire" {
 		err = vampireSpawnSP(world, id)
-	}
-	return err
-}
-
-// init special effect on unit for special components needed on spawn
-// spawns the special attack
-func spInit(world cardinal.WorldContext, id types.EntityID, name string) error {
-	var err error
-	// if name == "ArcherLady" {
-
-	// }
-
-	if name == "Vampire" {
-		err = vampireInitSP(world, id)
 	}
 	return err
 }
