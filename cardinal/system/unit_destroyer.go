@@ -17,7 +17,7 @@ func UnitDestroyerSystem(world cardinal.WorldContext) error {
 	})
 	//for each unit with no hp's ids
 	err := cardinal.NewSearch().Entity(
-		filter.Exact(UnitFilters())).
+		filter.Contains(UnitFilters())).
 		Where(healthFilter).Each(world, func(id types.EntityID) bool {
 
 		//get needed compoenents
@@ -99,7 +99,7 @@ func UnitDestroyerSystem(world cardinal.WorldContext) error {
 func resetUnitsTargetingSelfUD(world cardinal.WorldContext, targetFilter cardinal.FilterFn) error {
 	//for each targetting unit
 	err := cardinal.NewSearch().Entity(
-		filter.Exact(UnitFilters())).
+		filter.Contains(UnitFilters())).
 		Where(targetFilter).Each(world, func(enemyID types.EntityID) bool {
 		//reset attack component
 		cardinal.UpdateComponent(world, enemyID, func(attack *comp.Attack) *comp.Attack {

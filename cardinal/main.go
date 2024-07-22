@@ -50,6 +50,7 @@ func MustInitWorld(w *cardinal.World) {
 		cardinal.RegisterComponent[component.Health](w),
 		cardinal.RegisterComponent[component.UnitName](w),
 		cardinal.RegisterComponent[component.UnitRadius](w),
+		cardinal.RegisterComponent[component.IntTracker](w),
 	)
 
 	// Register messages (user action)

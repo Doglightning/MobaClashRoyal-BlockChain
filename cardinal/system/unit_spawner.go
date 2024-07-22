@@ -68,7 +68,7 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 			}
 
 			//create unit
-			entityID, errr := cardinal.Create(world,
+			entityID, err := cardinal.Create(world,
 				comp.MatchId{MatchId: create.Msg.MatchID},
 				comp.UID{UID: UID},
 				comp.UnitName{UnitName: create.Msg.UnitType},
@@ -82,9 +82,15 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 				comp.Attack{Combat: false, Damage: unitType.Damage, Rate: unitType.AttackRate, Frame: 0, DamageFrame: unitType.DamageFrame, Class: unitType.Class, AttackRadius: unitType.AttackRadius, AggroRadius: unitType.AggroRadius},
 				comp.Sp{DmgSp: unitType.DmgSp, SpRate: unitType.SpRate, CurrentSp: unitType.CurrentSP, MaxSp: unitType.MaxSP},
 			)
-			if errr != nil {
+			if err != nil {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("error creating unit (unit_spawner.go): %w", err)
 			}
+			//add Special power related components to unit
+			err = spInit(world, entityID, create.Msg.UnitType)
+			if err != nil {
+				return msg.CreateUnitResult{Success: false}, fmt.Errorf("(unit_spawner.go) -  %w", err)
+			}
+
 			//add unit to collision hash collision map
 			AddObjectSpatialHash(SpatialHash, entityID, create.Msg.PositionX, create.Msg.PositionY, unitType.Radius, create.Msg.Team)
 

@@ -17,7 +17,7 @@ func CombatCheckSystem(world cardinal.WorldContext) error {
 	})
 	//for each unit with no hp's ids
 	err := cardinal.NewSearch().Entity(
-		filter.Exact(UnitFilters())).
+		filter.Contains(UnitFilters())).
 		Where(combatFilter).Each(world, func(id types.EntityID) bool {
 		//get attack component
 		uAtk, err := cardinal.GetComponent[comp.Attack](world, id)

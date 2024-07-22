@@ -110,7 +110,7 @@ func GameState(world cardinal.WorldContext, req *UnitMatchIdRequest) (*UnitState
 func unitStateGS(world cardinal.WorldContext, matchFilter cardinal.FilterFn, response UnitStateResponse) (UnitStateResponse, error) {
 	// get each unit
 	unitSearch := cardinal.NewSearch().Entity(
-		filter.Exact(system.UnitFilters())).
+		filter.Contains(system.UnitFilters())).
 		Where(matchFilter)
 
 	err := unitSearch.Each(world, func(id types.EntityID) bool {

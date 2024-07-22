@@ -198,7 +198,7 @@ func priorityUnitMovement(world cardinal.WorldContext) ([]types.EntityID, error)
 
 	// Search all units
 	unitList, err := cardinal.NewSearch().Entity(
-		filter.Exact(UnitFilters())).Collect(world)
+		filter.Contains(UnitFilters())).Collect(world)
 	if err != nil {
 		return nil, fmt.Errorf("PriorityUnitMovement error searching for unit with map (priorityUnitMovement): %w", err)
 	}

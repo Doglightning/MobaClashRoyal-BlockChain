@@ -17,7 +17,7 @@ func UnitAttackSystem(world cardinal.WorldContext) error {
 	})
 	//for every unit in combats id
 	err := cardinal.NewSearch().Entity(
-		filter.Exact(UnitFilters())).
+		filter.Contains(UnitFilters())).
 		Where(combatFilter).Each(world, func(id types.EntityID) bool {
 		// get unit attack component
 		unitAtk, err := cardinal.GetComponent[comp.Attack](world, id)

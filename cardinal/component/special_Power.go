@@ -5,6 +5,8 @@ type Sp struct {
 	SpRate    int `json:"rate"`
 	CurrentSp int `json:"CurrentSp"`
 	MaxSp     int `json:"MaxSp"`
+
+	Animation string `json:"Animation"`
 }
 
 func (Sp) Name() string {

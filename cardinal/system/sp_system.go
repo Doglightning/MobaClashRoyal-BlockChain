@@ -30,7 +30,11 @@ func SpUpdater(world cardinal.WorldContext) error {
 		}
 
 		if spName.SpName == "VampireSP" {
-			fmt.Println("hello")
+			err = vampireUpdateSP(world, id)
+			if err != nil {
+				fmt.Printf("%v", err)
+				return false
+			}
 		}
 
 		return true
@@ -47,7 +51,21 @@ func spSpawner(world cardinal.WorldContext, id types.EntityID, name string) erro
 	}
 
 	if name == "Vampire" {
-		err = vampireSpawn(world, id)
+		err = vampireSpawnSP(world, id)
+	}
+	return err
+}
+
+// init special effect on unit for special components needed on spawn
+// spawns the special attack
+func spInit(world cardinal.WorldContext, id types.EntityID, name string) error {
+	var err error
+	// if name == "ArcherLady" {
+
+	// }
+
+	if name == "Vampire" {
+		err = vampireInitSP(world, id)
 	}
 	return err
 }
