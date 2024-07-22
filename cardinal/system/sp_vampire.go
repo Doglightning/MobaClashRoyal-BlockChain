@@ -25,7 +25,7 @@ func NewVampireSP() *vampireSP {
 func vampireUpdateSP(world cardinal.WorldContext, id types.EntityID) error {
 	vampire := NewVampireSP()
 
-	targetID, err := cardinal.GetComponent[comp.Attack](world, id)
+	targetID, err := cardinal.GetComponent[comp.Target](world, id)
 	if err != nil {
 		return fmt.Errorf("error getting attack comp (sp_vampire.go): %w", err)
 	}
@@ -104,7 +104,7 @@ func vampireSpawnSP(world cardinal.WorldContext, id types.EntityID) error {
 		comp.UID{UID: UID},
 		comp.SpEntity{SpName: "VampireSP"},
 		comp.IntTracker{Num: 0},
-		comp.Attack{Target: id},
+		comp.Target{Target: id},
 	)
 
 	return err

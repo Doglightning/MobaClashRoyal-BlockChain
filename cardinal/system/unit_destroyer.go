@@ -59,8 +59,11 @@ func UnitDestroyerSystem(world cardinal.WorldContext) error {
 			return false
 		}
 
+		//filter for units targeting self
+		targetFilter = cardinal.ComponentFilter(func(m comp.Target) bool {
+			return m.Target == id
+		})
 		//for app special powers targettting self
-
 		err = destroySPTargetingSelfUD(world, targetFilter)
 		if err != nil {
 			fmt.Printf("(unit_destroyer.go) %v", err)

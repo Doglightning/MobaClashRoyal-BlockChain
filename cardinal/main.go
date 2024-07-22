@@ -46,6 +46,7 @@ func MustInitWorld(w *cardinal.World) {
 		cardinal.RegisterComponent[component.Sp](w),
 		cardinal.RegisterComponent[component.SpEntity](w),
 		cardinal.RegisterComponent[component.SpName](w),
+		cardinal.RegisterComponent[component.Target](w),
 		cardinal.RegisterComponent[component.Team](w),
 		cardinal.RegisterComponent[component.UID](w),
 		cardinal.RegisterComponent[component.Health](w),
