@@ -43,7 +43,7 @@ func UnitAttackSystem(world cardinal.WorldContext) error {
 					return false
 				}
 				//spawn special power
-				err = spSpawner(world, id, unitName.UnitName)
+				err = spSpawner(world, id, unitName.UnitName, unitSp)
 				if err != nil {
 					fmt.Printf("error spawning special attack (Unit_Attack.go): %v - ", err)
 					return false

@@ -52,6 +52,20 @@ func vampireUpdateSP(world cardinal.WorldContext, id types.EntityID) error {
 	}
 	healCount.Num += 1
 	if healCount.Num >= vampire.healCount {
+		//reduce health by units attack damage
+		err = cardinal.UpdateComponent(world, targetID.Target, func(sp *comp.Sp) *comp.Sp {
+			if sp == nil {
+				fmt.Printf("error retrieving special power component (sp_vampire.go)")
+				return nil
+			}
+			sp.Animation = "default"
+			return sp
+		})
+
+		if err != nil {
+			return err
+		}
+
 		// remove entity
 		if err := cardinal.Remove(world, id); err != nil {
 			return fmt.Errorf("error removing entity sp (sp_vampire.go): %w", err)
@@ -65,7 +79,10 @@ func vampireUpdateSP(world cardinal.WorldContext, id types.EntityID) error {
 	return err
 }
 
-func vampireSpawnSP(world cardinal.WorldContext, id types.EntityID) error {
+func vampireSpawnSP(world cardinal.WorldContext, id types.EntityID, sp *comp.Sp) error {
+
+	sp.Animation = "healing"
+
 	// get unit attack component
 	unitAtk, err := cardinal.GetComponent[comp.Attack](world, id)
 	if err != nil {
@@ -99,13 +116,16 @@ func vampireSpawnSP(world cardinal.WorldContext, id types.EntityID) error {
 		return fmt.Errorf("(sp_vampire.go): %v - ", err)
 	}
 	//create projectile entity
-	cardinal.Create(world,
+	_, err = cardinal.Create(world,
 		comp.MatchId{MatchId: matchID.MatchId},
 		comp.UID{UID: UID},
 		comp.SpEntity{SpName: "VampireSP"},
 		comp.IntTracker{Num: 0},
 		comp.Target{Target: id},
 	)
+	if err != nil {
+		return fmt.Errorf("error creating healing entity (sp_vampire.go): %v", err)
+	}
 
 	return err
 }

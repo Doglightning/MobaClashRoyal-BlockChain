@@ -45,14 +45,14 @@ func SpUpdater(world cardinal.WorldContext) error {
 }
 
 // spawns the special attack
-func spSpawner(world cardinal.WorldContext, id types.EntityID, name string) error {
+func spSpawner(world cardinal.WorldContext, id types.EntityID, name string, sp *comp.Sp) error {
 	var err error
 	if name == "ArcherLady" {
 		err = archerLadySpawn(world, id)
 	}
 
 	if name == "Vampire" {
-		err = vampireSpawnSP(world, id)
+		err = vampireSpawnSP(world, id, sp)
 	}
 	return err
 }
