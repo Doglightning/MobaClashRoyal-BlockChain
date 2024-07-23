@@ -28,7 +28,7 @@ func NewArcherLadySpawnSP() *archerLadySpawnSP {
 		Distance:              1600,
 		Speed:                 150,
 		RadiusArrows:          150,
-		Damage:                30,
+		Damage:                20,
 	}
 }
 
@@ -40,7 +40,7 @@ type archerLadyUpdateSP struct {
 // update vars
 func NewArcherLadyUpdateSP() *archerLadyUpdateSP {
 	return &archerLadyUpdateSP{
-		BaseDmgReductionFactor: 4,
+		BaseDmgReductionFactor: 3,
 	}
 }
 
