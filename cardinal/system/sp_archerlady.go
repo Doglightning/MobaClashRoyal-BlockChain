@@ -9,7 +9,7 @@ import (
 )
 
 // archerLadySP struct contains configuration for an archer lady in terms of her shooting properties.
-type archerLadySP struct {
+type archerLadySpawnSP struct {
 	Name                  string
 	NumArrows             int
 	ArrowSeparationDegree float64
@@ -20,8 +20,8 @@ type archerLadySP struct {
 }
 
 // NewArcherLadySP creates a new instance of archerLadySP with default settings.
-func NewArcherLadySP() *archerLadySP {
-	return &archerLadySP{
+func NewArcherLadySpawnSP() *archerLadySpawnSP {
+	return &archerLadySpawnSP{
 		Name:                  "ArcherLadySP",
 		NumArrows:             6,
 		ArrowSeparationDegree: 20,
@@ -32,9 +32,21 @@ func NewArcherLadySP() *archerLadySP {
 	}
 }
 
+// update struct
+type archerLadyUpdateSP struct {
+	BaseDmgReductionFactor int
+}
+
+// update vars
+func NewArcherLadyUpdateSP() *archerLadyUpdateSP {
+	return &archerLadyUpdateSP{
+		BaseDmgReductionFactor: 4,
+	}
+}
+
 // spawns the archer ladies villy special power
 func archerLadySpawn(world cardinal.WorldContext, id types.EntityID) error {
-	archerLady := NewArcherLadySP()
+	archerLady := NewArcherLadySpawnSP()
 
 	//get needed components
 	uPos, matchID, mapName, team, err := GetSpComponentsAL(world, id)
@@ -146,7 +158,21 @@ func archerLadyUpdate(world cardinal.WorldContext, id types.EntityID) error {
 					fmt.Printf("error retrieving collision health component (sp_archerlady.go): ")
 					return nil
 				}
-				health.CurrentHP -= float32(dmg.Damage)
+				targetName, err := cardinal.GetComponent[comp.UnitName](world, closestUnit)
+				if err != nil {
+					fmt.Printf("error retrieving target unit name component (sp_archerlady.go): ")
+					return nil
+				}
+
+				if targetName.UnitName == "Base" || targetName.UnitName == "Tower" { // reduce damage to structures
+					archerLady := NewArcherLadyUpdateSP() // get reduction var
+					health.CurrentHP -= float32(dmg.Damage / archerLady.BaseDmgReductionFactor)
+					fmt.Println("true")
+				} else {
+					health.CurrentHP -= float32(dmg.Damage)
+					fmt.Println("false")
+				}
+
 				if health.CurrentHP < 0 {
 					health.CurrentHP = 0
 				}
