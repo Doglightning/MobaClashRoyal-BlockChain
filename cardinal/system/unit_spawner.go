@@ -51,6 +51,25 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 			if !exists {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("error key for MapDataRegistry does not exsist (unit_spawner.go)")
 			}
+
+			// check direction map exsists
+			mapDir, ok := MapRegistry[create.Msg.MapName]
+			if !ok {
+				return msg.CreateUnitResult{Success: false}, fmt.Errorf("error key for MapRegistry does not exsist (unit_spawner.go)")
+			}
+
+			// normalize the units position to the maps grid increments.
+			normalizedX := int(((int(create.Msg.PositionX)-mapData.StartX)/mapData.Increment))*mapData.Increment + mapData.StartX
+			normalizedY := int(((int(create.Msg.PositionY)-mapData.StartY)/mapData.Increment))*mapData.Increment + mapData.StartY
+			// The units (x,y) coordinates normalized and turned into proper key(string) format for seaching map
+			coordKey := fmt.Sprintf("%d,%d", normalizedX, normalizedY)
+
+			// Retrieve direction vector using coordinate key
+			_, ok = mapDir.DMap[coordKey]
+			if !ok {
+				return msg.CreateUnitResult{Success: false}, fmt.Errorf("no direction vector found for the given coordinates (unit_spawner.go)")
+			}
+
 			if create.Msg.Team == "Blue" {
 				tempDistance = distanceBetweenTwoPoints(float32(mapData.Bases[1][0]), float32(mapData.Bases[1][1]), create.Msg.PositionX, create.Msg.PositionY)
 			} else {

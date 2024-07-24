@@ -253,20 +253,85 @@ func moveUnitDirectionMap(position *comp.Position, team *comp.Team, movespeed fl
 	if !exists {
 		return nil, fmt.Errorf("no direction vector found for the given coordinates (MoveUnitDirectionMap)")
 	}
+
+	var dirX, dirY float32
 	//updated rotation based on team
 	if team.Team == "Blue" {
-		position.RotationVectorX = directionVector[0]
-		position.RotationVectorY = directionVector[1]
+		dirX = directionVector[0]
+		dirY = directionVector[1]
 	} else {
-		position.RotationVectorX = directionVector[0] * -1 //reverse direction for red
-		position.RotationVectorY = directionVector[1] * -1
+		dirX = directionVector[0] * -1 //reverse direction for red
+		dirY = directionVector[1] * -1
 	}
 
 	//update new x,y based on movespeed
-	position.PositionVectorX = position.PositionVectorX + (position.RotationVectorX * movespeed)
-	position.PositionVectorY = position.PositionVectorY + (position.RotationVectorY * movespeed)
+	tempX := position.PositionVectorX + (dirX * movespeed)
+	tempY := position.PositionVectorY + (dirY * movespeed)
+	tempDirX := dirX
+	tempDirY := dirY
+
+	angle := 5.0    // Degrees to rotate each step
+	sumAngle := 0.0 // Sum of rotated angles
+
+	for i := 0; ; i++ {
+		if moveDirectionExsist(tempX, tempY, mapName) {
+			//update new x,y based on movespeed
+			position.PositionVectorX = tempX
+			position.PositionVectorY = tempY
+			position.RotationVectorX = tempDirX
+			position.RotationVectorY = tempDirY
+			break
+
+		}
+		// Rotate clockwise for even i, counterclockwise for odd i
+		if i%2 == 0 {
+			dirX, dirY = rotateVectorDegrees(tempDirX, tempDirY, angle)
+			angle += angle
+		} else {
+			dirX, dirY = rotateVectorDegrees(tempDirX, tempDirY, -angle)
+			angle += angle
+		}
+		tempX = position.PositionVectorX + (dirX * movespeed)
+		tempY = position.PositionVectorY + (dirY * movespeed)
+
+		// Check if the rotation has reached 180 degrees
+		if math.Abs(sumAngle) >= 180 {
+			break
+		}
+	}
 
 	return position, nil
+}
+
+// Moves Unit in direction of the map Direction vector
+func moveDirectionExsist(x, y float32, mapName *comp.MapName) bool {
+	//check map data exsists
+	mapData, exists := MapDataRegistry[mapName.MapName]
+	if !exists {
+		fmt.Printf("error key for MapDataRegistry does not exsist (MoveUnitDirectionMap)")
+		return false
+	}
+	//check direction map exsists
+	mapDir, ok := MapRegistry[mapName.MapName]
+	if !ok {
+		fmt.Printf("error key for MapRegistry does not exsist (MoveUnitDirectionMap)")
+		return false
+	}
+
+	//normalize the units position to the maps grid increments.
+	normalizedX := int(((int(x)-mapData.StartX)/mapData.Increment))*mapData.Increment + mapData.StartX
+	normalizedY := int(((int(y)-mapData.StartY)/mapData.Increment))*mapData.Increment + mapData.StartY
+	//The units (x,y) coordinates normalized and turned into proper key(string) format for seaching map
+	coordKey := fmt.Sprintf("%d,%d", normalizedX, normalizedY)
+
+	// Retrieve direction vector using coordinate key
+	_, exists = mapDir.DMap[coordKey]
+	if !exists {
+		fmt.Printf("no direction vector found for the given coordinates (MoveUnitDirectionMap)")
+		return false
+	}
+
+	return true
 }
 
 // FindClosestEnemy performs a BFS search from the unit's position outward within the attack radius.
