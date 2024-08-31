@@ -69,7 +69,7 @@ func MustInitWorld(w *cardinal.World) {
 	Must(
 		cardinal.RegisterQuery[query.MatchIdRequest, query.TeamStateResponse](w, "team-state", query.TeamState),
 		cardinal.RegisterQuery[query.UnitMatchIdRequest, query.UnitStateResponse](w, "game-state", query.GameState),
-		cardinal.RegisterQuery[query.RemovalMatchIdRequest, query.RemovalStateResponse](w, "removal-state", query.RemovalState),
+		cardinal.RegisterQuery[query.PSMatchIdRequest, query.PlayerStateResponse](w, "player-state", query.PlayerState),
 	)
 
 	// Each system executes deterministically in the order they are added.

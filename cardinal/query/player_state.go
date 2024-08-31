@@ -10,18 +10,19 @@ import (
 	"pkg.world.dev/world-engine/cardinal/search/filter"
 )
 
-type RemovalMatchIdRequest struct {
+type PSMatchIdRequest struct {
 	MatchId string
 	Team    string
 }
 
-type RemovalStateResponse struct {
+type PlayerStateResponse struct {
 	Units []int
+	Gold  float32
 }
 
 // get a list of all units to be removed for a player to maintian replication
-func RemovalState(world cardinal.WorldContext, req *RemovalMatchIdRequest) (*RemovalStateResponse, error) {
-	var response RemovalStateResponse
+func PlayerState(world cardinal.WorldContext, req *PSMatchIdRequest) (*PlayerStateResponse, error) {
+	var response PlayerStateResponse
 	var removeList = []int{}
 
 	//find gameState using matchID
@@ -50,9 +51,11 @@ func RemovalState(world cardinal.WorldContext, req *RemovalMatchIdRequest) (*Rem
 		for key := range player1.RemovalList {
 			removeList = append(removeList, key)
 		}
+		//player1 gold
+		response.Gold = player1.Gold
 
 	} else {
-		// Get Player1 component
+		// Get Player2 component
 		player2, err := cardinal.GetComponent[comp.Player2](world, gameState)
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving Player2 component (Removal State Query): %w", err)
@@ -61,7 +64,10 @@ func RemovalState(world cardinal.WorldContext, req *RemovalMatchIdRequest) (*Rem
 		for key := range player2.RemovalList {
 			removeList = append(removeList, key)
 		}
+		//player2 gold
+		response.Gold = player2.Gold
 	}
 	response.Units = removeList
+
 	return &response, nil
 }
