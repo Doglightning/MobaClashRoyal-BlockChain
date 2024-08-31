@@ -144,6 +144,54 @@ func spawnBasesGSS(world cardinal.WorldContext, matchID string, teamStateID type
 	//incriment UID
 	uid.UID++
 
+	//spawn all towers
+	for i := 0; i < MapDataRegistry[mapName].numTowers; i++ {
+		//spawn Blue towers
+		towerID, err := cardinal.Create(world,
+			comp.MatchId{MatchId: matchID},
+			comp.UID{UID: uid.UID},
+			comp.MapName{MapName: mapName},
+			comp.UnitName{UnitName: "Tower"},
+			comp.Team{Team: "Blue"},
+			comp.Health{CurrentHP: StructureDataRegistry["Tower"].Health, MaxHP: StructureDataRegistry["Tower"].Health},
+			comp.Position{PositionVectorX: float32(MapDataRegistry[mapName].TowersBlue[i][0]), PositionVectorY: float32(MapDataRegistry[mapName].TowersBlue[i][1])},
+			comp.UnitRadius{UnitRadius: StructureDataRegistry["Tower"].Radius},
+		)
+
+		if err != nil {
+			return fmt.Errorf("error creating blue tower ((game_state_spawner.go/spawnBasesGSS)): %w", err)
+		}
+
+		//add structure to spatial hash collision map
+		AddObjectSpatialHash(spatialHash, towerID, float32(MapDataRegistry[mapName].TowersBlue[i][0]), float32(MapDataRegistry[mapName].TowersBlue[i][1]), StructureDataRegistry["Tower"].Radius, "Blue")
+
+		//incriment UID
+		uid.UID++
+
+		//spawn Blue towers
+		towerID, err = cardinal.Create(world,
+			comp.MatchId{MatchId: matchID},
+			comp.UID{UID: uid.UID},
+			comp.MapName{MapName: mapName},
+			comp.UnitName{UnitName: "Tower"},
+			comp.Team{Team: "Red"},
+			comp.Health{CurrentHP: StructureDataRegistry["Tower"].Health, MaxHP: StructureDataRegistry["Tower"].Health},
+			comp.Position{PositionVectorX: float32(MapDataRegistry[mapName].TowersRed[i][0]), PositionVectorY: float32(MapDataRegistry[mapName].TowersRed[i][1])},
+			comp.UnitRadius{UnitRadius: StructureDataRegistry["Tower"].Radius},
+		)
+
+		if err != nil {
+			return fmt.Errorf("error creating red tower ((game_state_spawner.go/spawnBasesGSS)): %w", err)
+		}
+
+		//add structure to spatial hash collision map
+		AddObjectSpatialHash(spatialHash, towerID, float32(MapDataRegistry[mapName].TowersRed[i][0]), float32(MapDataRegistry[mapName].TowersRed[i][1]), StructureDataRegistry["Tower"].Radius, "Red")
+
+		//incriment UID
+		uid.UID++
+
+	}
+
 	//set UID in game state
 	if err := cardinal.SetComponent[comp.UID](world, teamStateID, uid); err != nil {
 		return fmt.Errorf("error updating UID (team state spawner (game_state_spawner.go/spawnBasesGSS): %w", err)
