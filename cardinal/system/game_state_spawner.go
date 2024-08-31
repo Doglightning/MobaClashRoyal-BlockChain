@@ -110,6 +110,7 @@ func spawnBasesGSS(world cardinal.WorldContext, matchID string, teamStateID type
 		comp.Health{CurrentHP: StructureDataRegistry["Base"].Health, MaxHP: StructureDataRegistry["Base"].Health},
 		comp.Position{PositionVectorX: float32(MapDataRegistry[mapName].Bases[0][0]), PositionVectorY: float32(MapDataRegistry[mapName].Bases[0][1])},
 		comp.UnitRadius{UnitRadius: StructureDataRegistry["Base"].Radius},
+		comp.State{State: "Default"},
 	)
 
 	if err != nil {
@@ -132,6 +133,7 @@ func spawnBasesGSS(world cardinal.WorldContext, matchID string, teamStateID type
 		comp.Health{CurrentHP: StructureDataRegistry["Base"].Health, MaxHP: StructureDataRegistry["Base"].Health},
 		comp.Position{PositionVectorX: float32(MapDataRegistry[mapName].Bases[1][0]), PositionVectorY: float32(MapDataRegistry[mapName].Bases[1][1])},
 		comp.UnitRadius{UnitRadius: StructureDataRegistry["Base"].Radius},
+		comp.State{State: "Default"},
 	)
 
 	if err != nil {
@@ -156,6 +158,7 @@ func spawnBasesGSS(world cardinal.WorldContext, matchID string, teamStateID type
 			comp.Health{CurrentHP: StructureDataRegistry["Tower"].Health, MaxHP: StructureDataRegistry["Tower"].Health},
 			comp.Position{PositionVectorX: float32(MapDataRegistry[mapName].TowersBlue[i][0]), PositionVectorY: float32(MapDataRegistry[mapName].TowersBlue[i][1])},
 			comp.UnitRadius{UnitRadius: StructureDataRegistry["Tower"].Radius},
+			comp.State{State: "Default"},
 		)
 
 		if err != nil {
@@ -178,6 +181,7 @@ func spawnBasesGSS(world cardinal.WorldContext, matchID string, teamStateID type
 			comp.Health{CurrentHP: StructureDataRegistry["Tower"].Health, MaxHP: StructureDataRegistry["Tower"].Health},
 			comp.Position{PositionVectorX: float32(MapDataRegistry[mapName].TowersRed[i][0]), PositionVectorY: float32(MapDataRegistry[mapName].TowersRed[i][1])},
 			comp.UnitRadius{UnitRadius: StructureDataRegistry["Tower"].Radius},
+			comp.State{State: "Default"},
 		)
 
 		if err != nil {

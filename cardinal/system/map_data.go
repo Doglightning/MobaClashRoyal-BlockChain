@@ -31,5 +31,5 @@ type StructureData struct {
 // structures
 var StructureDataRegistry = map[string]StructureData{
 	"Base":  {Health: 200, Radius: 240},
-	"Tower": {Health: 100, Radius: 150},
+	"Tower": {Health: 150, Radius: 150},
 }
