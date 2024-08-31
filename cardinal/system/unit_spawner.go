@@ -37,14 +37,29 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("unit type %s not found in registry (unit_spawner.go)", create.Msg.UnitType)
 			}
 
-			//get new UID
-			UID, err := getNextUID(world, create.Msg.MatchID)
-			if err != nil {
-				return msg.CreateUnitResult{Success: false}, fmt.Errorf("(unit_spawner.go) - %w", err)
+			var player1 *comp.Player1
+			var player2 *comp.Player2
+			if create.Msg.Team == "Blue" {
+				//get player1 component from game state
+				player1, err = cardinal.GetComponent[comp.Player1](world, gameState)
+				if err != nil {
+					return msg.CreateUnitResult{Success: false}, fmt.Errorf("error getting player1 component (unit_spawner.go): %w", err)
+				}
+				//check if enough gold to spawn unit
+				if player1.Gold < float32(unitType.Cost) {
+					return msg.CreateUnitResult{Success: false}, fmt.Errorf("not enough gold to spawn %s (unit_spawner.go): ", unitType.Name)
+				}
+			} else {
+				// get player2 component from game state
+				player2, err = cardinal.GetComponent[comp.Player2](world, gameState)
+				if err != nil {
+					return msg.CreateUnitResult{Success: false}, fmt.Errorf("error getting player2 component (unit_spawner.go): %w", err)
+				}
+				//check if enough gold to spawn unit
+				if player2.Gold < float32(unitType.Cost) {
+					return msg.CreateUnitResult{Success: false}, fmt.Errorf("not enough gold to spawn %s (unit_spawner.go): ", unitType.Name)
+				}
 			}
-
-			//calculate distance from enemy spawn
-			var tempDistance float32
 
 			//check map exsists in registy
 			mapData, exists := MapDataRegistry[create.Msg.MapName]
@@ -70,6 +85,8 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("no direction vector found for the given coordinates (unit_spawner.go)")
 			}
 
+			//calculate distance from enemy spawn
+			var tempDistance float32
 			if create.Msg.Team == "Blue" {
 				tempDistance = distanceBetweenTwoPoints(float32(mapData.Bases[1][0]), float32(mapData.Bases[1][1]), create.Msg.PositionX, create.Msg.PositionY)
 			} else {
@@ -84,6 +101,12 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 			//check if spawning on a taken spot in collision hash
 			if CheckCollisionSpatialHash(SpatialHash, create.Msg.PositionX, create.Msg.PositionY, unitType.Radius) {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("collision with unit (unit_spawner.go)")
+			}
+
+			//get new UID
+			UID, err := getNextUID(world, create.Msg.MatchID)
+			if err != nil {
+				return msg.CreateUnitResult{Success: false}, fmt.Errorf("(unit_spawner.go) - %w", err)
 			}
 
 			//create unit
@@ -107,6 +130,21 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 
 			//add unit to collision hash collision map
 			AddObjectSpatialHash(SpatialHash, entityID, create.Msg.PositionX, create.Msg.PositionY, unitType.Radius, create.Msg.Team)
+
+			//reduce player gold and then set the component
+			if create.Msg.Team == "Blue" {
+				player1.Gold -= float32(unitType.Cost)
+				err = cardinal.SetComponent(world, gameState, player1)
+				if err != nil {
+					return msg.CreateUnitResult{Success: false}, fmt.Errorf("error setting player1 component (unit_spawner.go): %w", err)
+				}
+			} else {
+				player2.Gold -= float32(unitType.Cost)
+				err = cardinal.SetComponent(world, gameState, player2)
+				if err != nil {
+					return msg.CreateUnitResult{Success: false}, fmt.Errorf("error setting player2 component (unit_spawner.go): %w", err)
+				}
+			}
 
 			return msg.CreateUnitResult{Success: true}, nil
 		})
