@@ -9,7 +9,7 @@ import (
 	"pkg.world.dev/world-engine/cardinal/types"
 )
 
-// destroy units with no health
+// destroy towers with no health
 func TowerDestroyerSystem(world cardinal.WorldContext) error {
 	// Filter for no HP
 	healthFilter := cardinal.ComponentFilter(func(m comp.Health) bool {
@@ -99,13 +99,13 @@ func TowerDestroyerSystem(world cardinal.WorldContext) error {
 				AddObjectSpatialHash(CollisionSpartialHash, id, UnitPosition.PositionVectorX, UnitPosition.PositionVectorY, UnitRadius.UnitRadius, "Blue")
 			}
 
-			state.State = "converting"
+			state.State = "Converting"
 			if err := cardinal.SetComponent(world, id, state); err != nil {
 				fmt.Printf("error updating state component (unit_destroyer.go): %s", err)
 				return false
 			}
 
-			health.CurrentHP = health.MaxHP / 2
+			health.CurrentHP = health.MaxHP / 4
 			if err := cardinal.SetComponent(world, id, health); err != nil {
 				fmt.Printf("error updating health component (unit_destroyer.go): %s", err)
 				return false

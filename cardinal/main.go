@@ -81,7 +81,8 @@ func MustInitWorld(w *cardinal.World) {
 		system.RemoveAllEntitiesMsgSystem,
 		system.GameStateSpawnerSystem,
 
-		system.GoldGeneration,     //prespawn phase
+		system.GoldGeneration, //prespawn phase
+		system.TowerConverterSystem,
 		system.UnitSpawnerSystem,  //spawn phase
 		system.UnitMovementSystem, //move phase
 		system.ProjectileMovementSystem,
