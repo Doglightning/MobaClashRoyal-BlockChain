@@ -86,9 +86,8 @@ func MustInitWorld(w *cardinal.World) {
 		system.UnitSpawnerSystem,  //spawn phase
 		system.UnitMovementSystem, //move phase
 		system.ProjectileMovementSystem,
-		system.CombatCheckSystem,      //pre attack phase
-		system.ProjectileAttackSystem, //attack phase
-		system.UnitAttackSystem,
+		system.CombatCheckSystem, //pre attack phase
+		system.AttackPhaseSystem,
 		system.SpUpdater,
 		system.ProjectileDestroyerSystem, //destroy phase
 		system.UnitDestroyerSystem,

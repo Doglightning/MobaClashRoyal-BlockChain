@@ -167,10 +167,8 @@ func archerLadyUpdate(world cardinal.WorldContext, id types.EntityID) error {
 				if targetName.UnitName == "Base" || targetName.UnitName == "Tower" { // reduce damage to structures
 					archerLady := NewArcherLadyUpdateSP() // get reduction var
 					health.CurrentHP -= float32(dmg.Damage / archerLady.BaseDmgReductionFactor)
-					fmt.Println("true")
 				} else {
 					health.CurrentHP -= float32(dmg.Damage)
-					fmt.Println("false")
 				}
 
 				if health.CurrentHP < 0 {
