@@ -11,11 +11,26 @@ import (
 
 // make sure any units who are in range to attack get set for attack b4 attack phase
 func CombatCheckSystem(world cardinal.WorldContext) error {
+
+	err := unitCombatSearch(world)
+	if err != nil {
+		fmt.Printf("error searching for unit combat (check_combat.go): %v \n", err)
+	}
+
+	// err = structureCombatSearch(world)
+	// if err != nil {
+	// 	fmt.Printf("error searching for structure combat (check_combat.go): %v \n", err)
+	// }
+
+	return err
+}
+
+func unitCombatSearch(world cardinal.WorldContext) error {
 	// filter not in combat units
 	combatFilter := cardinal.ComponentFilter(func(m comp.Attack) bool {
 		return !m.Combat
 	})
-	//for each unit with no hp's ids
+	//for each unit not in combat
 	err := cardinal.NewSearch().Entity(
 		filter.Contains(UnitFilters())).
 		Where(combatFilter).Each(world, func(id types.EntityID) bool {
@@ -67,7 +82,64 @@ func CombatCheckSystem(world cardinal.WorldContext) error {
 		}
 		return true
 	})
+	return err
+}
 
+func structureCombatSearch(world cardinal.WorldContext) error {
+	//for each structure not in combat
+	err := cardinal.NewSearch().Entity(
+		filter.Contains(StructureFilters())).
+		Each(world, func(id types.EntityID) bool {
+			//get attack component
+			uAtk, err := cardinal.GetComponent[comp.Attack](world, id)
+			if err != nil {
+				fmt.Printf("failed to get attack comp (structureCombatSearch - check_combat.go): %v", err)
+				return false
+			}
+
+			if !uAtk.Combat { //not in combat
+				//get Unit Components
+				uPos, uRadius, uAtk, uTeam, MatchID, err := getUnitComponentsCC(world, id)
+				if err != nil {
+					fmt.Printf("(structureCombatSearch - check_combat.go) -%v", err)
+					return false
+				}
+
+				// get game state
+				gameState, err := getGameStateGSS(world, MatchID)
+				if err != nil {
+					fmt.Printf("(structureCombatSearch - check_combat.go): - %v", err)
+					return false
+				}
+
+				// get collision Hash
+				collisionHash, err := cardinal.GetComponent[comp.SpatialHash](world, gameState)
+				if err != nil {
+					fmt.Printf("error retrieving SpartialHash component on tempSpartialHash (structureCombatSearch - check_combat.go): %s", err)
+					return false
+				}
+				//find closest enemy
+				eID, eX, eY, eRadius, found := findClosestEnemy(collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uAtk.AggroRadius, uTeam.Team)
+				if found { //found enemy
+					// Calculate squared distance between the unit and the enemy, minus their radii
+					adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, eX, eY) - float32(eRadius) - float32(uRadius.UnitRadius)
+					//if within attack range
+					if adjustedDistance <= float32(uAtk.AttackRadius) {
+						uAtk.Combat = true
+						uAtk.Target = eID
+						//set attack component
+						if err = cardinal.SetComponent(world, id, uAtk); err != nil {
+							fmt.Printf("error setting attack component (structureCombatSearch - check_combat.go): %v", err)
+							return false
+						}
+					}
+
+				}
+			} else { // in combat make sure target still in range
+
+			}
+			return true
+		})
 	return err
 }
 

@@ -52,6 +52,13 @@ func UnitDestroyerSystem(world cardinal.WorldContext) error {
 			return false
 		}
 
+		//for Structures targetting self, reset combat
+		err = resetStructuresTargetingSelfUD(world, targetFilter)
+		if err != nil {
+			fmt.Printf("(unit_destroyer.go) %v", err)
+			return false
+		}
+
 		//for projectiles targetting self destroy
 		err = destroyProjectilesTargetingSelfUD(world, targetFilter, p1, p2)
 		if err != nil {
@@ -114,6 +121,30 @@ func resetUnitsTargetingSelfUD(world cardinal.WorldContext, targetFilter cardina
 		Where(targetFilter).Each(world, func(enemyID types.EntityID) bool {
 		//reset attack component
 		cardinal.UpdateComponent(world, enemyID, func(attack *comp.Attack) *comp.Attack {
+			if attack == nil {
+				fmt.Printf("error retrieving enemy attack component (unit_destroyer.go): ")
+				return nil
+			}
+			attack.Combat = false
+			attack.Frame = 0
+			return attack
+		})
+		return true
+	})
+	if err != nil {
+		return fmt.Errorf("error retrieving unit entities (resetUnitsTargetingSelfUD): %s", err)
+	}
+	return nil
+}
+
+// for each unit targeting targetFilter, reset combat to false and attack frame to 0
+func resetStructuresTargetingSelfUD(world cardinal.WorldContext, targetFilter cardinal.FilterFn) error {
+	//for each targetting unit
+	err := cardinal.NewSearch().Entity(
+		filter.Contains(StructureFilters())).
+		Where(targetFilter).Each(world, func(structID types.EntityID) bool {
+		//reset attack component
+		cardinal.UpdateComponent(world, structID, func(attack *comp.Attack) *comp.Attack {
 			if attack == nil {
 				fmt.Printf("error retrieving enemy attack component (unit_destroyer.go): ")
 				return nil

@@ -454,8 +454,16 @@ func pushBlockingUnit(world cardinal.WorldContext, hash *comp.SpatialHash, objID
 				fmt.Printf("error getting targets team compoenent (pushBlockingUnit): %v", err)
 				continue
 			}
+
+			//get targets unit name
+			targetName, err := cardinal.GetComponent[comp.UnitName](world, collisionID)
+			if err != nil {
+				fmt.Printf("error getting targets name compoenent (pushBlockingUnit): %v", err)
+				continue
+			}
+
 			//if unit is ally push
-			if targetTeam.Team == team {
+			if targetTeam.Team == team && targetName.UnitName != "Base" && targetName.UnitName != "Tower" {
 				//get targets posisiton and radius components
 				targetPos, targetRadius, err := getTargetComponentsUM(world, collisionID)
 				if err != nil {
@@ -615,8 +623,8 @@ func moveToNearestFreeSpaceBox(hash *comp.SpatialHash, startX, startY, targetX, 
 	perpY := dirX
 
 	// Step size, which can be adjusted as needed
-	step := length / 8 // or another division factor
-
+	step := float32(2) // or another division factor
+	//length/8
 	// Half the unit's radius
 	halfWidth := radius / 2
 

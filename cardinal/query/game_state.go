@@ -69,6 +69,7 @@ type StructureDetails struct {
 	CurrentHP       float32
 	StructureName   string
 	Team            string
+	State           string
 	PositionVectorX float32
 	PositionVectorY float32
 }
@@ -230,6 +231,13 @@ func structureStateGS(world cardinal.WorldContext, matchFilter cardinal.FilterFn
 			return false
 		}
 		structure.StructureName = name.UnitName
+
+		// Fetch State component
+		state, err := cardinal.GetComponent[comp.State](world, id)
+		if err != nil {
+			return false
+		}
+		structure.State = state.State
 
 		// Fetch Position component
 		position, err := cardinal.GetComponent[comp.Position](world, id)
