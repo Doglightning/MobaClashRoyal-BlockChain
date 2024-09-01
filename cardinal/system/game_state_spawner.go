@@ -111,6 +111,7 @@ func spawnBasesGSS(world cardinal.WorldContext, matchID string, teamStateID type
 		comp.Position{PositionVectorX: float32(MapDataRegistry[mapName].Bases[0][0]), PositionVectorY: float32(MapDataRegistry[mapName].Bases[0][1])},
 		comp.UnitRadius{UnitRadius: StructureDataRegistry["Base"].Radius},
 		comp.State{State: "Default"},
+		comp.Attack{Combat: false, Damage: StructureDataRegistry["Base"].Damage, Rate: StructureDataRegistry["Base"].AttackRate, Frame: 0, DamageFrame: StructureDataRegistry["Base"].DamageFrame, Class: StructureDataRegistry["Base"].Class, AttackRadius: StructureDataRegistry["Base"].AttackRadius, AggroRadius: StructureDataRegistry["Base"].AggroRadius},
 	)
 
 	if err != nil {
@@ -134,6 +135,7 @@ func spawnBasesGSS(world cardinal.WorldContext, matchID string, teamStateID type
 		comp.Position{PositionVectorX: float32(MapDataRegistry[mapName].Bases[1][0]), PositionVectorY: float32(MapDataRegistry[mapName].Bases[1][1])},
 		comp.UnitRadius{UnitRadius: StructureDataRegistry["Base"].Radius},
 		comp.State{State: "Default"},
+		comp.Attack{Combat: false, Damage: StructureDataRegistry["Base"].Damage, Rate: StructureDataRegistry["Base"].AttackRate, Frame: 0, DamageFrame: StructureDataRegistry["Base"].DamageFrame, Class: StructureDataRegistry["Base"].Class, AttackRadius: StructureDataRegistry["Base"].AttackRadius, AggroRadius: StructureDataRegistry["Base"].AggroRadius},
 	)
 
 	if err != nil {
@@ -159,6 +161,7 @@ func spawnBasesGSS(world cardinal.WorldContext, matchID string, teamStateID type
 			comp.Position{PositionVectorX: float32(MapDataRegistry[mapName].TowersBlue[i][0]), PositionVectorY: float32(MapDataRegistry[mapName].TowersBlue[i][1])},
 			comp.UnitRadius{UnitRadius: StructureDataRegistry["Tower"].Radius},
 			comp.State{State: "Default"},
+			comp.Attack{Combat: false, Damage: StructureDataRegistry["Tower"].Damage, Rate: StructureDataRegistry["Tower"].AttackRate, Frame: 0, DamageFrame: StructureDataRegistry["Tower"].DamageFrame, Class: StructureDataRegistry["Tower"].Class, AttackRadius: StructureDataRegistry["Tower"].AttackRadius, AggroRadius: StructureDataRegistry["Tower"].AggroRadius},
 		)
 
 		if err != nil {
@@ -182,6 +185,7 @@ func spawnBasesGSS(world cardinal.WorldContext, matchID string, teamStateID type
 			comp.Position{PositionVectorX: float32(MapDataRegistry[mapName].TowersRed[i][0]), PositionVectorY: float32(MapDataRegistry[mapName].TowersRed[i][1])},
 			comp.UnitRadius{UnitRadius: StructureDataRegistry["Tower"].Radius},
 			comp.State{State: "Default"},
+			comp.Attack{Combat: false, Damage: StructureDataRegistry["Tower"].Damage, Rate: StructureDataRegistry["Tower"].AttackRate, Frame: 0, DamageFrame: StructureDataRegistry["Tower"].DamageFrame, Class: StructureDataRegistry["Tower"].Class, AttackRadius: StructureDataRegistry["Tower"].AttackRadius, AggroRadius: StructureDataRegistry["Tower"].AggroRadius},
 		)
 
 		if err != nil {

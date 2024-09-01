@@ -16,8 +16,8 @@ func GameStateFilters() (filter.ComponentWrapper, filter.ComponentWrapper, filte
 	return filter.Component[comp.MatchId](), filter.Component[comp.UID](), filter.Component[comp.Player1](), filter.Component[comp.Player2](), filter.Component[comp.SpatialHash]()
 }
 
-func StructureFilters() (filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper) {
-	return filter.Component[comp.MatchId](), filter.Component[comp.UID](), filter.Component[comp.Team](), filter.Component[comp.Health](), filter.Component[comp.UnitName](), filter.Component[comp.MapName](), filter.Component[comp.Position](), filter.Component[comp.UnitRadius](), filter.Component[comp.State]()
+func StructureFilters() (filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper) {
+	return filter.Component[comp.MatchId](), filter.Component[comp.UID](), filter.Component[comp.Team](), filter.Component[comp.Health](), filter.Component[comp.UnitName](), filter.Component[comp.MapName](), filter.Component[comp.Position](), filter.Component[comp.UnitRadius](), filter.Component[comp.State](), filter.Component[comp.Attack]()
 }
 
 func ProjectileFilters() (filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper) {

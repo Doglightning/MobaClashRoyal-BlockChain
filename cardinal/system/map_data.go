@@ -1,5 +1,7 @@
 package system
 
+import "pkg.world.dev/world-engine/cardinal/types"
+
 // size of collision hash map. (should be atleast 1.5x the size of the largest unit)
 var SpatialGridCellSize = 300
 
@@ -24,12 +26,19 @@ var MapDataRegistry = map[string]MapData{
 }
 
 type StructureData struct {
-	Health float32 `json:"health"`
-	Radius int
+	Health       float32        `json:"health"`
+	Radius       int            `json:"radius"`
+	Damage       int            `json:"damage"`
+	AttackRate   int            `json:"attackrate"`  //tick based 5 Rate = 5 ticks (100ms tickrate = 500ms attack rate)
+	DamageFrame  int            `json:"attackframe"` // Frame damage goes off (most animations have a wind down so the dmage goes off in the middle somewhere)
+	AttackRadius int            `json:"AttackRadius"`
+	AggroRadius  int            `json:"AggroRadius"`
+	Target       types.EntityID `json:"target"`
+	Class        string         `json:"class"`
 }
 
 // structures
 var StructureDataRegistry = map[string]StructureData{
-	"Base":  {Health: 200, Radius: 240},
-	"Tower": {Health: 150, Radius: 150},
+	"Base":  {Class: "Range", Health: 200, Radius: 240, Damage: 15, AttackRate: 20, DamageFrame: 10, AttackRadius: 1200, AggroRadius: 1200},
+	"Tower": {Class: "Range", Health: 150, Radius: 150, Damage: 15, AttackRate: 20, DamageFrame: 10, AttackRadius: 1200, AggroRadius: 1200},
 }
