@@ -23,7 +23,7 @@ func AttackPhaseSystem(world cardinal.WorldContext) error {
 		// get attack component
 		atk, err := cardinal.GetComponent[comp.Attack](world, id)
 		if err != nil {
-			fmt.Printf("error retrieving unit Attack component (Unit_Attack.go): %v \n", err)
+			fmt.Printf("error retrieving unit Attack component (phase_Attack.go): %v \n", err)
 			return false
 		}
 
@@ -48,7 +48,7 @@ func AttackPhaseSystem(world cardinal.WorldContext) error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("error retrieving unit entities (Unit_Attack.go): %w ", err)
+		return fmt.Errorf("error retrieving unit entities (phase_Attack.go): %w ", err)
 	}
 	return nil
 }
@@ -60,13 +60,13 @@ func MeleeRangeAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 		//get special power component
 		unitSp, err := cardinal.GetComponent[comp.Sp](world, id)
 		if err != nil {
-			return fmt.Errorf("error retrieving special power component (Unit_Attack.go): %v", err)
+			return fmt.Errorf("error retrieving special power component (phase_Attack.go): %v", err)
 		}
 
 		//get units name
 		unitName, err := cardinal.GetComponent[comp.UnitName](world, id)
 		if err != nil {
-			return fmt.Errorf("error retrieving unit name component (Unit_Attack.go): %v", err)
+			return fmt.Errorf("error retrieving unit name component (phase_Attack.go): %v", err)
 		}
 
 		//if unit is ready to use Special power attack
@@ -74,7 +74,7 @@ func MeleeRangeAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 			//spawn special power
 			err = spSpawner(world, id, unitName.UnitName, unitSp)
 			if err != nil {
-				return fmt.Errorf("error spawning special attack (Unit_Attack.go): %v - ", err)
+				return fmt.Errorf("error spawning special attack (phase_Attack.go): %v - ", err)
 			}
 
 		} else { // normal attack
@@ -97,7 +97,7 @@ func MeleeRangeAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 		}
 		// set updated attack component
 		if err := cardinal.SetComponent(world, id, unitSp); err != nil {
-			return fmt.Errorf("error updating special power component (Unit_Attack.go): %s ", err)
+			return fmt.Errorf("error updating special power component (phase_Attack.go): %s ", err)
 		}
 	}
 	//if our attack frame is at the attack rate reset
@@ -107,7 +107,7 @@ func MeleeRangeAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 	atk.Frame++
 	// set updated attack component
 	if err := cardinal.SetComponent(world, id, atk); err != nil {
-		return fmt.Errorf("error updating attack component (Unit_Attack.go): %s ", err)
+		return fmt.Errorf("error updating attack component (phase_Attack.go): %s ", err)
 	}
 
 	return nil
@@ -118,7 +118,7 @@ func ProjectileAttack(world cardinal.WorldContext, id types.EntityID, projectile
 	//get targets health compoenent from the projectiles attack target
 	enemyHealth, err := cardinal.GetComponent[comp.Health](world, projectileAttack.Target)
 	if err != nil {
-		return fmt.Errorf("error getting enemy Health component (projectile_Attack.go): %v ", err)
+		return fmt.Errorf("error getting enemy Health component (projectile_Attack - phase_Attack.go): %v ", err)
 	}
 
 	//reduce enemy HP
@@ -129,19 +129,19 @@ func ProjectileAttack(world cardinal.WorldContext, id types.EntityID, projectile
 	//set enemy HP compoenent
 	err = cardinal.SetComponent(world, projectileAttack.Target, enemyHealth)
 	if err != nil {
-		return fmt.Errorf("error setting Health component (projectile_Attack.go): %v ", err)
+		return fmt.Errorf("error setting Health component (projectile_Attack - phase_Attack.go): %v ", err)
 	}
 	//set projectime combat to false
 	projectileAttack.Combat = false
 	//set attack component
 	if err := cardinal.SetComponent(world, id, projectileAttack); err != nil {
-		return fmt.Errorf("error updating attack component (projectile_Attack.go): %v ", err)
+		return fmt.Errorf("error updating attack component (projectile_Attack - phase_Attack.go): %v ", err)
 	}
 
 	//update projectiles destroyed component to True
 	cardinal.UpdateComponent(world, id, func(destroyed *comp.Destroyed) *comp.Destroyed {
 		if destroyed == nil {
-			fmt.Printf("error retrieving enemy destroyed component (projectile_Attack.go): \n")
+			fmt.Printf("error retrieving enemy destroyed component (projectile_Attack - phase_Attack.go): \n")
 			return nil
 		}
 		destroyed.Destroyed = true
