@@ -10,8 +10,6 @@ import (
 	"pkg.world.dev/world-engine/cardinal/types"
 )
 
-var projectileCenterMass float32 = 150
-
 // moves projectiles towards target
 func ProjectileMovementSystem(world cardinal.WorldContext) error {
 	//filter for class type projectile
@@ -41,11 +39,17 @@ func ProjectileMovementSystem(world cardinal.WorldContext) error {
 			fmt.Printf("error retrieving enemy Position component (Projectile_movement.go): %v \n", err)
 			return false
 		}
+		//get projectiles targets center offset
+		eCenOffset, err := cardinal.GetComponent[comp.CenterOffset](world, projectileAtk.Target)
+		if err != nil {
+			fmt.Printf("error retrieving enemy center offset component (Projectile_movement.go): %v \n", err)
+			return false
+		}
 
 		// Compute direction vector towards the enemy
 		deltaX := enemyPos.PositionVectorX - projectilePos.PositionVectorX
 		deltaY := enemyPos.PositionVectorY - projectilePos.PositionVectorY
-		deltaZ := enemyPos.PositionVectorZ - projectilePos.PositionVectorZ + projectileCenterMass
+		deltaZ := enemyPos.PositionVectorZ - projectilePos.PositionVectorZ + eCenOffset.CenterOffset
 		magnitude := float32(math.Sqrt(float64(deltaX*deltaX + deltaY*deltaY + deltaZ*deltaZ)))
 
 		// Normalize the direction vector

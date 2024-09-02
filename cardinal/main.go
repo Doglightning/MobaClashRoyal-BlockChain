@@ -54,6 +54,7 @@ func MustInitWorld(w *cardinal.World) {
 		cardinal.RegisterComponent[component.UnitRadius](w),
 		cardinal.RegisterComponent[component.IntTracker](w),
 		cardinal.RegisterComponent[component.State](w),
+		cardinal.RegisterComponent[component.CenterOffset](w),
 	)
 
 	// Register messages (user action)

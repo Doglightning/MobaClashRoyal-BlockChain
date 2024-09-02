@@ -112,6 +112,7 @@ func spawnBasesGSS(world cardinal.WorldContext, matchID string, teamStateID type
 		comp.UnitRadius{UnitRadius: StructureDataRegistry["Base"].Radius},
 		comp.State{State: "Default"},
 		comp.Attack{Combat: false, Damage: StructureDataRegistry["Base"].Damage, Rate: StructureDataRegistry["Base"].AttackRate, Frame: 0, DamageFrame: StructureDataRegistry["Base"].DamageFrame, Class: StructureDataRegistry["Base"].Class, AttackRadius: StructureDataRegistry["Base"].AttackRadius, AggroRadius: StructureDataRegistry["Base"].AggroRadius},
+		comp.CenterOffset{CenterOffset: StructureDataRegistry["Base"].CenterOffset},
 	)
 
 	if err != nil {
@@ -136,6 +137,7 @@ func spawnBasesGSS(world cardinal.WorldContext, matchID string, teamStateID type
 		comp.UnitRadius{UnitRadius: StructureDataRegistry["Base"].Radius},
 		comp.State{State: "Default"},
 		comp.Attack{Combat: false, Damage: StructureDataRegistry["Base"].Damage, Rate: StructureDataRegistry["Base"].AttackRate, Frame: 0, DamageFrame: StructureDataRegistry["Base"].DamageFrame, Class: StructureDataRegistry["Base"].Class, AttackRadius: StructureDataRegistry["Base"].AttackRadius, AggroRadius: StructureDataRegistry["Base"].AggroRadius},
+		comp.CenterOffset{CenterOffset: StructureDataRegistry["Base"].CenterOffset},
 	)
 
 	if err != nil {
@@ -162,6 +164,7 @@ func spawnBasesGSS(world cardinal.WorldContext, matchID string, teamStateID type
 			comp.UnitRadius{UnitRadius: StructureDataRegistry["Tower"].Radius},
 			comp.State{State: "Default"},
 			comp.Attack{Combat: false, Damage: StructureDataRegistry["Tower"].Damage, Rate: StructureDataRegistry["Tower"].AttackRate, Frame: 0, DamageFrame: StructureDataRegistry["Tower"].DamageFrame, Class: StructureDataRegistry["Tower"].Class, AttackRadius: StructureDataRegistry["Tower"].AttackRadius, AggroRadius: StructureDataRegistry["Tower"].AggroRadius},
+			comp.CenterOffset{CenterOffset: StructureDataRegistry["Tower"].CenterOffset},
 		)
 
 		if err != nil {
@@ -186,6 +189,7 @@ func spawnBasesGSS(world cardinal.WorldContext, matchID string, teamStateID type
 			comp.UnitRadius{UnitRadius: StructureDataRegistry["Tower"].Radius},
 			comp.State{State: "Default"},
 			comp.Attack{Combat: false, Damage: StructureDataRegistry["Tower"].Damage, Rate: StructureDataRegistry["Tower"].AttackRate, Frame: 0, DamageFrame: StructureDataRegistry["Tower"].DamageFrame, Class: StructureDataRegistry["Tower"].Class, AttackRadius: StructureDataRegistry["Tower"].AttackRadius, AggroRadius: StructureDataRegistry["Tower"].AggroRadius},
+			comp.CenterOffset{CenterOffset: StructureDataRegistry["Tower"].CenterOffset},
 		)
 
 		if err != nil {

@@ -123,6 +123,7 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 				comp.UnitRadius{UnitRadius: unitType.Radius},
 				comp.Attack{Combat: false, Damage: unitType.Damage, Rate: unitType.AttackRate, Frame: 0, DamageFrame: unitType.DamageFrame, Class: unitType.Class, AttackRadius: unitType.AttackRadius, AggroRadius: unitType.AggroRadius},
 				comp.Sp{DmgSp: unitType.DmgSp, SpRate: unitType.SpRate, CurrentSp: unitType.CurrentSP, MaxSp: unitType.MaxSP, Animation: "default"},
+				comp.CenterOffset{CenterOffset: unitType.CenterOffset},
 			)
 			if err != nil {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("error creating unit (unit_spawner.go): %w", err)

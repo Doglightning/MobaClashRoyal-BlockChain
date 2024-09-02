@@ -15,6 +15,7 @@ type archerLadySpawnSP struct {
 	ArrowSeparationDegree float64
 	Distance              float32
 	Speed                 float32
+	offSet                float32
 	RadiusArrows          int
 	Damage                int
 }
@@ -27,6 +28,7 @@ func NewArcherLadySpawnSP() *archerLadySpawnSP {
 		ArrowSeparationDegree: 20,
 		Distance:              1600,
 		Speed:                 150,
+		offSet:                190,
 		RadiusArrows:          150,
 		Damage:                20,
 	}
@@ -68,7 +70,14 @@ func archerLadySpawn(world cardinal.WorldContext, id types.EntityID) error {
 			comp.UID{UID: UID},
 			comp.SpName{SpName: archerLady.Name},
 			comp.Movespeed{CurrentMS: archerLady.Speed},
-			comp.Position{PositionVectorX: uPos.PositionVectorX, PositionVectorY: uPos.PositionVectorY, PositionVectorZ: uPos.PositionVectorZ, RotationVectorX: vectors[i][0], RotationVectorY: vectors[i][1], RotationVectorZ: uPos.RotationVectorZ},
+			comp.Position{
+				PositionVectorX: uPos.PositionVectorX,
+				PositionVectorY: uPos.PositionVectorY,
+				PositionVectorZ: uPos.PositionVectorZ + archerLady.offSet,
+				RotationVectorX: vectors[i][0],
+				RotationVectorY: vectors[i][1],
+				RotationVectorZ: uPos.RotationVectorZ,
+			},
 			comp.MapName{MapName: mapName.MapName},
 			comp.Damage{Damage: archerLady.Damage},
 			comp.Destroyed{Destroyed: false},
@@ -222,7 +231,14 @@ func archerLadyAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 		comp.UID{UID: UID},
 		comp.UnitName{UnitName: ProjectileRegistry[unitName.UnitName].Name},
 		comp.Movespeed{CurrentMS: ProjectileRegistry[unitName.UnitName].Speed},
-		comp.Position{PositionVectorX: unitPosition.PositionVectorX, PositionVectorY: unitPosition.PositionVectorY, PositionVectorZ: unitPosition.PositionVectorZ, RotationVectorX: unitPosition.RotationVectorX, RotationVectorY: unitPosition.RotationVectorY, RotationVectorZ: unitPosition.RotationVectorZ},
+		comp.Position{
+			PositionVectorX: unitPosition.PositionVectorX,
+			PositionVectorY: unitPosition.PositionVectorY,
+			PositionVectorZ: unitPosition.PositionVectorZ + ProjectileRegistry[unitName.UnitName].offSetZ,
+			RotationVectorX: unitPosition.RotationVectorX,
+			RotationVectorY: unitPosition.RotationVectorY,
+			RotationVectorZ: unitPosition.RotationVectorZ,
+		},
 		comp.MapName{MapName: mapName.MapName},
 		comp.Attack{Target: atk.Target, Class: "projectile", Damage: UnitRegistry[unitName.UnitName].Damage},
 		comp.Destroyed{Destroyed: false},
