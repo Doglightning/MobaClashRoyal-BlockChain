@@ -68,7 +68,7 @@ func TowerAttackSystem(world cardinal.WorldContext) error {
 
 				if unitAtk.Class == "range" { //if range
 					//get units component
-					unitPosition, matchID, mapName, unitName, err := GetUnitComponentsUA(world, id)
+					unitPosition, matchID, mapName, unitName, err := archerLadyAttackComponentsUA(world, id)
 					if err != nil {
 						fmt.Printf("%v", err)
 						return false

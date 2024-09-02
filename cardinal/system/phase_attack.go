@@ -62,13 +62,15 @@ func MeleeRangeAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 		if err != nil {
 			return fmt.Errorf("error retrieving special power component (Unit_Attack.go): %v", err)
 		}
+
+		//get units name
+		unitName, err := cardinal.GetComponent[comp.UnitName](world, id)
+		if err != nil {
+			return fmt.Errorf("error retrieving unit name component (Unit_Attack.go): %v", err)
+		}
+
 		//if unit is ready to use Special power attack
 		if unitSp.CurrentSp == unitSp.MaxSp {
-			//get units name
-			unitName, err := cardinal.GetComponent[comp.UnitName](world, id)
-			if err != nil {
-				return fmt.Errorf("error retrieving unit name component (Unit_Attack.go): %v", err)
-			}
 			//spawn special power
 			err = spSpawner(world, id, unitName.UnitName, unitSp)
 			if err != nil {
@@ -77,44 +79,11 @@ func MeleeRangeAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 
 		} else { // normal attack
 
-			if atk.Class == "melee" { //if melee
-				//reduce health by units attack damage
-				cardinal.UpdateComponent(world, atk.Target, func(health *comp.Health) *comp.Health {
-					if health == nil {
-						fmt.Printf("error retrieving Health component (Unit_Attack.go) \n")
-						return nil
-					}
-					health.CurrentHP -= float32(atk.Damage)
-					if health.CurrentHP < 0 {
-						health.CurrentHP = 0 //never have negative health
-					}
-					return health
-				})
+			err := ClassAttack(world, id, unitName.UnitName, atk)
+			if err != nil {
+				return err
 			}
 
-			if atk.Class == "range" { //if range
-				//get units component
-				unitPosition, matchID, mapName, unitName, err := GetUnitComponentsUA(world, id)
-				if err != nil {
-					return err
-				}
-				//get next uid
-				UID, err := getNextUID(world, matchID.MatchId)
-				if err != nil {
-					return fmt.Errorf("(Unit_Attack.go): %v ", err)
-				}
-				//create projectile entity
-				cardinal.Create(world,
-					comp.MatchId{MatchId: matchID.MatchId},
-					comp.UID{UID: UID},
-					comp.UnitName{UnitName: ProjectileRegistry[unitName.UnitName].Name},
-					comp.Movespeed{CurrentMS: ProjectileRegistry[unitName.UnitName].Speed},
-					comp.Position{PositionVectorX: unitPosition.PositionVectorX, PositionVectorY: unitPosition.PositionVectorY, PositionVectorZ: unitPosition.PositionVectorZ, RotationVectorX: unitPosition.RotationVectorX, RotationVectorY: unitPosition.RotationVectorY, RotationVectorZ: unitPosition.RotationVectorZ},
-					comp.MapName{MapName: mapName.MapName},
-					comp.Attack{Target: atk.Target, Class: "projectile", Damage: UnitRegistry[unitName.UnitName].Damage},
-					comp.Destroyed{Destroyed: false},
-				)
-			}
 		}
 		//if our CurrentSp is at the MaxSp threshhold
 		if unitSp.CurrentSp >= unitSp.MaxSp {
@@ -179,28 +148,4 @@ func ProjectileAttack(world cardinal.WorldContext, id types.EntityID, projectile
 		return destroyed
 	})
 	return nil
-}
-
-// GetUnitComponents fetches all necessary components related to a unit entity.
-func GetUnitComponentsUA(world cardinal.WorldContext, unitID types.EntityID) (*comp.Position, *comp.MatchId, *comp.MapName, *comp.UnitName, error) {
-	position, err := cardinal.GetComponent[comp.Position](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("error retrieving Position component (Unit_Attack.go): %v ", err)
-	}
-
-	matchId, err := cardinal.GetComponent[comp.MatchId](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("error retrieving MatchId component (Unit_Attack.go): %v ", err)
-	}
-
-	mapName, err := cardinal.GetComponent[comp.MapName](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("error retrieving mapname component (Unit_Attack.go): %v ", err)
-	}
-
-	unitName, err := cardinal.GetComponent[comp.UnitName](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("error retrieving UnitName component (Unit_Attack.go): %v ", err)
-	}
-	return position, matchId, mapName, unitName, nil
 }

@@ -56,3 +56,17 @@ func spSpawner(world cardinal.WorldContext, id types.EntityID, name string, sp *
 	}
 	return err
 }
+
+// triggers unit attack
+func ClassAttack(world cardinal.WorldContext, id types.EntityID, name string, atk *comp.Attack) error {
+	var err error
+
+	if name == "ArcherLady" {
+		err = archerLadyAttack(world, id, atk)
+	}
+
+	if name == "Vampire" {
+		err = vampireAttack(world, atk)
+	}
+	return err
+}

@@ -97,18 +97,7 @@ func vampireSpawnSP(world cardinal.WorldContext, id types.EntityID, sp *comp.Sp)
 		return fmt.Errorf("error retrieving unit Attack component (sp_vampire.go): %w", err)
 	}
 
-	//perform a normal auto attack damage
-	err = cardinal.UpdateComponent(world, unitAtk.Target, func(health *comp.Health) *comp.Health {
-		if health == nil {
-			fmt.Printf("error retrieving Health component (sp_vampire.go)")
-			return nil
-		}
-		health.CurrentHP -= float32(unitAtk.Damage)
-		if health.CurrentHP < 0 {
-			health.CurrentHP = 0 //never have negative health
-		}
-		return health
-	})
+	err = vampireAttack(world, unitAtk)
 
 	if err != nil {
 		return err
@@ -136,4 +125,24 @@ func vampireSpawnSP(world cardinal.WorldContext, id types.EntityID, sp *comp.Sp)
 	}
 
 	return err
+}
+
+func vampireAttack(world cardinal.WorldContext, atk *comp.Attack) error {
+	// reduce health by units attack damage
+	err := cardinal.UpdateComponent(world, atk.Target, func(health *comp.Health) *comp.Health {
+		if health == nil {
+			fmt.Printf("error retrieving Health component (Unit_Attack.go) \n")
+			return nil
+		}
+		health.CurrentHP -= float32(atk.Damage)
+		if health.CurrentHP < 0 {
+			health.CurrentHP = 0 //never have negative health
+		}
+		return health
+	})
+	if err != nil {
+		return fmt.Errorf("error on vampire attack (class vampire.go): %v", err)
+	}
+
+	return nil
 }
