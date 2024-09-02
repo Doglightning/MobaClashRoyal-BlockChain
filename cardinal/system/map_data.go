@@ -39,6 +39,6 @@ type StructureData struct {
 
 // structures
 var StructureDataRegistry = map[string]StructureData{
-	"Base":  {Class: "Range", Health: 200, Radius: 240, Damage: 15, AttackRate: 20, DamageFrame: 10, AttackRadius: 1200, AggroRadius: 1200},
-	"Tower": {Class: "Range", Health: 150, Radius: 150, Damage: 15, AttackRate: 20, DamageFrame: 10, AttackRadius: 1200, AggroRadius: 1200},
+	"Base":  {Class: "structure", Health: 200, Radius: 240, Damage: 15, AttackRate: 20, DamageFrame: 10, AttackRadius: 1200, AggroRadius: 1200},
+	"Tower": {Class: "structure", Health: 150, Radius: 150, Damage: 15, AttackRate: 20, DamageFrame: 10, AttackRadius: 1200, AggroRadius: 1200},
 }
