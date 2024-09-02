@@ -72,6 +72,7 @@ type StructureDetails struct {
 	State           string
 	PositionVectorX float32
 	PositionVectorY float32
+	PositionVectorZ float32
 }
 
 func GameState(world cardinal.WorldContext, req *UnitMatchIdRequest) (*UnitStateResponse, error) {
@@ -246,6 +247,7 @@ func structureStateGS(world cardinal.WorldContext, matchFilter cardinal.FilterFn
 		}
 		structure.PositionVectorX = position.PositionVectorX
 		structure.PositionVectorY = position.PositionVectorY
+		structure.PositionVectorZ = position.PositionVectorZ
 
 		response.Structures = append(response.Structures, structure)
 		return true

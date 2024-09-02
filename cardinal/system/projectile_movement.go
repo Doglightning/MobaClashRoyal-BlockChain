@@ -10,6 +10,8 @@ import (
 	"pkg.world.dev/world-engine/cardinal/types"
 )
 
+var projectileCenterMass float32 = 150
+
 // moves projectiles towards target
 func ProjectileMovementSystem(world cardinal.WorldContext) error {
 	//filter for class type projectile
@@ -23,36 +25,43 @@ func ProjectileMovementSystem(world cardinal.WorldContext) error {
 		//get needed projectile components
 		projectileAtk, projectileMs, projectilePos, err := getProjectileComponentsPM(world, projectileID)
 		if err != nil {
-			fmt.Printf("(Projectile_movement.go): %v", err)
+			fmt.Printf("(Projectile_movement.go): %v \n", err)
 			return false
 		}
 		//copy starting position
-		oldPos := &comp.Position{PositionVectorX: projectilePos.PositionVectorX, PositionVectorY: projectilePos.PositionVectorY}
+		oldPos := &comp.Position{
+			PositionVectorX: projectilePos.PositionVectorX,
+			PositionVectorY: projectilePos.PositionVectorY,
+			PositionVectorZ: projectilePos.PositionVectorZ,
+		}
 
 		//get projectiles targets position component
 		enemyPos, err := cardinal.GetComponent[comp.Position](world, projectileAtk.Target)
 		if err != nil {
-			fmt.Printf("error retrieving enemy Position component (Projectile_movement.go): %v", err)
+			fmt.Printf("error retrieving enemy Position component (Projectile_movement.go): %v \n", err)
 			return false
 		}
 
 		// Compute direction vector towards the enemy
 		deltaX := enemyPos.PositionVectorX - projectilePos.PositionVectorX
 		deltaY := enemyPos.PositionVectorY - projectilePos.PositionVectorY
-		magnitude := float32(math.Sqrt(float64(deltaX*deltaX + deltaY*deltaY)))
+		deltaZ := enemyPos.PositionVectorZ - projectilePos.PositionVectorZ + projectileCenterMass
+		magnitude := float32(math.Sqrt(float64(deltaX*deltaX + deltaY*deltaY + deltaZ*deltaZ)))
 
 		// Normalize the direction vector
 		projectilePos.RotationVectorX = deltaX / magnitude
 		projectilePos.RotationVectorY = deltaY / magnitude
+		projectilePos.RotationVectorZ = deltaZ / magnitude
 
 		// Compute new position based on movespeed and direction
-		projectilePos.PositionVectorX = projectilePos.PositionVectorX + projectilePos.RotationVectorX*projectileMs.CurrentMS
-		projectilePos.PositionVectorY = projectilePos.PositionVectorY + projectilePos.RotationVectorY*projectileMs.CurrentMS
+		projectilePos.PositionVectorX += projectilePos.RotationVectorX * projectileMs.CurrentMS
+		projectilePos.PositionVectorY += projectilePos.RotationVectorY * projectileMs.CurrentMS
+		projectilePos.PositionVectorZ += projectilePos.RotationVectorZ * projectileMs.CurrentMS
 
 		// Set the new position component
 		err = cardinal.SetComponent(world, projectileID, projectilePos)
 		if err != nil {
-			fmt.Printf("error set posisiton compoenent on projectileID (Projectile_movement.go): %v", err)
+			fmt.Printf("error set posisiton compoenent on projectileID (Projectile_movement.go): %v \n", err)
 			return false
 		}
 
@@ -62,7 +71,7 @@ func ProjectileMovementSystem(world cardinal.WorldContext) error {
 			projectileAtk.Combat = true
 			err = cardinal.SetComponent(world, projectileID, projectileAtk)
 			if err != nil {
-				fmt.Printf("error set attack compoenent on projectileID (Projectile_movement.go): %v", err)
+				fmt.Printf("error set attack compoenent on projectileID (Projectile_movement.go): %v \n", err)
 				return false
 			}
 
@@ -73,7 +82,7 @@ func ProjectileMovementSystem(world cardinal.WorldContext) error {
 
 	if err != nil {
 
-		return fmt.Errorf("error retrieving projectile entities (Projectile_movement.go): %s", err)
+		return fmt.Errorf("error retrieving projectile entities (Projectile_movement.go): %s ", err)
 	}
 
 	return nil

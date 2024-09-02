@@ -1,5 +1,7 @@
 package system
 
+import "pkg.world.dev/world-engine/cardinal/types"
+
 type UnitType struct {
 	Name         string
 	Class        string
@@ -27,13 +29,34 @@ var UnitRegistry = map[string]UnitType{
 }
 
 type ProjectileType struct {
-	Name  string
-	Speed float32
+	Name    string
+	Speed   float32
+	offSetX float32
+	offSetY float32
+	offSetZ float32
 }
 
 // registry of all projectiles in game
 var ProjectileRegistry = map[string]ProjectileType{
-	"ArcherLady": {Name: "ArcherLadyArrow", Speed: 150},
-	"Base":       {Name: "BaseBolt", Speed: 150},
-	"Tower":      {Name: "TowerBolt", Speed: 150},
+	"ArcherLady": {Name: "ArcherLadyArrow", Speed: 150, offSetX: 40, offSetY: 10, offSetZ: 75},
+	"Base":       {Name: "BaseBolt", Speed: 150, offSetX: 0, offSetY: 0, offSetZ: 1000},
+	"Tower":      {Name: "TowerBolt", Speed: 150, offSetX: 0, offSetY: 0, offSetZ: 1000},
+}
+
+type StructureData struct {
+	Health       float32        `json:"health"`
+	Radius       int            `json:"radius"`
+	Damage       int            `json:"damage"`
+	AttackRate   int            `json:"attackrate"`  //tick based 5 Rate = 5 ticks (100ms tickrate = 500ms attack rate)
+	DamageFrame  int            `json:"attackframe"` // Frame damage goes off (most animations have a wind down so the dmage goes off in the middle somewhere)
+	AttackRadius int            `json:"AttackRadius"`
+	AggroRadius  int            `json:"AggroRadius"`
+	Target       types.EntityID `json:"target"`
+	Class        string         `json:"class"`
+}
+
+// structures
+var StructureDataRegistry = map[string]StructureData{
+	"Base":  {Class: "structure", Health: 200, Radius: 240, Damage: 15, AttackRate: 20, DamageFrame: 10, AttackRadius: 1600, AggroRadius: 1600},
+	"Tower": {Class: "structure", Health: 150, Radius: 150, Damage: 15, AttackRate: 20, DamageFrame: 10, AttackRadius: 1600, AggroRadius: 1600},
 }
