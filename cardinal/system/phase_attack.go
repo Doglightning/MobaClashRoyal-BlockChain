@@ -42,6 +42,12 @@ func AttackPhaseSystem(world cardinal.WorldContext) error {
 				fmt.Printf("%v \n", err)
 				return false
 			}
+		} else if atk.Class == "structure" {
+			err = StructureAttack(world, id, atk)
+			if err != nil {
+				fmt.Printf("%v \n", err)
+				return false
+			}
 		}
 
 		return true
@@ -99,6 +105,36 @@ func MeleeRangeAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 		if err := cardinal.SetComponent(world, id, unitSp); err != nil {
 			return fmt.Errorf("error updating special power component (phase_Attack.go): %s ", err)
 		}
+	}
+	//if our attack frame is at the attack rate reset
+	if atk.Frame >= atk.Rate {
+		atk.Frame = -1
+	}
+	atk.Frame++
+	// set updated attack component
+	if err := cardinal.SetComponent(world, id, atk); err != nil {
+		return fmt.Errorf("error updating attack component (phase_Attack.go): %s ", err)
+	}
+
+	return nil
+}
+
+// handles structure units in combat
+func StructureAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.Attack) error {
+	//if unit is in its damage frame
+	if atk.Frame == atk.DamageFrame {
+
+		//get units name
+		unitName, err := cardinal.GetComponent[comp.UnitName](world, id)
+		if err != nil {
+			return fmt.Errorf("error retrieving unit name component (phase_Attack.go): %v", err)
+		}
+
+		err = ClassAttack(world, id, unitName.UnitName, atk)
+		if err != nil {
+			return err
+		}
+
 	}
 	//if our attack frame is at the attack rate reset
 	if atk.Frame >= atk.Rate {

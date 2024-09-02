@@ -104,6 +104,37 @@ func structureCombatSearch(world cardinal.WorldContext) error {
 			}
 
 			if state.State != "Converting" {
+
+				if uAtk.Combat { // in combat make sure target still in range
+					//get Unit Components
+					uPos, uRadius, uAtk, err := getTowerComponentsCC(world, id)
+					if err != nil {
+						fmt.Printf("(structureCombatSearch - check_combat.go) -%v", err)
+						return false
+					}
+
+					//get Unit Components
+					ePos, eRadius, err := getTowerTargetComponentsCC(world, uAtk.Target)
+					if err != nil {
+						fmt.Printf("(structureCombatSearch - check_combat.go) -%v", err)
+						return false
+					}
+
+					// Calculate squared distance between the unit and the enemy, minus their radii
+					adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, ePos.PositionVectorX, ePos.PositionVectorY) - float32(eRadius.UnitRadius) - float32(uRadius.UnitRadius)
+					//if within attack range
+					if adjustedDistance > float32(uAtk.AttackRadius) {
+						uAtk.Combat = false
+						uAtk.Frame = 0
+						//set attack component
+						if err = cardinal.SetComponent(world, id, uAtk); err != nil {
+							fmt.Printf("error setting attack component (structureCombatSearch - check_combat.go): %v", err)
+							return false
+						}
+					}
+
+				}
+
 				if !uAtk.Combat { //not in combat
 					//get Unit Components
 					uPos, uRadius, uAtk, uTeam, MatchID, err := getUnitComponentsCC(world, id)
@@ -142,33 +173,6 @@ func structureCombatSearch(world cardinal.WorldContext) error {
 						}
 
 					}
-				} else { // in combat make sure target still in range
-					//get Unit Components
-					uPos, uRadius, uAtk, err := getTowerComponentsCC(world, id)
-					if err != nil {
-						fmt.Printf("(structureCombatSearch - check_combat.go) -%v", err)
-						return false
-					}
-
-					//get Unit Components
-					ePos, eRadius, err := getTowerTargetComponentsCC(world, uAtk.Target)
-					if err != nil {
-						fmt.Printf("(structureCombatSearch - check_combat.go) -%v", err)
-						return false
-					}
-
-					// Calculate squared distance between the unit and the enemy, minus their radii
-					adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, ePos.PositionVectorX, ePos.PositionVectorY) - float32(eRadius.UnitRadius) - float32(uRadius.UnitRadius)
-					//if within attack range
-					if adjustedDistance > float32(uAtk.AttackRadius) {
-						uAtk.Combat = false
-						//set attack component
-						if err = cardinal.SetComponent(world, id, uAtk); err != nil {
-							fmt.Printf("error setting attack component (structureCombatSearch - check_combat.go): %v", err)
-							return false
-						}
-					}
-
 				}
 			}
 			return true

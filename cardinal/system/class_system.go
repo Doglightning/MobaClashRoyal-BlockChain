@@ -65,6 +65,10 @@ func ClassAttack(world cardinal.WorldContext, id types.EntityID, name string, at
 		err = archerLadyAttack(world, id, atk)
 	}
 
+	if name == "Tower" || name == "Base" {
+		err = towerAttack(world, id, atk)
+	}
+
 	if name == "Vampire" {
 		err = vampireAttack(world, atk)
 	}

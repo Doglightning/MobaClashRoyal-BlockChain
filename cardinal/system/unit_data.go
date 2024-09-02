@@ -34,4 +34,6 @@ type ProjectileType struct {
 // registry of all projectiles in game
 var ProjectileRegistry = map[string]ProjectileType{
 	"ArcherLady": {Name: "ArcherLadyArrow", Speed: 150},
+	"Base":       {Name: "BaseBolt", Speed: 150},
+	"Tower":      {Name: "TowerBolt", Speed: 150},
 }
