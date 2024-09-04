@@ -35,8 +35,17 @@ func GameStateSpawnerSystem(world cardinal.WorldContext) error {
 				teamStateID, err := cardinal.Create(world,
 					comp.MatchId{MatchId: create.Msg.MatchID},
 					comp.UID{UID: 0},
-					comp.Player1{Nickname: create.Tx.PersonaTag, RemovalList: make(map[int]bool), Gold: 5},
-					comp.SpatialHash{Cells: make(map[string]comp.SpatialCell), CellSize: SpatialGridCellSize, StartX: float32(MapDataRegistry[create.Msg.MapName].StartX), StartY: float32(MapDataRegistry[create.Msg.MapName].StartY)},
+					comp.Player1{
+						Nickname:    create.Tx.PersonaTag,
+						Hand:        []string{"Vampire", "ArcherLady", "Vampire"},
+						Deck:        []string{"ArcherLady", "Vampire"},
+						RemovalList: make(map[int]bool),
+						Gold:        5,
+					},
+					comp.SpatialHash{Cells: make(map[string]comp.SpatialCell),
+						CellSize: SpatialGridCellSize,
+						StartX:   float32(MapDataRegistry[create.Msg.MapName].StartX),
+						StartY:   float32(MapDataRegistry[create.Msg.MapName].StartY)},
 				)
 
 				if err != nil {
@@ -72,7 +81,15 @@ func GameStateSpawnerSystem(world cardinal.WorldContext) error {
 			}
 
 			//set player2 compoenent
-			err = cardinal.SetComponent(world, matchFound, &comp.Player2{Nickname: create.Tx.PersonaTag, RemovalList: make(map[int]bool), Gold: 5})
+			err = cardinal.SetComponent(world, matchFound,
+				&comp.Player2{
+					Nickname:    create.Tx.PersonaTag,
+					Hand:        []string{"Vampire", "ArcherLady", "Vampire"},
+					Deck:        []string{"ArcherLady", "Vampire"},
+					RemovalList: make(map[int]bool),
+					Gold:        5,
+				})
+
 			if err != nil {
 				// if error remove the empty player2 component
 				err = cardinal.RemoveComponentFrom[comp.Player2](world, matchFound)

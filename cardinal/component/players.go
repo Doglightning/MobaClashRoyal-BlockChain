@@ -2,12 +2,16 @@ package component
 
 type Player1 struct {
 	Nickname    string       `json:"player1"`
+	Hand        []string     `json:"Hand"`
+	Deck        []string     `json:"Deck"`
 	RemovalList map[int]bool `json:"removallist"`
 	Gold        float32      `json:"Gold"`
 }
 
 type Player2 struct {
 	Nickname    string       `json:"player2"`
+	Hand        []string     `json:"Hand"`
+	Deck        []string     `json:"Deck"`
 	RemovalList map[int]bool `json:"removallist"`
 	Gold        float32      `json:"Gold"`
 }

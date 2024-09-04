@@ -17,6 +17,8 @@ type PSMatchIdRequest struct {
 
 type PlayerStateResponse struct {
 	Units []int
+	Hand  []string
+	Deck  []string
 	Gold  float32
 }
 
@@ -51,6 +53,9 @@ func PlayerState(world cardinal.WorldContext, req *PSMatchIdRequest) (*PlayerSta
 		for key := range player1.RemovalList {
 			removeList = append(removeList, key)
 		}
+
+		response.Hand = player1.Hand
+		response.Deck = player1.Deck
 		//player1 gold
 		response.Gold = player1.Gold
 
@@ -64,6 +69,9 @@ func PlayerState(world cardinal.WorldContext, req *PSMatchIdRequest) (*PlayerSta
 		for key := range player2.RemovalList {
 			removeList = append(removeList, key)
 		}
+
+		response.Hand = player2.Hand
+		response.Deck = player2.Deck
 		//player2 gold
 		response.Gold = player2.Gold
 	}

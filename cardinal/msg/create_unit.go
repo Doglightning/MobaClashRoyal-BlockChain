@@ -12,6 +12,7 @@ type CreateUnitMsg struct {
 	RotationX float32
 	RotationY float32
 	RotationZ float32
+	UID       int
 }
 
 type CreateUnitResult struct {

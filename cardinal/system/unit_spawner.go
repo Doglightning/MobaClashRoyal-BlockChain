@@ -134,13 +134,19 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 
 			//reduce player gold and then set the component
 			if create.Msg.Team == "Blue" {
+				//reduce Gold
 				player1.Gold -= float32(unitType.Cost)
+				//-1 key means to tell player to remove unit they were holding to transition it to this spawned unit
+				player1.RemovalList[create.Msg.UID] = true
 				err = cardinal.SetComponent(world, gameState, player1)
 				if err != nil {
 					return msg.CreateUnitResult{Success: false}, fmt.Errorf("error setting player1 component (unit_spawner.go): %w", err)
 				}
 			} else {
+				//reduce Gold
 				player2.Gold -= float32(unitType.Cost)
+				//-1 key means to tell player to remove unit they were holding to transition it to this spawned unit
+				player2.RemovalList[create.Msg.UID] = true
 				err = cardinal.SetComponent(world, gameState, player2)
 				if err != nil {
 					return msg.CreateUnitResult{Success: false}, fmt.Errorf("error setting player2 component (unit_spawner.go): %w", err)
