@@ -26,20 +26,24 @@ type UnitType struct {
 // registry of all units in game
 var UnitRegistry = map[string]UnitType{
 	"ArcherLady": {Class: "range", Health: 75, Damage: 30, AttackRate: 30, DamageFrame: 20, Speed: 50, Cost: 3, Radius: 50, AggroRadius: 1400, AttackRadius: 1200, CenterOffset: 150, DmgSp: 25, SpRate: 50, CurrentSP: 0, MaxSP: 100},
+	"Mage":       {Class: "range", Health: 75, Damage: 15, AttackRate: 21, DamageFrame: 10, Speed: 30, Cost: 3, Radius: 50, AggroRadius: 1400, AttackRadius: 1000, CenterOffset: 150, DmgSp: 25, SpRate: 50, CurrentSP: 0, MaxSP: 100},
 	"Vampire":    {Class: "melee", Health: 100, Damage: 10, AttackRate: 10, DamageFrame: 4, Speed: 50, Cost: 2, Radius: 80, AggroRadius: 1400, AttackRadius: 10, CenterOffset: 150, DmgSp: 10, SpRate: 25, CurrentSP: 0, MaxSP: 100},
 }
 
 type ProjectileType struct {
 	Name    string
 	Speed   float32
+	offSetX float32
+	offSetY float32
 	offSetZ float32
 }
 
 // registry of all projectiles in game
 var ProjectileRegistry = map[string]ProjectileType{
-	"ArcherLady": {Name: "ArcherLadyArrow", Speed: 150, offSetZ: 190},
-	"Base":       {Name: "BaseBolt", Speed: 150, offSetZ: 1000},
-	"Tower":      {Name: "TowerBolt", Speed: 150, offSetZ: 1000},
+	"ArcherLady": {Name: "ArcherLadyArrow", Speed: 150, offSetX: 25, offSetY: 28, offSetZ: 190},
+	"Mage":       {Name: "MageBolt", Speed: 80, offSetX: 45, offSetY: 80, offSetZ: 307},
+	"Base":       {Name: "BaseBolt", Speed: 150, offSetX: 0, offSetY: 0, offSetZ: 1000},
+	"Tower":      {Name: "TowerBolt", Speed: 150, offSetX: 0, offSetY: 0, offSetZ: 1000},
 }
 
 type StructureData struct {

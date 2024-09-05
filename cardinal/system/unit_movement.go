@@ -527,8 +527,8 @@ func pushUnitDirection(posX1, posY1, posX2, posY2, dirX2, dirY2, distance float3
 		// Perpendicular push to the right
 		dirX, dirY = normBallHitY, -normBallHitX
 	}
-	targetX = posX2 + dirX*distance
-	targetY = posY2 + dirY*distance
+	targetX = posX2 + dirX*(distance/2)
+	targetY = posY2 + dirY*(distance/2)
 	return targetX, targetY
 }
 

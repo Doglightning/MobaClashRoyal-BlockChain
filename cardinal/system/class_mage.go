@@ -9,7 +9,7 @@ import (
 )
 
 // archerLadySP struct contains configuration for an archer lady in terms of her shooting properties.
-type archerLadySpawnSP struct {
+type archerLadySpawnSPa struct {
 	Name                  string
 	NumArrows             int
 	ArrowSeparationDegree float64
@@ -21,7 +21,7 @@ type archerLadySpawnSP struct {
 }
 
 // NewArcherLadySP creates a new instance of archerLadySP with default settings.
-func NewArcherLadySpawnSP() *archerLadySpawnSP {
+func NewArcherLadySpawnSPa() *archerLadySpawnSP {
 	return &archerLadySpawnSP{
 		Name:                  "ArcherLadySP",
 		NumArrows:             6,
@@ -35,19 +35,19 @@ func NewArcherLadySpawnSP() *archerLadySpawnSP {
 }
 
 // update struct
-type archerLadyUpdateSP struct {
+type archerLadyUpdateSPa struct {
 	BaseDmgReductionFactor int
 }
 
 // update vars
-func NewArcherLadyUpdateSP() *archerLadyUpdateSP {
+func NewArcherLadyUpdateSPa() *archerLadyUpdateSP {
 	return &archerLadyUpdateSP{
 		BaseDmgReductionFactor: 3,
 	}
 }
 
 // spawns the archer ladies villy special power
-func archerLadySpawn(world cardinal.WorldContext, id types.EntityID) error {
+func archerLadySpawna(world cardinal.WorldContext, id types.EntityID) error {
 	archerLady := NewArcherLadySpawnSP()
 
 	//get needed components
@@ -92,7 +92,7 @@ func archerLadySpawn(world cardinal.WorldContext, id types.EntityID) error {
 }
 
 // called every tick to updated the archerladies arrows
-func archerLadyUpdate(world cardinal.WorldContext, id types.EntityID) error {
+func archerLadyUpdatea(world cardinal.WorldContext, id types.EntityID) error {
 	//update Sp location
 	err := cardinal.UpdateComponent(world, id, func(pos *comp.Position) *comp.Position {
 		if pos == nil {
@@ -214,7 +214,7 @@ func archerLadyUpdate(world cardinal.WorldContext, id types.EntityID) error {
 }
 
 // spawns projectile for archer basic attack
-func archerLadyAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.Attack) error {
+func mageAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.Attack) error {
 	//get units component
 	unitPosition, matchID, mapName, unitName, err := archerLadyAttackComponentsUA(world, id)
 	if err != nil {
@@ -223,7 +223,7 @@ func archerLadyAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 	//get next uid
 	UID, err := getNextUID(world, matchID.MatchId)
 	if err != nil {
-		return fmt.Errorf("(class archerlady.go): %v ", err)
+		return fmt.Errorf("(class mage.go): %v ", err)
 	}
 
 	newX, newY := RelativeOffsetXY(unitPosition.PositionVectorX, unitPosition.PositionVectorY, unitPosition.RotationVectorX, unitPosition.RotationVectorY, ProjectileRegistry[unitName.UnitName].offSetX, ProjectileRegistry[unitName.UnitName].offSetY)
@@ -247,7 +247,7 @@ func archerLadyAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 	)
 
 	if err != nil {
-		return fmt.Errorf("error spawning archer lady basic attack (class archerlady.go): %v ", err)
+		return fmt.Errorf("error spawning mage basic attack (class mage.go): %v ", err)
 	}
 
 	return nil
@@ -257,7 +257,7 @@ func archerLadyAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 // dirX, dirY: central Direction vector (normalized)
 // angle: angle between vectors
 // count: Number of vectors
-func generateVectors(dirX, dirY float32, angle float64, count int) [][]float32 {
+func generateVectorsa(dirX, dirY float32, angle float64, count int) [][]float32 {
 	halfAngle := angle / 2
 	stepAngle := angle / float64(count-1)
 
@@ -271,7 +271,7 @@ func generateVectors(dirX, dirY float32, angle float64, count int) [][]float32 {
 }
 
 // GetSpComponentsAL fetches all necessary components related to a sp entity.
-func GetSpComponentsAL(world cardinal.WorldContext, unitID types.EntityID) (*comp.Position, *comp.MatchId, *comp.MapName, *comp.Team, error) {
+func GetSpComponentsALa(world cardinal.WorldContext, unitID types.EntityID) (*comp.Position, *comp.MatchId, *comp.MapName, *comp.Team, error) {
 	position, err := cardinal.GetComponent[comp.Position](world, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, fmt.Errorf("error retrieving Position component (class archerlady.go): %v", err)
@@ -296,7 +296,7 @@ func GetSpComponentsAL(world cardinal.WorldContext, unitID types.EntityID) (*com
 }
 
 // GetSpComponentsAL fetches all necessary components related to a sp entity.
-func GetUpdateComponentsAL(world cardinal.WorldContext, unitID types.EntityID) (*comp.Movespeed, *comp.Distance, *comp.MatchId, *comp.Team, *comp.Damage, *comp.UnitRadius, error) {
+func GetUpdateComponentsALa(world cardinal.WorldContext, unitID types.EntityID) (*comp.Movespeed, *comp.Distance, *comp.MatchId, *comp.Team, *comp.Damage, *comp.UnitRadius, error) {
 	ms, err := cardinal.GetComponent[comp.Movespeed](world, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving movespeed component (class archerlady.go): %v", err)
@@ -325,7 +325,7 @@ func GetUpdateComponentsAL(world cardinal.WorldContext, unitID types.EntityID) (
 }
 
 // GetUnitComponents fetches all necessary components related to a unit entity.
-func archerLadyAttackComponentsUA(world cardinal.WorldContext, unitID types.EntityID) (*comp.Position, *comp.MatchId, *comp.MapName, *comp.UnitName, error) {
+func archerLadyAttackComponentsUAa(world cardinal.WorldContext, unitID types.EntityID) (*comp.Position, *comp.MatchId, *comp.MapName, *comp.UnitName, error) {
 	position, err := cardinal.GetComponent[comp.Position](world, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, fmt.Errorf("error retrieving Position component (class archerlady.go): %v ", err)
