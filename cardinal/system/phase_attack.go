@@ -61,13 +61,31 @@ func AttackPhaseSystem(world cardinal.WorldContext) error {
 
 // handles basic range / melee units in combat
 func MeleeRangeAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.Attack) error {
-	//if unit is in its damage frame
-	if atk.Frame == atk.DamageFrame {
-		//get special power component
-		unitSp, err := cardinal.GetComponent[comp.Sp](world, id)
+	//get special power component
+	unitSp, err := cardinal.GetComponent[comp.Sp](world, id)
+	if err != nil {
+		return fmt.Errorf("error retrieving special power component (phase_Attack.go): %v", err)
+	}
+
+	//check if in a SP animation or a regular attack
+	if atk.Frame == 0 && unitSp.CurrentSp >= unitSp.MaxSp { //In special power
+		//get Target name
+		tarName, err := cardinal.GetComponent[comp.UnitName](world, atk.Target)
 		if err != nil {
-			return fmt.Errorf("error retrieving special power component (phase_Attack.go): %v", err)
+			return fmt.Errorf("error retrieving target name component (phase_Attack.go): %v", err)
 		}
+
+		if !unitSp.StructureTargetable && (tarName.UnitName == "Base" || tarName.UnitName == "Tower") {
+			unitSp.Charged = false
+		} else {
+			unitSp.Charged = true
+		}
+	} else if atk.Frame == 0 && unitSp.CurrentSp < unitSp.MaxSp { // in regular attack
+		unitSp.Charged = false
+	}
+
+	//if unit is in its damage frame and not charged OR in damage fram when charged
+	if (atk.Frame == atk.DamageFrame && !unitSp.Charged) || (atk.Frame == unitSp.DamageFrame && unitSp.Charged) {
 
 		//get units name
 		unitName, err := cardinal.GetComponent[comp.UnitName](world, id)
@@ -76,7 +94,7 @@ func MeleeRangeAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 		}
 
 		//if unit is ready to use Special power attack
-		if unitSp.CurrentSp == unitSp.MaxSp {
+		if unitSp.Charged {
 			//spawn special power
 			err = spSpawner(world, id, unitName.UnitName, unitSp)
 			if err != nil {
@@ -92,7 +110,7 @@ func MeleeRangeAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 
 		}
 		//if our CurrentSp is at the MaxSp threshhold
-		if unitSp.CurrentSp >= unitSp.MaxSp {
+		if unitSp.Charged {
 			unitSp.CurrentSp = 0
 		} else {
 			unitSp.CurrentSp += unitSp.SpRate //increase sp after attack
@@ -101,19 +119,21 @@ func MeleeRangeAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 				unitSp.CurrentSp = unitSp.MaxSp
 			}
 		}
-		// set updated attack component
-		if err := cardinal.SetComponent(world, id, unitSp); err != nil {
-			return fmt.Errorf("error updating special power component (phase_Attack.go): %s ", err)
-		}
+
 	}
-	//if our attack frame is at the attack rate reset
-	if atk.Frame >= atk.Rate {
+	//if attack frame is at max and not sp charged  OR attack fram at sp max and charged
+	if (atk.Frame >= atk.Rate && !unitSp.Charged) || (atk.Frame >= unitSp.Rate && unitSp.Charged) {
 		atk.Frame = -1
 	}
+
 	atk.Frame++
 	// set updated attack component
 	if err := cardinal.SetComponent(world, id, atk); err != nil {
 		return fmt.Errorf("error updating attack component (phase_Attack.go): %s ", err)
+	}
+	// set updated sp component
+	if err := cardinal.SetComponent(world, id, unitSp); err != nil {
+		return fmt.Errorf("error updating special power component (phase_Attack.go): %s ", err)
 	}
 
 	return nil

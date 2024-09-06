@@ -37,6 +37,12 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("unit type %s not found in registry (unit_spawner.go)", create.Msg.UnitType)
 			}
 
+			//check if unit being spawned exsists in the sp registry
+			spType, ok := SpRegistry[create.Msg.UnitType]
+			if !ok {
+				return msg.CreateUnitResult{Success: false}, fmt.Errorf("unit type %s not found in registry (unit_spawner.go)", create.Msg.UnitType)
+			}
+
 			var player1 *comp.Player1
 			var player2 *comp.Player2
 			if create.Msg.Team == "Blue" {
@@ -122,7 +128,17 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 				comp.Distance{Distance: tempDistance},
 				comp.UnitRadius{UnitRadius: unitType.Radius},
 				comp.Attack{Combat: false, Damage: unitType.Damage, Rate: unitType.AttackRate, Frame: 0, DamageFrame: unitType.DamageFrame, Class: unitType.Class, AttackRadius: unitType.AttackRadius, AggroRadius: unitType.AggroRadius},
-				comp.Sp{DmgSp: unitType.DmgSp, SpRate: unitType.SpRate, CurrentSp: unitType.CurrentSP, MaxSp: unitType.MaxSP, Animation: "default"},
+				comp.Sp{
+					DmgSp:               unitType.DmgSp,
+					SpRate:              unitType.SpRate,
+					CurrentSp:           unitType.CurrentSP,
+					MaxSp:               unitType.MaxSP,
+					Animation:           "default",
+					Charged:             false,
+					Rate:                spType.AttackRate,
+					DamageFrame:         spType.DamageFrame,
+					StructureTargetable: spType.StructureTargetable,
+				},
 				comp.CenterOffset{CenterOffset: unitType.CenterOffset},
 			)
 			if err != nil {

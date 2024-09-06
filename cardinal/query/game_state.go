@@ -40,6 +40,7 @@ type UnitDetails struct {
 	AttackFrame     int
 	CurrentSp       int
 	Animation       string
+	ChargedSP       bool
 }
 
 type ProjectileDetails struct {
@@ -183,6 +184,7 @@ func unitStateGS(world cardinal.WorldContext, matchFilter cardinal.FilterFn, res
 		}
 		unit.CurrentSp = unitSp.CurrentSp
 		unit.Animation = unitSp.Animation
+		unit.ChargedSP = unitSp.Charged
 
 		// Append the gathered data to the response
 		response.Units = append(response.Units, unit)
