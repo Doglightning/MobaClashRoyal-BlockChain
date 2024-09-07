@@ -29,6 +29,21 @@ func MageSpawnSP(world cardinal.WorldContext, id types.EntityID) error {
 		return fmt.Errorf("error retrieving unit Attack component (class mage.go): %w", err)
 	}
 
+	//Add stun effect to target effects list
+	err = cardinal.UpdateComponent(world, unitAtk.Target, func(effect *comp.EffectsList) *comp.EffectsList {
+		if effect == nil {
+			fmt.Printf("error retrieving effect list (class mage.go) \n")
+			return nil
+		}
+
+		effect.EffectsList["MageStun"]++
+
+		return effect
+	})
+	if err != nil {
+		return fmt.Errorf("error on effect list (class mage.go): %v", err)
+	}
+
 	//get matchid component
 	matchID, err := cardinal.GetComponent[comp.MatchId](world, id)
 	if err != nil {
@@ -69,8 +84,8 @@ func MageUpdate(world cardinal.WorldContext, id types.EntityID) error {
 		return fmt.Errorf("error getting target cc component(class mage.go): %w", err)
 	}
 	//if target not stunned then stun it
-	if !cc.Stun {
-		cc.Stun = true
+	if cc.Stun == 0 {
+		cc.Stun++
 	}
 
 	// get tracker holding number of frames stun has gone off (stun count)
@@ -81,12 +96,36 @@ func MageUpdate(world cardinal.WorldContext, id types.EntityID) error {
 	stunCount.Num += 1                    // increase stun frame count
 	if stunCount.Num >= mage.frameCount { //if stun count is greater than mage max stun count
 
+		//remove heal spiral effect to the effects list
+		err := cardinal.UpdateComponent(world, tarID.Target, func(effect *comp.EffectsList) *comp.EffectsList {
+			if effect == nil {
+				fmt.Printf("error retrieving effect list (class mage.go) \n")
+				return nil
+			}
+
+			if list, ok := effect.EffectsList["MageStun"]; ok { // if key exists
+				if list <= 1 { // if 1 or less of this buff active remove
+					delete(effect.EffectsList, "MageStun")
+				} else { // if more then 1 active reduce by 1
+					effect.EffectsList["MageStun"] -= 1
+				}
+			}
+			return effect
+		})
+		if err != nil {
+			return err
+		}
+
 		// remove entity
 		if err := cardinal.Remove(world, id); err != nil {
 			return fmt.Errorf("error removing entity sp (class mage.go): %w", err)
 		}
 
-		cc.Stun = false
+		cc.Stun--
+
+		if cc.Stun < 0 {
+			cc.Stun = 0
+		}
 	} else { // else update stun count component
 		if err := cardinal.SetComponent(world, id, stunCount); err != nil {
 			return fmt.Errorf("error setting stun count (class mage.go): %w", err)

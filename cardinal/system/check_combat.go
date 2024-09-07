@@ -41,7 +41,7 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 			fmt.Printf("error getting unit cc component (unit_movement.go): %v", err)
 		}
 
-		if cc.Stun { //if unit stunned cannot attack
+		if cc.Stun > 0 { //if unit stunned cannot attack
 			return false
 		}
 

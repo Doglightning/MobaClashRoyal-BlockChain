@@ -139,7 +139,7 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 					StructureTargetable: spType.StructureTargetable,
 				},
 				comp.CenterOffset{CenterOffset: unitType.CenterOffset},
-				comp.CC{Stun: false},
+				comp.CC{Stun: 0},
 				comp.EffectsList{EffectsList: make(map[string]int)},
 			)
 			if err != nil {

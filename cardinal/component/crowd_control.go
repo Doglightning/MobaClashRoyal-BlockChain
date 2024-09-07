@@ -1,7 +1,7 @@
 package component
 
 type CC struct {
-	Stun bool `json:"Stun"`
+	Stun int `json:"Stun"`
 }
 
 func (CC) Name() string {

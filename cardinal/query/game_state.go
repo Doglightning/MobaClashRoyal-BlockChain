@@ -191,7 +191,9 @@ func unitStateGS(world cardinal.WorldContext, matchFilter cardinal.FilterFn, res
 		if err != nil {
 			return false
 		}
-		unit.Stunned = cc.Stun
+		if cc.Stun > 0 {
+			unit.Stunned = true
+		}
 
 		// Fetch effect list component
 		effect, err := cardinal.GetComponent[comp.EffectsList](world, id)

@@ -17,7 +17,7 @@ type vampireSP struct {
 // NewVampireSP creates a new instance of vampireSP with default settings.
 func NewVampireSP() *vampireSP {
 	return &vampireSP{
-		healCount:  70,
+		healCount:  25,
 		healAmount: 1.2,
 	}
 }
