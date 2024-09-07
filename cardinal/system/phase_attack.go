@@ -61,6 +61,17 @@ func AttackPhaseSystem(world cardinal.WorldContext) error {
 
 // handles basic range / melee units in combat
 func MeleeRangeAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.Attack) error {
+
+	//get Unit CC component
+	cc, err := cardinal.GetComponent[comp.CC](world, id)
+	if err != nil {
+		fmt.Printf("error getting unit cc component (unit_movement.go): %v", err)
+	}
+
+	if cc.Stun { //if unit stunned cannot attack
+		return nil
+	}
+
 	//get special power component
 	unitSp, err := cardinal.GetComponent[comp.Sp](world, id)
 	if err != nil {
@@ -96,7 +107,7 @@ func MeleeRangeAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 		//if unit is ready to use Special power attack
 		if unitSp.Charged {
 			//spawn special power
-			err = spSpawner(world, id, unitName.UnitName, unitSp)
+			err = spSpawner(world, id, unitName.UnitName)
 			if err != nil {
 				return fmt.Errorf("error spawning special attack (phase_Attack.go): %v - ", err)
 			}

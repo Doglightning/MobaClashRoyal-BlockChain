@@ -17,7 +17,7 @@ type vampireSP struct {
 // NewVampireSP creates a new instance of vampireSP with default settings.
 func NewVampireSP() *vampireSP {
 	return &vampireSP{
-		healCount:  25,
+		healCount:  70,
 		healAmount: 1.2,
 	}
 }
@@ -59,16 +59,23 @@ func vampireUpdateSP(world cardinal.WorldContext, id types.EntityID) error {
 	}
 	healCount.Num += 1                      // increase heal frame count
 	if healCount.Num >= vampire.healCount { //if heal count is greater than vampire max heal count
-		//put unit back into default animation state
-		err = cardinal.UpdateComponent(world, targetID.Target, func(sp *comp.Sp) *comp.Sp {
-			if sp == nil {
-				fmt.Printf("error retrieving special power component (sp_vampire.go)")
+
+		//remove heal spiral effect to the effects list
+		err := cardinal.UpdateComponent(world, targetID.Target, func(effect *comp.EffectsList) *comp.EffectsList {
+			if effect == nil {
+				fmt.Printf("error retrieving effect list (sp_vampire.go) \n")
 				return nil
 			}
-			sp.Animation = "default"
-			return sp
-		})
 
+			if list, ok := effect.EffectsList["HealSpiral"]; ok { // if key exists
+				if list <= 1 { // if 1 or less of this buff active remove
+					delete(effect.EffectsList, "HealSpiral")
+				} else { // if more then 1 active reduce by 1
+					effect.EffectsList["HealSpiral"] -= 1
+				}
+			}
+			return effect
+		})
 		if err != nil {
 			return err
 		}
@@ -87,9 +94,22 @@ func vampireUpdateSP(world cardinal.WorldContext, id types.EntityID) error {
 }
 
 // spawning the vampire special power
-func vampireSpawnSP(world cardinal.WorldContext, id types.EntityID, sp *comp.Sp) error {
-	//put vampire into healing state for animation on client
-	sp.Animation = "healing"
+func vampireSpawnSP(world cardinal.WorldContext, id types.EntityID) error {
+
+	//Add heal spiral effect to the effects list
+	err := cardinal.UpdateComponent(world, id, func(effect *comp.EffectsList) *comp.EffectsList {
+		if effect == nil {
+			fmt.Printf("error retrieving effect list (sp_vampire.go) \n")
+			return nil
+		}
+
+		effect.EffectsList["HealSpiral"]++
+
+		return effect
+	})
+	if err != nil {
+		return fmt.Errorf("error on effect list (class vampire.go): %v", err)
+	}
 
 	// get unit attack component
 	unitAtk, err := cardinal.GetComponent[comp.Attack](world, id)

@@ -133,13 +133,14 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 					SpRate:              unitType.SpRate,
 					CurrentSp:           unitType.CurrentSP,
 					MaxSp:               unitType.MaxSP,
-					Animation:           "default",
 					Charged:             false,
 					Rate:                spType.AttackRate,
 					DamageFrame:         spType.DamageFrame,
 					StructureTargetable: spType.StructureTargetable,
 				},
 				comp.CenterOffset{CenterOffset: unitType.CenterOffset},
+				comp.CC{Stun: false},
+				comp.EffectsList{EffectsList: make(map[string]int)},
 			)
 			if err != nil {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("error creating unit (unit_spawner.go): %w", err)

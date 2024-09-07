@@ -39,8 +39,9 @@ type UnitDetails struct {
 	Combat          bool
 	AttackFrame     int
 	CurrentSp       int
-	Animation       string
 	ChargedSP       bool
+	Stunned         bool
+	EffectList      []string
 }
 
 type ProjectileDetails struct {
@@ -183,8 +184,28 @@ func unitStateGS(world cardinal.WorldContext, matchFilter cardinal.FilterFn, res
 			return false
 		}
 		unit.CurrentSp = unitSp.CurrentSp
-		unit.Animation = unitSp.Animation
 		unit.ChargedSP = unitSp.Charged
+
+		// Fetch CC component
+		cc, err := cardinal.GetComponent[comp.CC](world, id)
+		if err != nil {
+			return false
+		}
+		unit.Stunned = cc.Stun
+
+		// Fetch effect list component
+		effect, err := cardinal.GetComponent[comp.EffectsList](world, id)
+		if err != nil {
+			return false
+		}
+
+		// Pre-allocate slice with the same capacity as the map
+		unit.EffectList = make([]string, 0, len(effect.EffectsList))
+		if effect.EffectsList != nil {
+			for key := range effect.EffectsList {
+				unit.EffectList = append(unit.EffectList, key)
+			}
+		}
 
 		// Append the gathered data to the response
 		response.Units = append(response.Units, unit)

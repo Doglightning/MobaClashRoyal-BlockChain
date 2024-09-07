@@ -10,8 +10,6 @@ type Sp struct {
 
 	Charged             bool `json:"Charged"`
 	StructureTargetable bool `json:"StructureTargetable"`
-
-	Animation string `json:"Animation"`
 }
 
 type SpEntity struct {

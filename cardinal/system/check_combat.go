@@ -34,6 +34,17 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 	err := cardinal.NewSearch().Entity(
 		filter.Contains(UnitFilters())).
 		Where(combatFilter).Each(world, func(id types.EntityID) bool {
+
+		//get Unit CC component
+		cc, err := cardinal.GetComponent[comp.CC](world, id)
+		if err != nil {
+			fmt.Printf("error getting unit cc component (unit_movement.go): %v", err)
+		}
+
+		if cc.Stun { //if unit stunned cannot attack
+			return false
+		}
+
 		//get attack component
 		uAtk, err := cardinal.GetComponent[comp.Attack](world, id)
 		if err != nil {

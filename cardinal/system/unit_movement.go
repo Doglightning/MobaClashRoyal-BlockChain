@@ -27,6 +27,16 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 
 	//go through all Unit ID's
 	for _, id := range priorityUnitIDs {
+		//get Unit CC component
+		cc, err := cardinal.GetComponent[comp.CC](world, id)
+		if err != nil {
+			fmt.Printf("error getting unit cc component (unit_movement.go): %v", err)
+		}
+
+		if cc.Stun { //if unit stunned cannot move
+			continue
+		}
+
 		//get Unit Components
 		uPos, uRadius, uAtk, uTeam, uMs, MatchID, mapName, err := getUnitComponentsUM(world, id)
 		if err != nil {
