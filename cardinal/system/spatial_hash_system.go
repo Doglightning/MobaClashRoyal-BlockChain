@@ -10,7 +10,7 @@ import (
 )
 
 // adds an object with a radius to the spatial hash grid, considering all cells it may intersect.
-func AddObjectSpatialHash(hash *comp.SpatialHash, objID types.EntityID, x, y float32, radius int, team string) {
+func AddObjectSpatialHash(hash *comp.SpatialHash, objID types.EntityID, x, y float32, radius int, team string, _type string) {
 	//get range of cells covered
 	startCellX, endCellX, startCellY, endCellY := calculateCellRangeSpatialHash(hash, x, y, radius)
 
@@ -29,6 +29,7 @@ func AddObjectSpatialHash(hash *comp.SpatialHash, objID types.EntityID, x, y flo
 					PositionsY: []float32{},
 					Radii:      []int{},
 					Team:       []string{},
+					Type:       []string{},
 				}
 			}
 			//add to the cell data list
@@ -37,6 +38,7 @@ func AddObjectSpatialHash(hash *comp.SpatialHash, objID types.EntityID, x, y flo
 			cell.PositionsY = append(cell.PositionsY, y)
 			cell.Radii = append(cell.Radii, radius)
 			cell.Team = append(cell.Team, team)
+			cell.Type = append(cell.Type, _type)
 			hash.Cells[hashKey] = cell
 		}
 	}
@@ -62,6 +64,7 @@ func RemoveObjectFromSpatialHash(hash *comp.SpatialHash, objID types.EntityID, x
 						cell.PositionsY = append(cell.PositionsY[:i], cell.PositionsY[i+1:]...)
 						cell.Radii = append(cell.Radii[:i], cell.Radii[i+1:]...)
 						cell.Team = append(cell.Team[:i], cell.Team[i+1:]...)
+						cell.Type = append(cell.Type[:i], cell.Type[i+1:]...)
 					}
 				}
 				// Update the cell in the map or delete it if empty

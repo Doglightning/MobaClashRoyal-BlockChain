@@ -1,5 +1,7 @@
 package component
 
+import "pkg.world.dev/world-engine/cardinal/types"
+
 type Sp struct {
 	DmgSp       int `json:"DmgSp"`
 	SpRate      int `json:"sprate"`
@@ -8,8 +10,10 @@ type Sp struct {
 	Rate        int `json:"rate"`        //tick based 5 Rate = 5 ticks (100ms tickrate = 500ms attack rate)
 	DamageFrame int `json:"attackframe"` // Frame damage goes off (most animations have a wind down so the dmage goes off in the middle somewhere)
 
-	Charged             bool `json:"Charged"`
-	StructureTargetable bool `json:"StructureTargetable"`
+	Target              types.EntityID `json:"target"`
+	Combat              bool           `json:"Combat"`
+	Charged             bool           `json:"Charged"`
+	StructureTargetable bool           `json:"StructureTargetable"`
 }
 
 type SpEntity struct {

@@ -137,7 +137,7 @@ func spawnBasesGSS(world cardinal.WorldContext, matchID string, teamStateID type
 	}
 
 	//add structure to spatial hash collision map
-	AddObjectSpatialHash(spatialHash, baseID, float32(MapDataRegistry[mapName].Bases[0][0]), float32(MapDataRegistry[mapName].Bases[0][1]), StructureDataRegistry["Base"].Radius, "Blue")
+	AddObjectSpatialHash(spatialHash, baseID, float32(MapDataRegistry[mapName].Bases[0][0]), float32(MapDataRegistry[mapName].Bases[0][1]), StructureDataRegistry["Base"].Radius, "Blue", "structure")
 
 	//incriment UID
 	uid.UID++
@@ -162,7 +162,7 @@ func spawnBasesGSS(world cardinal.WorldContext, matchID string, teamStateID type
 	}
 
 	//add structure to spatial hash collision map
-	AddObjectSpatialHash(spatialHash, baseID, float32(MapDataRegistry[mapName].Bases[1][0]), float32(MapDataRegistry[mapName].Bases[1][1]), StructureDataRegistry["Base"].Radius, "Red")
+	AddObjectSpatialHash(spatialHash, baseID, float32(MapDataRegistry[mapName].Bases[1][0]), float32(MapDataRegistry[mapName].Bases[1][1]), StructureDataRegistry["Base"].Radius, "Red", "structure")
 
 	//incriment UID
 	uid.UID++
@@ -189,7 +189,7 @@ func spawnBasesGSS(world cardinal.WorldContext, matchID string, teamStateID type
 		}
 
 		//add structure to spatial hash collision map
-		AddObjectSpatialHash(spatialHash, towerID, float32(MapDataRegistry[mapName].TowersBlue[i][0]), float32(MapDataRegistry[mapName].TowersBlue[i][1]), StructureDataRegistry["Tower"].Radius, "Blue")
+		AddObjectSpatialHash(spatialHash, towerID, float32(MapDataRegistry[mapName].TowersBlue[i][0]), float32(MapDataRegistry[mapName].TowersBlue[i][1]), StructureDataRegistry["Tower"].Radius, "Blue", "structure")
 
 		//incriment UID
 		uid.UID++
@@ -214,7 +214,7 @@ func spawnBasesGSS(world cardinal.WorldContext, matchID string, teamStateID type
 		}
 
 		//add structure to spatial hash collision map
-		AddObjectSpatialHash(spatialHash, towerID, float32(MapDataRegistry[mapName].TowersRed[i][0]), float32(MapDataRegistry[mapName].TowersRed[i][1]), StructureDataRegistry["Tower"].Radius, "Red")
+		AddObjectSpatialHash(spatialHash, towerID, float32(MapDataRegistry[mapName].TowersRed[i][0]), float32(MapDataRegistry[mapName].TowersRed[i][1]), StructureDataRegistry["Tower"].Radius, "Red", "structure")
 
 		//incriment UID
 		uid.UID++

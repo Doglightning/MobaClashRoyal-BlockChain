@@ -147,7 +147,7 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 			}
 
 			//add unit to collision hash collision map
-			AddObjectSpatialHash(SpatialHash, entityID, create.Msg.PositionX, create.Msg.PositionY, unitType.Radius, create.Msg.Team)
+			AddObjectSpatialHash(SpatialHash, entityID, create.Msg.PositionX, create.Msg.PositionY, unitType.Radius, create.Msg.Team, unitType.Class)
 
 			//reduce player gold and then set the component
 			if create.Msg.Team == "Blue" {

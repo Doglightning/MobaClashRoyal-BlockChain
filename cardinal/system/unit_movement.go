@@ -1,7 +1,6 @@
 package system
 
 import (
-	"container/list"
 	"fmt"
 	"math"
 	"sort"
@@ -94,7 +93,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 						//attempt to push blocking units
 						pushBlockingUnit(world, collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, uMs.CurrentMS, mapName)
 						//move unit.  walk around blocking units
-						uPos.PositionVectorX, uPos.PositionVectorY = moveFreeSpace(collisionHash, id, tempX, tempY, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, mapName)
+						uPos.PositionVectorX, uPos.PositionVectorY = moveFreeSpace(collisionHash, id, tempX, tempY, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, uAtk.Class, mapName)
 						// Set the new position component
 						if err := cardinal.SetComponent(world, id, uPos); err != nil {
 							fmt.Printf("error set component on position (unit movement.go): %v", err)
@@ -163,7 +162,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 							//attempt to push blocking units
 							pushBlockingUnit(world, collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, uMs.CurrentMS, mapName)
 							//move unit.  walk around blocking units
-							uPos.PositionVectorX, uPos.PositionVectorY = moveFreeSpace(collisionHash, id, tempX, tempY, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, mapName)
+							uPos.PositionVectorX, uPos.PositionVectorY = moveFreeSpace(collisionHash, id, tempX, tempY, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, uAtk.Class, mapName)
 							// Set the new position component
 							err := cardinal.SetComponent(world, id, uPos)
 							if err != nil {
@@ -197,7 +196,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 					//attempt to push blocking units
 					pushBlockingUnit(world, collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, uMs.CurrentMS, mapName)
 					//move unit.  walk around blocking units
-					uPos.PositionVectorX, uPos.PositionVectorY = moveFreeSpace(collisionHash, id, tempX, tempY, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, mapName)
+					uPos.PositionVectorX, uPos.PositionVectorY = moveFreeSpace(collisionHash, id, tempX, tempY, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, uAtk.Class, mapName)
 					//set updated position component
 					err := cardinal.SetComponent(world, id, uPos)
 					if err != nil {
@@ -364,62 +363,6 @@ func moveDirectionExsist(x, y float32, mapName *comp.MapName) bool {
 	return true
 }
 
-// FindClosestEnemy performs a BFS search from the unit's position outward within the attack radius.
-func findClosestEnemy(hash *comp.SpatialHash, objID types.EntityID, startX, startY float32, attackRadius int, team string) (types.EntityID, float32, float32, int, bool) {
-	queue := list.New()                                                              //queue of cells to check
-	visited := make(map[string]bool)                                                 //cells checked
-	queue.PushBack(&comp.Position{PositionVectorX: startX, PositionVectorY: startY}) //insert starting position to queue
-	minDist := float32(attackRadius * attackRadius)                                  // Using squared distance to avoid sqrt calculations.
-	closestEnemy := types.EntityID(0)
-	closestX, closestY := float32(0), float32(0)
-	closestRadius := int(0)
-	foundEnemy := false
-
-	//while units in queue
-	for queue.Len() > 0 {
-		pos := queue.Remove(queue.Front()).(*comp.Position) // remove first Item
-		x, y := pos.PositionVectorX, pos.PositionVectorY
-		cellX, cellY := calculateSpatialHash(hash, x, y) //Find the hash key for grid size
-		hashKey := fmt.Sprintf("%d,%d", cellX, cellY)    //create key
-
-		// Prevent re-checking the same cell
-		if _, found := visited[hashKey]; found {
-			continue
-		}
-		visited[hashKey] = true
-
-		if cell, exists := hash.Cells[hashKey]; exists { //if unit found in cell
-			for i, id := range cell.UnitIDs { //go over each unit in cell
-				if cell.Team[i] != team && id != objID { //if unit in cell is enemy and not self
-					distSq := (cell.PositionsX[i]-startX)*(cell.PositionsX[i]-startX) + (cell.PositionsY[i]-startY)*(cell.PositionsY[i]-startY) - float32(cell.Radii[i]*cell.Radii[i])
-					//if distance is smaller then closest unit found so far
-					if distSq < minDist {
-						minDist = distSq
-						closestEnemy = id
-						closestX, closestY = cell.PositionsX[i], cell.PositionsY[i]
-						closestRadius = cell.Radii[i]
-						foundEnemy = true
-					}
-				}
-			}
-		}
-
-		// Add neighboring cells to the queue if within range
-		if !foundEnemy {
-			for dx := -hash.CellSize; dx <= hash.CellSize; dx += hash.CellSize {
-				for dy := -hash.CellSize; dy <= hash.CellSize; dy += hash.CellSize {
-					nx, ny := x+float32(dx), y+float32(dy)
-					//check if new cell being added is still within attack range
-					if (nx-startX)*(nx-startX)+(ny-startY)*(ny-startY) <= float32(attackRadius*attackRadius) {
-						queue.PushBack(&comp.Position{PositionVectorX: nx, PositionVectorY: ny}) // add to queue
-					}
-				}
-			}
-		}
-	}
-	return closestEnemy, closestX, closestY, closestRadius, foundEnemy
-}
-
 // Moves Unit towards enemy position
 func moveUnitTowardsEnemy(position *comp.Position, enemyX float32, enemyY float32, enemyRadius int, movespeed float32, radius int) *comp.Position {
 	// Compute direction vector towards the enemy
@@ -472,6 +415,13 @@ func pushBlockingUnit(world cardinal.WorldContext, hash *comp.SpatialHash, objID
 				continue
 			}
 
+			//get targets attack
+			atk, err := cardinal.GetComponent[comp.Attack](world, collisionID)
+			if err != nil {
+				fmt.Printf("error getting targets attack compoenent (pushBlockingUnit): %v", err)
+				continue
+			}
+
 			//if unit is ally push
 			if targetTeam.Team == team && targetName.UnitName != "Base" && targetName.UnitName != "Tower" {
 				//get targets posisiton and radius components
@@ -489,7 +439,7 @@ func pushBlockingUnit(world cardinal.WorldContext, hash *comp.SpatialHash, objID
 				targetPos.PositionVectorX, targetPos.PositionVectorY = pushFromPtBtoA(world, hash, collisionID, targetPos.PositionVectorX, targetPos.PositionVectorY, newTargetX, newTargetY, targetRadius.UnitRadius, mapName)
 				// Add the objects position to collosion hash
 
-				AddObjectSpatialHash(hash, collisionID, targetPos.PositionVectorX, targetPos.PositionVectorY, targetRadius.UnitRadius, targetTeam.Team)
+				AddObjectSpatialHash(hash, collisionID, targetPos.PositionVectorX, targetPos.PositionVectorY, targetRadius.UnitRadius, targetTeam.Team, atk.Class)
 				//set collided units new position component
 				if err = cardinal.SetComponent(world, collisionID, targetPos); err != nil {
 					fmt.Printf("error setting target pos component (pushBlockingUnit): %v", err)
@@ -602,7 +552,7 @@ func pushFromPtBtoA(world cardinal.WorldContext, hash *comp.SpatialHash, id type
 }
 
 // walks around blocking unit if exsists to closest free space
-func moveFreeSpace(hash *comp.SpatialHash, objID types.EntityID, startX, startY, targetX, targetY float32, radius int, team string, mapName *comp.MapName) (float32, float32) {
+func moveFreeSpace(hash *comp.SpatialHash, objID types.EntityID, startX, startY, targetX, targetY float32, radius int, team string, _type string, mapName *comp.MapName) (float32, float32) {
 	// Remove the object from its current position
 	RemoveObjectFromSpatialHash(hash, objID, startX, startY, radius)
 	// Find an alternative position if the target is occupied
@@ -611,7 +561,7 @@ func moveFreeSpace(hash *comp.SpatialHash, objID types.EntityID, startX, startY,
 		targetX, targetY = moveToNearestFreeSpaceBox(hash, startX, startY, targetX, targetY, float32(radius), mapName)
 	}
 	// Add the object to the new position
-	AddObjectSpatialHash(hash, objID, targetX, targetY, radius, team)
+	AddObjectSpatialHash(hash, objID, targetX, targetY, radius, team, _type)
 	return targetX, targetY
 }
 

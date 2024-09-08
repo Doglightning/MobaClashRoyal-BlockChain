@@ -36,7 +36,7 @@ func AttackPhaseSystem(world cardinal.WorldContext) error {
 			}
 
 			// basic melee/range attack logic
-		} else if atk.Class == "melee" || atk.Class == "range" {
+		} else if atk.Class == "ground" || atk.Class == "air" {
 			err = MeleeRangeAttack(world, id, atk)
 			if err != nil {
 				fmt.Printf("%v \n", err)

@@ -87,7 +87,7 @@ func TowerDestroyerSystem(world cardinal.WorldContext) error {
 					return false
 				}
 				//add structure to spatial hash collision map
-				AddObjectSpatialHash(CollisionSpartialHash, id, UnitPosition.PositionVectorX, UnitPosition.PositionVectorY, UnitRadius.UnitRadius, "Red")
+				AddObjectSpatialHash(CollisionSpartialHash, id, UnitPosition.PositionVectorX, UnitPosition.PositionVectorY, UnitRadius.UnitRadius, "Red", "structure")
 			} else {
 				//change tower team
 				team.Team = "Blue"
@@ -96,7 +96,7 @@ func TowerDestroyerSystem(world cardinal.WorldContext) error {
 					return false
 				}
 				//add structure to spatial hash collision map
-				AddObjectSpatialHash(CollisionSpartialHash, id, UnitPosition.PositionVectorX, UnitPosition.PositionVectorY, UnitRadius.UnitRadius, "Blue")
+				AddObjectSpatialHash(CollisionSpartialHash, id, UnitPosition.PositionVectorX, UnitPosition.PositionVectorY, UnitRadius.UnitRadius, "Blue", "structure")
 			}
 
 			state.State = "Converting"
