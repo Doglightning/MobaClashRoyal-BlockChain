@@ -58,6 +58,9 @@ func spSpawner(world cardinal.WorldContext, id types.EntityID, name string) erro
 	if name == "ArcherLady" {
 		err = archerLadySpawn(world, id)
 	}
+	if name == "FireSpirit" {
+		err = fireSpiritSpawn(world, id)
+	}
 
 	if name == "Mage" {
 		err = MageSpawnSP(world, id)
@@ -76,6 +79,10 @@ func ClassAttack(world cardinal.WorldContext, id types.EntityID, name string, at
 	if name == "ArcherLady" {
 		err = archerLadyAttack(world, id, atk)
 	}
+
+	// if name == "FireSpirit" {
+	// 	err = fireSpiritAttack(world, atk)
+	// }
 
 	if name == "Mage" {
 		err = mageAttack(world, id, atk)

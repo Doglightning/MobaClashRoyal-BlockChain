@@ -136,6 +136,7 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 					Charged:             false,
 					Rate:                spType.AttackRate,
 					DamageFrame:         spType.DamageFrame,
+					DamageEndFrame:      spType.DamageEndFrame,
 					StructureTargetable: spType.StructureTargetable,
 				},
 				comp.CenterOffset{CenterOffset: unitType.CenterOffset},

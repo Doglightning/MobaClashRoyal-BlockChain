@@ -6,7 +6,7 @@ type UnitType struct {
 	Name         string
 	Class        string
 	Health       float32
-	Damage       int
+	Damage       float32
 	AttackRate   int //tick based 5 = 5 ticks (100ms tickrate = 500ms attack rate)
 	DamageFrame  int
 	Speed        float32
@@ -25,20 +25,23 @@ type UnitType struct {
 // registry of all units in game
 var UnitRegistry = map[string]UnitType{
 	"ArcherLady": {Class: "ground", Health: 75, Damage: 30, AttackRate: 30, DamageFrame: 20, Speed: 50, Cost: 3, Radius: 50, AggroRadius: 1400, AttackRadius: 1200, CenterOffset: 150, DmgSp: 25, SpRate: 50, CurrentSP: 0, MaxSP: 100},
+	"FireSpirit": {Class: "ground", Health: 100, Damage: 2.5, AttackRate: 20, DamageFrame: 13, Speed: 40, Cost: 2, Radius: 100, AggroRadius: 1400, AttackRadius: 350, CenterOffset: 150, DmgSp: 10, SpRate: 34, CurrentSP: 0, MaxSP: 100},
 	"Mage":       {Class: "ground", Health: 75, Damage: 15, AttackRate: 20, DamageFrame: 8, Speed: 30, Cost: 3, Radius: 130, AggroRadius: 1400, AttackRadius: 1000, CenterOffset: 150, DmgSp: 25, SpRate: 50, CurrentSP: 0, MaxSP: 100},
 	"Vampire":    {Class: "ground", Health: 100, Damage: 10, AttackRate: 10, DamageFrame: 4, Speed: 50, Cost: 2, Radius: 80, AggroRadius: 1400, AttackRadius: 10, CenterOffset: 150, DmgSp: 10, SpRate: 25, CurrentSP: 0, MaxSP: 100},
 }
 
 type SpType struct {
 	AttackRate          int  `json:"attackrate"`  //tick based 5 Rate = 5 ticks (100ms tickrate = 500ms attack rate)
-	DamageFrame         int  `json:"attackframe"` // Frame damage goes off (most animations have a wind down so the dmage goes off in the middle somewhere)
+	DamageFrame         int  `json:"damageframe"` // Frame damage goes off (most animations have a wind down so the dmage goes off in the middle somewhere)
+	DamageEndFrame      int  `json:"damageendframe"`
 	StructureTargetable bool `json:"StructureTargetable"`
 }
 
 var SpRegistry = map[string]SpType{
-	"ArcherLady": {AttackRate: 30, DamageFrame: 20, StructureTargetable: true},
-	"Mage":       {AttackRate: 15, DamageFrame: 8, StructureTargetable: false},
-	"Vampire":    {AttackRate: 10, DamageFrame: 4, StructureTargetable: true},
+	"ArcherLady": {AttackRate: 30, DamageFrame: 20, DamageEndFrame: 20, StructureTargetable: true},
+	"FireSpirit": {AttackRate: 41, DamageFrame: 14, DamageEndFrame: 27, StructureTargetable: true},
+	"Mage":       {AttackRate: 15, DamageFrame: 8, DamageEndFrame: 8, StructureTargetable: false},
+	"Vampire":    {AttackRate: 10, DamageFrame: 4, DamageEndFrame: 4, StructureTargetable: true},
 }
 
 type ProjectileType struct {
@@ -60,7 +63,7 @@ var ProjectileRegistry = map[string]ProjectileType{
 type StructureData struct {
 	Health       float32        `json:"health"`
 	Radius       int            `json:"radius"`
-	Damage       int            `json:"damage"`
+	Damage       float32        `json:"damage"`
 	AttackRate   int            `json:"attackrate"`  //tick based 5 Rate = 5 ticks (100ms tickrate = 500ms attack rate)
 	DamageFrame  int            `json:"attackframe"` // Frame damage goes off (most animations have a wind down so the dmage goes off in the middle somewhere)
 	AttackRadius int            `json:"AttackRadius"`
