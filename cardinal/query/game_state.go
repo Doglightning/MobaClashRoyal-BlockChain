@@ -38,10 +38,15 @@ type UnitDetails struct {
 	UnitName        string
 	Combat          bool
 	AttackFrame     int
-	CurrentSp       int
-	ChargedSP       bool
-	Stunned         bool
-	EffectList      []string
+	AttackRate      int
+
+	DamageFrameSP int
+	EndFrameSP    int
+	SpRate        int
+	CurrentSp     int
+	ChargedSP     bool
+	Stunned       bool
+	EffectList    []string
 }
 
 type ProjectileDetails struct {
@@ -183,8 +188,11 @@ func unitStateGS(world cardinal.WorldContext, matchFilter cardinal.FilterFn, res
 		if err != nil {
 			return false
 		}
+		unit.DamageFrameSP = unitSp.DamageFrame
+		unit.EndFrameSP = unitSp.DamageEndFrame
 		unit.CurrentSp = unitSp.CurrentSp
 		unit.ChargedSP = unitSp.Charged
+		unit.SpRate = unitSp.SpRate
 
 		// Fetch CC component
 		cc, err := cardinal.GetComponent[comp.CC](world, id)
