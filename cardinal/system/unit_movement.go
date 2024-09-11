@@ -43,6 +43,10 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 			continue
 		}
 
+		if uAtk.State == "Channeling" { //if unit chenneling cannot move
+			continue
+		}
+
 		//get game state
 		gameState, err := getGameStateGSS(world, MatchID)
 		if err != nil {
@@ -487,8 +491,8 @@ func pushUnitDirection(posX1, posY1, posX2, posY2, dirX2, dirY2, distance float3
 		// Perpendicular push to the right
 		dirX, dirY = normBallHitY, -normBallHitX
 	}
-	targetX = posX2 + dirX*(distance/2)
-	targetY = posY2 + dirY*(distance/2)
+	targetX = posX2 + dirX*(distance/4)
+	targetY = posY2 + dirY*(distance/4)
 	return targetX, targetY
 }
 

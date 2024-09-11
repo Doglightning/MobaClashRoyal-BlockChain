@@ -2,7 +2,6 @@ package system
 
 import (
 	comp "MobaClashRoyal/component"
-	"container/list"
 	"fmt"
 
 	"pkg.world.dev/world-engine/cardinal"
@@ -38,7 +37,7 @@ func AttackPhaseSystem(world cardinal.WorldContext) error {
 
 			// basic melee/range attack logic
 		} else if atk.Class == "ground" || atk.Class == "air" {
-			err = MeleeRangeAttack(world, id, atk)
+			err = ClassAttackSystem(world, id, atk)
 			if err != nil {
 				fmt.Printf("%v \n", err)
 				return false
@@ -81,14 +80,18 @@ func MeleeRangeAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 
 	//check if in a SP animation or a regular attack
 	if atk.Frame == 0 && unitSp.CurrentSp >= unitSp.MaxSp { //In special power
-		//get Target name
-		tarName, err := cardinal.GetComponent[comp.UnitName](world, atk.Target)
-		if err != nil {
-			return fmt.Errorf("error retrieving target name component (phase_Attack.go): %v", err)
-		}
 
-		if !unitSp.StructureTargetable && (tarName.UnitName == "Base" || tarName.UnitName == "Tower") {
-			unitSp.Charged = false
+		if !unitSp.StructureTargetable {
+			//get Target name
+			tarName, err := cardinal.GetComponent[comp.UnitName](world, atk.Target)
+			if err != nil {
+				return fmt.Errorf("error retrieving target name component (phase_Attack.go): %v", err)
+			}
+			if tarName.UnitName == "Base" || tarName.UnitName == "Tower" {
+				unitSp.Charged = false
+			} else {
+				unitSp.Charged = true
+			}
 		} else {
 			unitSp.Charged = true
 		}
@@ -107,10 +110,11 @@ func MeleeRangeAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 
 		//if unit is ready to use Special power attack
 		if unitSp.Charged {
+
 			//spawn special power
 			err = spSpawner(world, id, unitName.UnitName)
 			if err != nil {
-				return fmt.Errorf("error spawning special attack (phase_Attack.go): %v - ", err)
+				return err
 			}
 
 		} else { // normal attack
@@ -216,56 +220,4 @@ func ProjectileAttack(world cardinal.WorldContext, id types.EntityID, projectile
 		return destroyed
 	})
 	return nil
-}
-
-// FindClosestEnemyNotStructure a BFS search from the unit's position outward within the attack radius.
-func findClosestEnemyNotStructure(hash *comp.SpatialHash, objID types.EntityID, startX, startY float32, attackRadius int, team string) (types.EntityID, bool) {
-	queue := list.New()                                                              //queue of cells to check
-	visited := make(map[string]bool)                                                 //cells checked
-	queue.PushBack(&comp.Position{PositionVectorX: startX, PositionVectorY: startY}) //insert starting position to queue
-	minDist := float32(attackRadius * attackRadius)                                  // Using squared distance to avoid sqrt calculations.
-	closestEnemy := types.EntityID(0)
-	foundEnemy := false
-
-	//while units in queue
-	for queue.Len() > 0 {
-		pos := queue.Remove(queue.Front()).(*comp.Position) // remove first Item
-		x, y := pos.PositionVectorX, pos.PositionVectorY
-		cellX, cellY := calculateSpatialHash(hash, x, y) //Find the hash key for grid size
-		hashKey := fmt.Sprintf("%d,%d", cellX, cellY)    //create key
-
-		// Prevent re-checking the same cell
-		if _, found := visited[hashKey]; found {
-			continue
-		}
-		visited[hashKey] = true
-
-		if cell, exists := hash.Cells[hashKey]; exists { //if unit found in cell
-			for i, id := range cell.UnitIDs { //go over each unit in cell
-				if cell.Team[i] != team && id != objID && cell.Type[i] != "structure" { //if unit in cell is enemy and not self and not structure
-					distSq := (cell.PositionsX[i]-startX)*(cell.PositionsX[i]-startX) + (cell.PositionsY[i]-startY)*(cell.PositionsY[i]-startY) - float32(cell.Radii[i]*cell.Radii[i])
-					//if distance is smaller then closest unit found so far
-					if distSq < minDist {
-						minDist = distSq
-						closestEnemy = id
-						foundEnemy = true
-					}
-				}
-			}
-		}
-
-		// Add neighboring cells to the queue if within range
-		if !foundEnemy {
-			for dx := -hash.CellSize; dx <= hash.CellSize; dx += hash.CellSize {
-				for dy := -hash.CellSize; dy <= hash.CellSize; dy += hash.CellSize {
-					nx, ny := x+float32(dx), y+float32(dy)
-					//check if new cell being added is still within attack range
-					if (nx-startX)*(nx-startX)+(ny-startY)*(ny-startY) <= float32(attackRadius*attackRadius) {
-						queue.PushBack(&comp.Position{PositionVectorX: nx, PositionVectorY: ny}) // add to queue
-					}
-				}
-			}
-		}
-	}
-	return closestEnemy, foundEnemy
 }

@@ -18,7 +18,7 @@ type vampireSP struct {
 func NewVampireSP() *vampireSP {
 	return &vampireSP{
 		healCount:  25,
-		healAmount: 1.2,
+		healAmount: .8,
 	}
 }
 

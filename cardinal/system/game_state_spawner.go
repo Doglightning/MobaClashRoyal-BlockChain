@@ -38,7 +38,7 @@ func GameStateSpawnerSystem(world cardinal.WorldContext) error {
 					comp.Player1{
 						Nickname:    create.Tx.PersonaTag,
 						Hand:        []string{"Vampire", "FireSpirit", "Mage"},
-						Deck:        []string{"ArcherLady", "Vampire"},
+						Deck:        []string{"ArcherLady"},
 						RemovalList: make(map[int]bool),
 						Gold:        5,
 					},
@@ -85,7 +85,7 @@ func GameStateSpawnerSystem(world cardinal.WorldContext) error {
 				&comp.Player2{
 					Nickname:    create.Tx.PersonaTag,
 					Hand:        []string{"Vampire", "FireSpirit", "Mage"},
-					Deck:        []string{"ArcherLady", "Vampire"},
+					Deck:        []string{"ArcherLady"},
 					RemovalList: make(map[int]bool),
 					Gold:        5,
 				})

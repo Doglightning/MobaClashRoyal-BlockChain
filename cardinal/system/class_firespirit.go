@@ -20,7 +20,7 @@ func NewFireSpiritSpawnSP() *fireSpiritSpawnSP {
 	return &fireSpiritSpawnSP{
 		Hieght:    570,
 		BaseWidth: 385,
-		Damage:    2.5,
+		Damage:    3.5,
 	}
 }
 
@@ -82,8 +82,6 @@ func fireSpiritSpawn(world cardinal.WorldContext, id types.EntityID) error {
 			continue
 		}
 
-		fmt.Printf("%s \n", team.Team)
-		fmt.Printf("%s \n", targetTeam.Team)
 		if team.Team != targetTeam.Team {
 
 			// reduce health by units attack damage
@@ -104,6 +102,146 @@ func fireSpiritSpawn(world cardinal.WorldContext, id types.EntityID) error {
 			}
 
 		}
+	}
+
+	//reset attack component
+	err = cardinal.UpdateComponent(world, id, func(attack *comp.Attack) *comp.Attack {
+		if attack == nil {
+			fmt.Printf("error retrieving enemy attack component (class fireSpirit.go): \n")
+			return nil
+		}
+
+		sp, err := cardinal.GetComponent[comp.Sp](world, id)
+		if err != nil {
+			fmt.Printf("error retrieving special power comp (class fireSpirit.go): ")
+			return nil
+		}
+
+		if attack.Frame == sp.DamageEndFrame+1 {
+
+			attack.State = "Default"
+			if attack.Target == id {
+				attack.Combat = false
+			}
+
+		}
+
+		return attack
+	})
+	if err != nil {
+		return fmt.Errorf("error updating attack comp (class fireSpirit.go): %v", err)
+	}
+
+	return nil
+}
+
+func fireSpiritResetCombat(world cardinal.WorldContext, id types.EntityID) error {
+
+	//reset attack component
+	err := cardinal.UpdateComponent(world, id, func(attack *comp.Attack) *comp.Attack {
+		if attack == nil {
+			fmt.Printf("error retrieving enemy attack component (fireSpiritResetCombat): \n")
+			return nil
+		}
+
+		sp, err := cardinal.GetComponent[comp.Sp](world, id)
+		if err != nil {
+			fmt.Printf("error retrieving special power comp (fireSpiritResetCombat): ")
+			return nil
+		}
+
+		if attack.Frame < sp.DamageFrame || attack.Frame > sp.DamageEndFrame {
+
+			attack.Frame = 0
+			attack.Combat = false
+			attack.State = "Default"
+			attack.Target = id
+		} else {
+			attack.State = "Channeling"
+			attack.Target = id
+		}
+
+		return attack
+	})
+	if err != nil {
+		return fmt.Errorf("error updating attack comp (fireSpiritResetCombat): %v", err)
+	}
+
+	return nil
+}
+
+// custom phase_attack.go logic
+func FireSpiritAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.Attack) error {
+
+	//get Unit CC component
+	cc, err := cardinal.GetComponent[comp.CC](world, id)
+	if err != nil {
+		fmt.Printf("error getting unit cc component (Fire Spirit Attack): %v", err)
+	}
+
+	if cc.Stun > 0 { //if unit stunned cannot attack
+		return nil
+	}
+
+	//get special power component
+	unitSp, err := cardinal.GetComponent[comp.Sp](world, id)
+	if err != nil {
+		return fmt.Errorf("error retrieving special power component (Fire Spirit Attack): %v", err)
+	}
+
+	//check if in a SP animation or a regular attack
+	if atk.Frame == 0 && unitSp.CurrentSp >= unitSp.MaxSp { //In special power
+
+		unitSp.Charged = true
+
+	} else if atk.Frame == 0 && unitSp.CurrentSp < unitSp.MaxSp { // in regular attack
+		unitSp.Charged = false
+	}
+
+	//if unit is in its damage frame and not charged
+	if atk.Frame == atk.DamageFrame && !unitSp.Charged {
+		unitSp.CurrentSp += unitSp.SpRate //increase sp after attack
+		// make sure we are not over MaxSp
+		if unitSp.CurrentSp >= unitSp.MaxSp {
+			unitSp.CurrentSp = unitSp.MaxSp
+		}
+	}
+
+	//if unit is in damage frames when charged
+	if unitSp.DamageFrame <= atk.Frame && atk.Frame <= unitSp.DamageEndFrame && unitSp.Charged {
+
+		//Shoot Fire >:D
+		err = fireSpiritSpawn(world, id)
+		if err != nil {
+			return err
+		}
+
+		//return Sp to 0
+		unitSp.CurrentSp = 0
+
+	}
+
+	//if target died in cast (self target) and attack frame is at end of animation or start (don't interupt the fire strike once its going even if target died)
+	if (atk.Target == id && atk.Frame == unitSp.Rate-6) || atk.Target == id && atk.Frame < unitSp.DamageFrame {
+
+		atk.State = "Default"
+		atk.Combat = false
+
+	}
+
+	//if attack frame is at max and not sp charged  OR attack fram at sp max and charged
+	if (atk.Frame >= atk.Rate && !unitSp.Charged) || (atk.Frame >= unitSp.Rate && unitSp.Charged) {
+		atk.Frame = -1
+	}
+
+	atk.Frame++
+	// set updated attack component
+	if err := cardinal.SetComponent(world, id, atk); err != nil {
+		return fmt.Errorf("error updating attack component (Fire Spirit Attack): %s ", err)
+	}
+	// set updated sp component
+	if err := cardinal.SetComponent(world, id, unitSp); err != nil {
+		return fmt.Errorf("error updating special power component (Fire Spirit Attack): %s ", err)
 	}
 
 	return nil

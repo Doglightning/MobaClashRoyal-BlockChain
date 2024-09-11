@@ -115,6 +115,28 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("(unit_spawner.go) - %w", err)
 			}
 
+			//check unit spawned is in hand
+			var found bool = false
+			if create.Msg.Team == "Blue" {
+				for _, v := range player1.Hand { //search hand
+					if v == create.Msg.UnitType { // if card == unit spawned
+						found = true
+						break
+					}
+				}
+			} else {
+				for _, v := range player2.Hand { //search hand
+					if v == create.Msg.UnitType { // if card == unit spawned
+						found = true
+						break
+					}
+				}
+			}
+
+			if !found {
+				return msg.CreateUnitResult{Success: false}, fmt.Errorf("card not in hand (unit_spawner.go) ")
+			}
+
 			//create unit
 			entityID, err := cardinal.Create(world,
 				comp.MatchId{MatchId: create.Msg.MatchID},
@@ -127,7 +149,17 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 				comp.MapName{MapName: create.Msg.MapName},
 				comp.Distance{Distance: tempDistance},
 				comp.UnitRadius{UnitRadius: unitType.Radius},
-				comp.Attack{Combat: false, Damage: unitType.Damage, Rate: unitType.AttackRate, Frame: 0, DamageFrame: unitType.DamageFrame, Class: unitType.Class, AttackRadius: unitType.AttackRadius, AggroRadius: unitType.AggroRadius},
+				comp.Attack{
+					Combat:       false,
+					Damage:       unitType.Damage,
+					Rate:         unitType.AttackRate,
+					Frame:        0,
+					DamageFrame:  unitType.DamageFrame,
+					Class:        unitType.Class,
+					AttackRadius: unitType.AttackRadius,
+					AggroRadius:  unitType.AggroRadius,
+					State:        "Default",
+				},
 				comp.Sp{
 					DmgSp:               unitType.DmgSp,
 					SpRate:              unitType.SpRate,
@@ -156,6 +188,17 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 				player1.Gold -= float32(unitType.Cost)
 				//-1 key means to tell player to remove unit they were holding to transition it to this spawned unit
 				player1.RemovalList[create.Msg.UID] = true
+
+				//hand sorting
+				tempCard := player1.Deck[0]                     //get top deck card
+				player1.Deck = removeFirstElement(player1.Deck) //remove top deck card
+				for i, v := range player1.Hand {                //search hand
+					if v == create.Msg.UnitType { // if card == unit spawned
+						player1.Hand[i] = tempCard             //insert top card to hand
+						player1.Deck = append(player1.Deck, v) // put spawned unit to back of deck
+					}
+				}
+
 				err = cardinal.SetComponent(world, gameState, player1)
 				if err != nil {
 					return msg.CreateUnitResult{Success: false}, fmt.Errorf("error setting player1 component (unit_spawner.go): %w", err)
@@ -165,6 +208,17 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 				player2.Gold -= float32(unitType.Cost)
 				//-1 key means to tell player to remove unit they were holding to transition it to this spawned unit
 				player2.RemovalList[create.Msg.UID] = true
+
+				//hand sorting
+				tempCard := player2.Deck[0]                     //get top deck card
+				player2.Deck = removeFirstElement(player2.Deck) //remove top deck card
+				for i, v := range player2.Hand {                //search hand
+					if v == create.Msg.UnitType { // if card == unit spawned
+						player2.Hand[i] = tempCard             //insert top card to hand
+						player2.Deck = append(player2.Deck, v) // put spawned unit to back of deck
+					}
+				}
+
 				err = cardinal.SetComponent(world, gameState, player2)
 				if err != nil {
 					return msg.CreateUnitResult{Success: false}, fmt.Errorf("error setting player2 component (unit_spawner.go): %w", err)
@@ -173,4 +227,11 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 
 			return msg.CreateUnitResult{Success: true}, nil
 		})
+}
+
+func removeFirstElement(slice []string) []string {
+	if len(slice) > 0 {
+		return slice[1:] // Slice from the second element to the end
+	}
+	return slice // Return the original slice if it's empty
 }

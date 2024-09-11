@@ -80,10 +80,6 @@ func ClassAttack(world cardinal.WorldContext, id types.EntityID, name string, at
 		err = archerLadyAttack(world, id, atk)
 	}
 
-	// if name == "FireSpirit" {
-	// 	err = fireSpiritAttack(world, atk)
-	// }
-
 	if name == "Mage" {
 		err = mageAttack(world, id, atk)
 	}
@@ -95,5 +91,49 @@ func ClassAttack(world cardinal.WorldContext, id types.EntityID, name string, at
 	if name == "Vampire" {
 		err = vampireAttack(world, atk)
 	}
+	return err
+}
+
+func ClassAttackSystem(world cardinal.WorldContext, id types.EntityID, atk *comp.Attack) error {
+
+	name, err := cardinal.GetComponent[comp.UnitName](world, id)
+	if err != nil {
+		return fmt.Errorf("error getting name component (class attack system): %v", err)
+	}
+
+	if name.UnitName == "FireSpirit" {
+		err = FireSpiritAttack(world, id, atk)
+
+	} else {
+		err = MeleeRangeAttack(world, id, atk)
+	}
+
+	return err
+}
+
+// on desetry resets combat for units targeting
+func ClassResetCombat(world cardinal.WorldContext, id types.EntityID, name string) error {
+
+	var err error
+
+	if name == "FireSpirit" {
+		err = fireSpiritResetCombat(world, id)
+	} else {
+		//reset attack component
+		err := cardinal.UpdateComponent(world, id, func(attack *comp.Attack) *comp.Attack {
+			if attack == nil {
+				fmt.Printf("error retrieving enemy attack component (Phase attack.go): ")
+				return nil
+			}
+			attack.Combat = false
+			attack.Frame = 0
+			return attack
+		})
+		if err != nil {
+			return fmt.Errorf("error updating attack comp (Phase attack.go): %v", err)
+		}
+
+	}
+
 	return err
 }

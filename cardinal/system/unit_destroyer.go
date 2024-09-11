@@ -119,16 +119,19 @@ func resetUnitsTargetingSelfUD(world cardinal.WorldContext, targetFilter cardina
 	err := cardinal.NewSearch().Entity(
 		filter.Contains(UnitFilters())).
 		Where(targetFilter).Each(world, func(enemyID types.EntityID) bool {
-		//reset attack component
-		cardinal.UpdateComponent(world, enemyID, func(attack *comp.Attack) *comp.Attack {
-			if attack == nil {
-				fmt.Printf("error retrieving enemy attack component (unit_destroyer.go): ")
-				return nil
-			}
-			attack.Combat = false
-			attack.Frame = 0
-			return attack
-		})
+
+		name, err := cardinal.GetComponent[comp.UnitName](world, enemyID)
+		if err != nil {
+			fmt.Printf("error getting unit name component (unit_destroyer.go) \n")
+			return false
+		}
+
+		err = ClassResetCombat(world, enemyID, name.UnitName)
+		if err != nil {
+			fmt.Printf("error running ResetCombat (unit_destroyer.go) \n")
+			return false
+		}
+
 		return true
 	})
 	if err != nil {
