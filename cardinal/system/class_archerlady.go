@@ -12,7 +12,7 @@ import (
 type archerLadySpawnSP struct {
 	Name                  string
 	NumArrows             int
-	ArrowSeparationDegree float64
+	ArrowSeparationDegree float64 //distance between each arrow
 	Distance              float32
 	Speed                 float32
 	offSet                float32
@@ -46,7 +46,7 @@ func NewArcherLadyUpdateSP() *archerLadyUpdateSP {
 	}
 }
 
-// spawns the archer ladies villy special power
+// spawns the archer ladies volly special power
 func archerLadySpawn(world cardinal.WorldContext, id types.EntityID) error {
 	archerLady := NewArcherLadySpawnSP()
 
@@ -118,7 +118,7 @@ func archerLadyUpdate(world cardinal.WorldContext, id types.EntityID) error {
 		//find close units that arrow could have possibly crossed
 		cID := CheckCollisionSpatialHashList(collisionHash, pos.PositionVectorX, pos.PositionVectorY, radi.UnitRadius)
 
-		var closestUnit types.EntityID
+		var closestUnit types.EntityID //keeping track of closest unit over for loop
 		var closestDistance float32 = -1
 		for _, value := range cID { //for each collision
 			//get collision team component
@@ -167,6 +167,7 @@ func archerLadyUpdate(world cardinal.WorldContext, id types.EntityID) error {
 					fmt.Printf("error retrieving collision health component (class archerlady.go): \n")
 					return nil
 				}
+				///get target name
 				targetName, err := cardinal.GetComponent[comp.UnitName](world, closestUnit)
 				if err != nil {
 					fmt.Printf("error retrieving target unit name component (class archerlady.go): \n")
@@ -177,10 +178,10 @@ func archerLadyUpdate(world cardinal.WorldContext, id types.EntityID) error {
 					archerLady := NewArcherLadyUpdateSP() // get reduction var
 					health.CurrentHP -= float32(dmg.Damage / archerLady.BaseDmgReductionFactor)
 				} else {
-					health.CurrentHP -= float32(dmg.Damage)
+					health.CurrentHP -= float32(dmg.Damage) // damage to non towers
 				}
 
-				if health.CurrentHP < 0 {
+				if health.CurrentHP < 0 { //dont get health get into neg
 					health.CurrentHP = 0
 				}
 				return health
@@ -226,6 +227,7 @@ func archerLadyAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 		return fmt.Errorf("(class archerlady.go): %v ", err)
 	}
 
+	//off set units arrow spawn location to match model on client
 	newX, newY := RelativeOffsetXY(unitPosition.PositionVectorX, unitPosition.PositionVectorY, unitPosition.RotationVectorX, unitPosition.RotationVectorY, ProjectileRegistry[unitName.UnitName].offSetX, ProjectileRegistry[unitName.UnitName].offSetY)
 	//create projectile entity
 	_, err = cardinal.Create(world,
