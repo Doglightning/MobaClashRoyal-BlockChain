@@ -61,15 +61,8 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 				return false
 			}
 
-			// get game state
-			gameState, err := getGameStateGSS(world, MatchID)
-			if err != nil {
-				fmt.Printf("(check_combat.go): - %v", err)
-				return false
-			}
-
 			// get collision Hash
-			collisionHash, err := cardinal.GetComponent[comp.SpatialHash](world, gameState)
+			collisionHash, err := getCollisionHashGSS(world, MatchID)
 			if err != nil {
 				fmt.Printf("error retrieving SpartialHash component on tempSpartialHash (check_combat.go): %s", err)
 				return false

@@ -16,7 +16,7 @@ type PSMatchIdRequest struct {
 }
 
 type PlayerStateResponse struct {
-	Units []int
+	Units []int //removal list
 	Hand  []string
 	Deck  []string
 	Gold  float32

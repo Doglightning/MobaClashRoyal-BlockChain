@@ -150,7 +150,7 @@ func fireSpiritResetCombat(world cardinal.WorldContext, id types.EntityID) error
 			return nil
 		}
 
-		if attack.Frame < sp.DamageFrame || attack.Frame > sp.DamageEndFrame {
+		if (attack.Frame < sp.DamageFrame && sp.Charged) || (attack.Frame > sp.DamageEndFrame && sp.Charged) {
 
 			attack.Frame = 0
 			attack.Combat = false
