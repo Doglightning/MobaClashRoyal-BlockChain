@@ -10,12 +10,12 @@ import (
 
 // fireSpiritSpawnSP struct contains configuration for an fire spirit in terms of their shooting properties.
 type fireSpiritSpawnSP struct {
-	Hieght    float32
-	BaseWidth float32
-	Damage    float32
+	Hieght    float32 //triangle hieght
+	BaseWidth float32 //triangle base width
+	Damage    float32 //damage per frame
 }
 
-// NewArcherLadySP creates a new instance of archerLadySP with default settings.
+// NewFireSpiritSpawnSP creates a new instance of NewFireSpiritSP with default settings.
 func NewFireSpiritSpawnSP() *fireSpiritSpawnSP {
 	return &fireSpiritSpawnSP{
 		Hieght:    570,
@@ -24,6 +24,7 @@ func NewFireSpiritSpawnSP() *fireSpiritSpawnSP {
 	}
 }
 
+// shoots the fire attack every frame
 func fireSpiritSpawn(world cardinal.WorldContext, id types.EntityID) error {
 	//get fire spirit vars
 	fireSprit := NewFireSpiritSpawnSP()
@@ -34,18 +35,14 @@ func fireSpiritSpawn(world cardinal.WorldContext, id types.EntityID) error {
 		return fmt.Errorf("error getting team component (class fireSpirit.go): %v", err)
 	}
 
+	//get matchID component
 	matchID, err := cardinal.GetComponent[comp.MatchId](world, id)
 	if err != nil {
 		return fmt.Errorf("error getting position component (class fireSpirit.go): %v", err)
 	}
 
-	gameState, err := getGameStateGSS(world, matchID)
-	if err != nil {
-		return fmt.Errorf("(class fireSpirit.go): %v", err)
-	}
-
-	//get position comp
-	hash, err := cardinal.GetComponent[comp.SpatialHash](world, gameState)
+	//get collision hash
+	hash, err := getCollisionHashGSS(world, matchID)
 	if err != nil {
 		return fmt.Errorf("error getting spatial hash compoenent(class fireSpirit.go): %v", err)
 	}
@@ -65,11 +62,10 @@ func fireSpiritSpawn(world cardinal.WorldContext, id types.EntityID) error {
 	// Define a map to track unique collisions
 	collidedEntities := make(map[types.EntityID]bool)
 
-	for _, p := range points {
-
-		collList := CheckCollisionSpatialHashList(hash, p.X, p.Y, 1)
-		for _, collID := range collList {
-			collidedEntities[collID] = true
+	for _, p := range points { //for each point in triangle
+		collList := CheckCollisionSpatialHashList(hash, p.X, p.Y, 1) //list of all units in collision
+		for _, collID := range collList {                            //for each collision
+			collidedEntities[collID] = true //add to map
 		}
 	}
 
@@ -82,7 +78,7 @@ func fireSpiritSpawn(world cardinal.WorldContext, id types.EntityID) error {
 			continue
 		}
 
-		if team.Team != targetTeam.Team {
+		if team.Team != targetTeam.Team { //dont attack friendlies soilder!!
 
 			// reduce health by units attack damage
 			err = cardinal.UpdateComponent(world, collID, func(health *comp.Health) *comp.Health {
@@ -104,63 +100,34 @@ func fireSpiritSpawn(world cardinal.WorldContext, id types.EntityID) error {
 		}
 	}
 
-	//reset attack component
-	err = cardinal.UpdateComponent(world, id, func(attack *comp.Attack) *comp.Attack {
-		if attack == nil {
-			fmt.Printf("error retrieving enemy attack component (class fireSpirit.go): \n")
-			return nil
-		}
-
-		sp, err := cardinal.GetComponent[comp.Sp](world, id)
-		if err != nil {
-			fmt.Printf("error retrieving special power comp (class fireSpirit.go): ")
-			return nil
-		}
-
-		if attack.Frame == sp.DamageEndFrame+1 {
-
-			attack.State = "Default"
-			if attack.Target == id {
-				attack.Combat = false
-			}
-
-		}
-
-		return attack
-	})
-	if err != nil {
-		return fmt.Errorf("error updating attack comp (class fireSpirit.go): %v", err)
-	}
-
 	return nil
 }
 
+// overwrite base destruction.
+// if unit being attacked by fire spirit dies don't cancel attack.
 func fireSpiritResetCombat(world cardinal.WorldContext, id types.EntityID) error {
-
 	//reset attack component
 	err := cardinal.UpdateComponent(world, id, func(attack *comp.Attack) *comp.Attack {
 		if attack == nil {
 			fmt.Printf("error retrieving enemy attack component (fireSpiritResetCombat): \n")
 			return nil
 		}
-
+		//get special power component
 		sp, err := cardinal.GetComponent[comp.Sp](world, id)
 		if err != nil {
-			fmt.Printf("error retrieving special power comp (fireSpiritResetCombat): ")
+			fmt.Printf("error retrieving special power comp (fireSpiritResetCombat): \n")
 			return nil
 		}
 
-		if (attack.Frame < sp.DamageFrame && sp.Charged) || (attack.Frame > sp.DamageEndFrame && sp.Charged) {
-
+		if attack.Frame < sp.DamageFrame && sp.Charged { //if target dies b4 fire attack goes off
+			//reset units combat
 			attack.Frame = 0
 			attack.Combat = false
 			attack.State = "Default"
-			attack.Target = id
-		} else {
+		} else { //if unit started channeling fire
 			attack.State = "Channeling"
-			attack.Target = id
+			attack.Target = id //set target to self to not get errors if triggering functions that ref this but unit is dead
 		}
-
 		return attack
 	})
 	if err != nil {
@@ -170,7 +137,7 @@ func fireSpiritResetCombat(world cardinal.WorldContext, id types.EntityID) error
 	return nil
 }
 
-// custom phase_attack.go logic
+// overwrite phase_attack.go logic to support canneling
 func FireSpiritAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.Attack) error {
 
 	//get Unit CC component
@@ -222,19 +189,17 @@ func FireSpiritAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 	}
 
 	//if target died in cast (self target) and attack frame is at end of animation or start (don't interupt the fire strike once its going even if target died)
-	if (atk.Target == id && atk.Frame == unitSp.Rate-6) || atk.Target == id && atk.Frame < unitSp.DamageFrame {
-
+	if (atk.Target == id && atk.Frame >= unitSp.Rate-6) || (atk.Target == id && atk.Frame < unitSp.DamageFrame) {
 		atk.State = "Default"
 		atk.Combat = false
-
 	}
 
 	//if attack frame is at max and not sp charged  OR attack fram at sp max and charged
 	if (atk.Frame >= atk.Rate && !unitSp.Charged) || (atk.Frame >= unitSp.Rate && unitSp.Charged) {
-		atk.Frame = -1
+		atk.Frame = -1 //reset attack
 	}
-
 	atk.Frame++
+
 	// set updated attack component
 	if err := cardinal.SetComponent(world, id, atk); err != nil {
 		return fmt.Errorf("error updating attack component (Fire Spirit Attack): %s ", err)
