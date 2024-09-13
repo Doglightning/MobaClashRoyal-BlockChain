@@ -94,6 +94,7 @@ func ClassAttack(world cardinal.WorldContext, id types.EntityID, name string, at
 	return err
 }
 
+// sets attack system for how units engage in combat
 func ClassAttackSystem(world cardinal.WorldContext, id types.EntityID, atk *comp.Attack) error {
 
 	name, err := cardinal.GetComponent[comp.UnitName](world, id)
