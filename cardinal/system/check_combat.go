@@ -26,6 +26,7 @@ func CombatCheckSystem(world cardinal.WorldContext) error {
 	return err
 }
 
+// check if unit not in combat can find a unit to be in combat with
 func unitCombatSearch(world cardinal.WorldContext) error {
 	// filter not in combat units
 	combatFilter := cardinal.ComponentFilter(func(m comp.Attack) bool {
@@ -39,7 +40,7 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 		//get Unit CC component
 		cc, err := cardinal.GetComponent[comp.CC](world, id)
 		if err != nil {
-			fmt.Printf("error getting unit cc component (unit_movement.go): %v", err)
+			fmt.Printf("error getting unit cc component (unit_movement.go): %v \n", err)
 		}
 
 		if cc.Stun > 0 { //if unit stunned cannot attack
@@ -49,7 +50,7 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 		//get attack component
 		uAtk, err := cardinal.GetComponent[comp.Attack](world, id)
 		if err != nil {
-			fmt.Printf("failed to get attack comp (check_combat.go): %v", err)
+			fmt.Printf("failed to get attack comp (check_combat.go): %v \n", err)
 			return false
 		}
 
@@ -64,7 +65,7 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 			// get collision Hash
 			collisionHash, err := getCollisionHashGSS(world, MatchID)
 			if err != nil {
-				fmt.Printf("error retrieving SpartialHash component on tempSpartialHash (check_combat.go): %s", err)
+				fmt.Printf("error retrieving SpartialHash component on tempSpartialHash (check_combat.go): %s \n", err)
 				return false
 			}
 			//find closest enemy
@@ -78,7 +79,7 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 					uAtk.Target = eID
 					//set attack component
 					if err = cardinal.SetComponent(world, id, uAtk); err != nil {
-						fmt.Printf("error setting attack component (check_combat.go): %v", err)
+						fmt.Printf("error setting attack component (check_combat.go): %v \n", err)
 						return false
 					}
 				}
@@ -90,6 +91,7 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 	return err
 }
 
+// check if a structure not in combat can find a unit in range to attack
 func structureCombatSearch(world cardinal.WorldContext) error {
 	//for each structure not in combat
 	err := cardinal.NewSearch().Entity(
@@ -108,7 +110,7 @@ func structureCombatSearch(world cardinal.WorldContext) error {
 				return false
 			}
 
-			if state.State != "Converting" {
+			if state.State != "Converting" { //if tower is not converting teams
 
 				if uAtk.Combat { // in combat make sure target still in range
 					//get Unit Components
@@ -148,15 +150,8 @@ func structureCombatSearch(world cardinal.WorldContext) error {
 						return false
 					}
 
-					// get game state
-					gameState, err := getGameStateGSS(world, MatchID)
-					if err != nil {
-						fmt.Printf("(structureCombatSearch - check_combat.go): - %v", err)
-						return false
-					}
-
 					// get collision Hash
-					collisionHash, err := cardinal.GetComponent[comp.SpatialHash](world, gameState)
+					collisionHash, err := getCollisionHashGSS(world, MatchID)
 					if err != nil {
 						fmt.Printf("error retrieving SpartialHash component on tempSpartialHash (structureCombatSearch - check_combat.go): %s", err)
 						return false
