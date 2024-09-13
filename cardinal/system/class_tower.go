@@ -8,10 +8,10 @@ import (
 	"pkg.world.dev/world-engine/cardinal/types"
 )
 
-// spawns projectile for archer basic attack
+// spawns projectile for tower basic attack
 func towerAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.Attack) error {
 	//get units component
-	unitPosition, matchID, mapName, unitName, err := archerLadyAttackComponentsUA(world, id)
+	unitPosition, matchID, mapName, unitName, err := archerLadyAttackComponentsUA(world, id) //reusing
 	if err != nil {
 		return err
 	}
