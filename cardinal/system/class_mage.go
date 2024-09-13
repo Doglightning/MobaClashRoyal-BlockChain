@@ -20,9 +20,8 @@ func NewMageUpdateSP() *mageUpdateSP {
 	}
 }
 
-// spawns the archer ladies villy special power
+// Stuns mages target
 func MageSpawnSP(world cardinal.WorldContext, id types.EntityID) error {
-
 	// get unit attack component
 	unitAtk, err := cardinal.GetComponent[comp.Attack](world, id)
 	if err != nil {
@@ -36,7 +35,7 @@ func MageSpawnSP(world cardinal.WorldContext, id types.EntityID) error {
 			return nil
 		}
 
-		effect.EffectsList["MageStun"]++
+		effect.EffectsList["MageStun"]++ //increase mage stun count on target
 
 		return effect
 	})
@@ -54,12 +53,12 @@ func MageSpawnSP(world cardinal.WorldContext, id types.EntityID) error {
 	if err != nil {
 		return fmt.Errorf("(class mage.go): %v - ", err)
 	}
-	//create healing buff entity
+	//create stun entity attached to target
 	_, err = cardinal.Create(world,
 		comp.MatchId{MatchId: matchID.MatchId},
 		comp.UID{UID: UID},
 		comp.SpEntity{SpName: "MageSP"},
-		comp.IntTracker{Num: 0},
+		comp.IntTracker{Num: 0}, //tracks duration
 		comp.Target{Target: unitAtk.Target},
 	)
 	if err != nil {
@@ -69,9 +68,9 @@ func MageSpawnSP(world cardinal.WorldContext, id types.EntityID) error {
 	return err
 }
 
-// called every tick to updated the archerladies arrows
+// called every tick to update the active stuns to see if they have surpased duration limit
 func MageUpdate(world cardinal.WorldContext, id types.EntityID) error {
-	mage := NewMageUpdateSP() // get vampire vars
+	mage := NewMageUpdateSP() // get mage vars
 	// get target id
 	tarID, err := cardinal.GetComponent[comp.Target](world, id)
 	if err != nil {
@@ -83,12 +82,12 @@ func MageUpdate(world cardinal.WorldContext, id types.EntityID) error {
 	if err != nil {
 		return fmt.Errorf("error getting target cc component(class mage.go): %w", err)
 	}
-	//if target not stunned then stun it
+	//if target not stunned then stun it (should not happen but just to be careful)
 	if cc.Stun == 0 {
 		cc.Stun++
 	}
 
-	// get tracker holding number of frames stun has gone off (stun count)
+	// get tracker holding number of frames stun has been active for (stun count)
 	stunCount, err := cardinal.GetComponent[comp.IntTracker](world, id)
 	if err != nil {
 		return fmt.Errorf("error retrieving int tracker component (class mage.go): %w", err)
@@ -96,7 +95,7 @@ func MageUpdate(world cardinal.WorldContext, id types.EntityID) error {
 	stunCount.Num += 1                    // increase stun frame count
 	if stunCount.Num >= mage.frameCount { //if stun count is greater than mage max stun count
 
-		//remove heal spiral effect to the effects list
+		//remove stun of target
 		err := cardinal.UpdateComponent(world, tarID.Target, func(effect *comp.EffectsList) *comp.EffectsList {
 			if effect == nil {
 				fmt.Printf("error retrieving effect list (class mage.go) \n")
@@ -116,22 +115,22 @@ func MageUpdate(world cardinal.WorldContext, id types.EntityID) error {
 			return err
 		}
 
-		// remove entity
+		// delete entity
 		if err := cardinal.Remove(world, id); err != nil {
 			return fmt.Errorf("error removing entity sp (class mage.go): %w", err)
 		}
 
-		cc.Stun--
-
+		cc.Stun-- //reduce stun count by 1
 		if cc.Stun < 0 {
 			cc.Stun = 0
 		}
+
 	} else { // else update stun count component
 		if err := cardinal.SetComponent(world, id, stunCount); err != nil {
 			return fmt.Errorf("error setting stun count (class mage.go): %w", err)
 		}
 	}
-
+	//set cc component
 	if err = cardinal.SetComponent(world, tarID.Target, cc); err != nil {
 		return fmt.Errorf("error setting stun component on target (class mage.go): %w", err)
 	}
@@ -139,7 +138,7 @@ func MageUpdate(world cardinal.WorldContext, id types.EntityID) error {
 	return err
 }
 
-// spawns projectile for archer basic attack
+// spawns projectile for mage basic attack
 func mageAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.Attack) error {
 	//get units component
 	unitPosition, matchID, mapName, unitName, err := archerLadyAttackComponentsUA(world, id)
@@ -151,7 +150,7 @@ func mageAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.Attack
 	if err != nil {
 		return fmt.Errorf("(class mage.go): %v ", err)
 	}
-
+	// set offset to units mesh in client
 	newX, newY := RelativeOffsetXY(unitPosition.PositionVectorX, unitPosition.PositionVectorY, unitPosition.RotationVectorX, unitPosition.RotationVectorY, ProjectileRegistry[unitName.UnitName].offSetX, ProjectileRegistry[unitName.UnitName].offSetY)
 	//create projectile entity
 	_, err = cardinal.Create(world,
