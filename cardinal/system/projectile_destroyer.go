@@ -16,6 +16,7 @@ func ProjectileDestroyerSystem(world cardinal.WorldContext) error {
 	destroyedFilter := cardinal.ComponentFilter(func(m comp.Destroyed) bool {
 		return m.Destroyed
 	})
+
 	//go over each destroyed projectile id
 	err := cardinal.NewSearch().Entity(
 		filter.Contains()).

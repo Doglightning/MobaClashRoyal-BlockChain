@@ -62,11 +62,25 @@ func fireSpiritSpawn(world cardinal.WorldContext, id types.EntityID) error {
 	// Define a map to track unique collisions
 	collidedEntities := make(map[types.EntityID]bool)
 
-	for _, p := range points { //for each point in triangle
-		collList := CheckCollisionSpatialHashList(hash, p.X, p.Y, 1) //list of all units in collision
-		for _, collID := range collList {                            //for each collision
+	for i := 0; i < len(points); i += 40 { //dont need to go over everypoint because units average a radius of 80 units
+		collList := CheckCollisionSpatialHashList(hash, points[i].X, points[i].Y, 1) //list of all units in collision
+		for _, collID := range collList {                                            //for each collision
 			collidedEntities[collID] = true //add to map
 		}
+	}
+	collList := CheckCollisionSpatialHashList(hash, apex.X, apex.Y, 1) //check for apex point
+	for _, collID := range collList {                                  //for each collision
+		collidedEntities[collID] = true //add to map
+	}
+
+	collList = CheckCollisionSpatialHashList(hash, baseLeft.X, baseLeft.Y, 1) //check for base left point
+	for _, collID := range collList {                                         //for each collision
+		collidedEntities[collID] = true //add to map
+	}
+
+	collList = CheckCollisionSpatialHashList(hash, baseRight.X, baseRight.Y, 1) //check for base right point
+	for _, collID := range collList {                                           //for each collision
+		collidedEntities[collID] = true //add to map
 	}
 
 	// Iterate over each key in the map
