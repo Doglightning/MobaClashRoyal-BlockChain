@@ -37,8 +37,8 @@ func GameStateSpawnerSystem(world cardinal.WorldContext) error {
 					comp.UID{UID: 0},
 					comp.Player1{
 						Nickname:    create.Tx.PersonaTag,
-						Hand:        []string{"Vampire", "FireSpirit", "Mage"},
-						Deck:        []string{"ArcherLady"},
+						Hand:        []string{"Vampire", "FireSpirit", "LeafBird"},
+						Deck:        []string{"ArcherLady", "Mage"},
 						RemovalList: make(map[int]bool),
 						Gold:        5,
 					},

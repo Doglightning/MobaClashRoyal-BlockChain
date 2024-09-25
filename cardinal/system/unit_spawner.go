@@ -137,6 +137,11 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("card not in hand (unit_spawner.go) ")
 			}
 
+			zOffSet := create.Msg.PositionZ
+			if unitType.Class == "air" {
+				zOffSet += 300
+			}
+
 			//create unit
 			entityID, err := cardinal.Create(world,
 				comp.MatchId{MatchId: create.Msg.MatchID},
@@ -145,7 +150,7 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 				comp.Team{Team: create.Msg.Team},
 				comp.Health{CurrentHP: unitType.Health, MaxHP: unitType.Health},
 				comp.Movespeed{CurrentMS: unitType.Speed},
-				comp.Position{PositionVectorX: create.Msg.PositionX, PositionVectorY: create.Msg.PositionY, PositionVectorZ: create.Msg.PositionZ, RotationVectorX: create.Msg.RotationX, RotationVectorY: create.Msg.RotationY, RotationVectorZ: create.Msg.RotationZ},
+				comp.Position{PositionVectorX: create.Msg.PositionX, PositionVectorY: create.Msg.PositionY, PositionVectorZ: zOffSet, RotationVectorX: create.Msg.RotationX, RotationVectorY: create.Msg.RotationY, RotationVectorZ: create.Msg.RotationZ},
 				comp.MapName{MapName: create.Msg.MapName},
 				comp.Distance{Distance: tempDistance},
 				comp.UnitRadius{UnitRadius: unitType.Radius},
