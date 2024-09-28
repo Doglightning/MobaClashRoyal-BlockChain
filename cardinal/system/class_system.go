@@ -21,29 +21,18 @@ func SpUpdater(world cardinal.WorldContext) error {
 			return false
 		}
 
-		if spEntity.SpName == "ArcherLadySP" {
+		switch spEntity.SpName {
+		case "ArcherLadySP":
 			err = archerLadyUpdate(world, id)
-			if err != nil {
-				fmt.Printf("%v", err)
-				return false
-			}
-
-		}
-
-		if spEntity.SpName == "MageSP" {
+		case "MageSP":
 			err = MageUpdate(world, id)
-			if err != nil {
-				fmt.Printf("%v", err)
-				return false
-			}
+		case "VampireSP":
+			err = vampireUpdateSP(world, id)
 		}
 
-		if spEntity.SpName == "VampireSP" {
-			err = vampireUpdateSP(world, id)
-			if err != nil {
-				fmt.Printf("%v", err)
-				return false
-			}
+		if err != nil {
+			fmt.Printf("%v", err)
+			return false
 		}
 
 		return true
@@ -55,20 +44,18 @@ func SpUpdater(world cardinal.WorldContext) error {
 // spawns the special attack
 func spSpawner(world cardinal.WorldContext, id types.EntityID, name string) error {
 	var err error
-	if name == "ArcherLady" {
+
+	switch name {
+	case "ArcherLady":
 		err = archerLadySpawn(world, id)
-	}
-	if name == "FireSpirit" {
+	case "FireSpirit":
 		err = fireSpiritSpawn(world, id)
-	}
-
-	if name == "Mage" {
+	case "Mage":
 		err = MageSpawnSP(world, id)
-	}
-
-	if name == "Vampire" {
+	case "Vampire":
 		err = vampireSpawnSP(world, id)
 	}
+
 	return err
 }
 
@@ -76,25 +63,21 @@ func spSpawner(world cardinal.WorldContext, id types.EntityID, name string) erro
 func ClassAttack(world cardinal.WorldContext, id types.EntityID, name string, atk *comp.Attack) error {
 	var err error
 
-	if name == "ArcherLady" {
+	switch name {
+	case "ArcherLady":
 		err = archerLadyAttack(world, id, atk)
-	}
-
-	if name == "LeafBird" {
-		err = leafBirdAttack(world, atk)
-	}
-
-	if name == "Mage" {
-		err = mageAttack(world, id, atk)
-	}
-
-	if name == "Tower" || name == "Base" {
+	case "Base":
 		err = towerAttack(world, id, atk)
-	}
-
-	if name == "Vampire" {
+	case "LeafBird":
+		err = leafBirdAttack(world, atk)
+	case "Mage":
+		err = mageAttack(world, id, atk)
+	case "Tower":
+		err = towerAttack(world, id, atk)
+	case "Vampire":
 		err = vampireAttack(world, atk)
 	}
+
 	return err
 }
 
@@ -106,10 +89,10 @@ func ClassAttackSystem(world cardinal.WorldContext, id types.EntityID, atk *comp
 		return fmt.Errorf("error getting name component (class attack system): %v", err)
 	}
 
-	if name.UnitName == "FireSpirit" {
+	switch name.UnitName {
+	case "FireSpirit":
 		err = FireSpiritAttack(world, id, atk)
-
-	} else {
+	default:
 		err = MeleeRangeAttack(world, id, atk)
 	}
 
@@ -121,9 +104,10 @@ func ClassResetCombat(world cardinal.WorldContext, id types.EntityID, name strin
 
 	var err error
 
-	if name == "FireSpirit" {
+	switch name {
+	case "FireSpirit":
 		err = channelingResetCombat(world, id)
-	} else {
+	default:
 		err = resetCombat(world, id)
 	}
 
