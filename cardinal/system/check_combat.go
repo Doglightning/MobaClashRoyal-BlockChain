@@ -242,6 +242,69 @@ func findClosestEnemy(hash *comp.SpatialHash, objID types.EntityID, startX, star
 	return closestEnemy, closestX, closestY, closestRadius, foundEnemy
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////Default Combat Reset Functions////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+func resetCombat(world cardinal.WorldContext, id types.EntityID) error {
+	// reset attack component
+	err := cardinal.UpdateComponent(world, id, func(attack *comp.Attack) *comp.Attack {
+		if attack == nil {
+			fmt.Printf("error retrieving enemy attack component (Phase attack.go): ")
+			return nil
+		}
+		attack.Combat = false
+		attack.Frame = 0
+		return attack
+	})
+	if err != nil {
+		return fmt.Errorf("error updating attack comp (Phase attack.go): %v", err)
+	}
+	return nil
+}
+
+// overwrite base destruction.
+// if unit being attacked by channel dies don't cancel attack.
+func channelingResetCombat(world cardinal.WorldContext, id types.EntityID) error {
+	//reset attack component
+	err := cardinal.UpdateComponent(world, id, func(attack *comp.Attack) *comp.Attack {
+		if attack == nil {
+			fmt.Printf("error retrieving enemy attack component (check combat.go): \n")
+			return nil
+		}
+		//get special power component
+		sp, err := cardinal.GetComponent[comp.Sp](world, id)
+		if err != nil {
+			fmt.Printf("error retrieving special power comp (check combat.go): \n")
+			return nil
+		}
+
+		if attack.Frame < sp.DamageFrame && sp.Charged { //if target dies b4 fire attack goes off
+			//reset units combat
+			attack.Frame = 0
+			attack.Combat = false
+			attack.State = "Default"
+		} else { //if unit started channeling fire
+			attack.State = "Channeling"
+			attack.Target = id //set target to self to not get errors if triggering functions that ref this but unit is dead
+		}
+		return attack
+	})
+	if err != nil {
+		return fmt.Errorf("error updating attack comp (check combat.go): %v", err)
+	}
+
+	return nil
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////Default get Component Functions///////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 // GetUnitComponents fetches all necessary components related to a unit entity.
 func getUnitComponentsCC(world cardinal.WorldContext, unitID types.EntityID) (*comp.Position, *comp.UnitRadius, *comp.Attack, *comp.Team, *comp.MatchId, error) {
 	position, err := cardinal.GetComponent[comp.Position](world, unitID)

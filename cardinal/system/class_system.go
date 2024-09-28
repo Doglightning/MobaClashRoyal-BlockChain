@@ -122,22 +122,9 @@ func ClassResetCombat(world cardinal.WorldContext, id types.EntityID, name strin
 	var err error
 
 	if name == "FireSpirit" {
-		err = fireSpiritResetCombat(world, id)
+		err = channelingResetCombat(world, id)
 	} else {
-		//reset attack component
-		err := cardinal.UpdateComponent(world, id, func(attack *comp.Attack) *comp.Attack {
-			if attack == nil {
-				fmt.Printf("error retrieving enemy attack component (Phase attack.go): ")
-				return nil
-			}
-			attack.Combat = false
-			attack.Frame = 0
-			return attack
-		})
-		if err != nil {
-			return fmt.Errorf("error updating attack comp (Phase attack.go): %v", err)
-		}
-
+		err = resetCombat(world, id)
 	}
 
 	return err
