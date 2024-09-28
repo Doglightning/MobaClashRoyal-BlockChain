@@ -116,7 +116,7 @@ func archerLadyUpdate(world cardinal.WorldContext, id types.EntityID) error {
 		endX := pos.PositionVectorX + ms.CurrentMS*pos.RotationVectorX
 		endY := pos.PositionVectorY + ms.CurrentMS*pos.RotationVectorY
 		//find close units that arrow could have possibly crossed
-		cID := CheckCollisionSpatialHashList(collisionHash, pos.PositionVectorX, pos.PositionVectorY, radi.UnitRadius)
+		cID := CheckCollisionSpatialHashList(collisionHash, pos.PositionVectorX, pos.PositionVectorY, radi.UnitRadius, "range")
 
 		var closestUnit types.EntityID //keeping track of closest unit over for loop
 		var closestDistance float32 = -1

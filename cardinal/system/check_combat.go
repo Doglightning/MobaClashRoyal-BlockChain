@@ -69,7 +69,7 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 				return false
 			}
 			//find closest enemy
-			eID, eX, eY, eRadius, found := findClosestEnemy(collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uAtk.AggroRadius, uTeam.Team)
+			eID, eX, eY, eRadius, found := findClosestEnemy(collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uAtk.AggroRadius, uTeam.Team, uAtk.Class)
 			if found { //found enemy
 				// Calculate squared distance between the unit and the enemy, minus their radii
 				adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, eX, eY) - float32(eRadius) - float32(uRadius.UnitRadius)
@@ -157,7 +157,7 @@ func structureCombatSearch(world cardinal.WorldContext) error {
 						return false
 					}
 					//find closest enemy
-					eID, eX, eY, eRadius, found := findClosestEnemy(collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uAtk.AggroRadius, uTeam.Team)
+					eID, eX, eY, eRadius, found := findClosestEnemy(collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uAtk.AggroRadius, uTeam.Team, uAtk.Class)
 					if found { //found enemy
 						// Calculate squared distance between the unit and the enemy, minus their radii
 						adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, eX, eY) - float32(eRadius) - float32(uRadius.UnitRadius)
@@ -181,7 +181,7 @@ func structureCombatSearch(world cardinal.WorldContext) error {
 }
 
 // FindClosestEnemy performs a BFS search from the unit's position outward within the attack radius.
-func findClosestEnemy(hash *comp.SpatialHash, objID types.EntityID, startX, startY float32, attackRadius int, team string) (types.EntityID, float32, float32, int, bool) {
+func findClosestEnemy(hash *comp.SpatialHash, objID types.EntityID, startX, startY float32, attackRadius int, team, class string) (types.EntityID, float32, float32, int, bool) {
 	queue := list.New()                                                              //queue of cells to check
 	visited := make(map[string]bool)                                                 //cells checked
 	queue.PushBack(&comp.Position{PositionVectorX: startX, PositionVectorY: startY}) //insert starting position to queue
@@ -207,15 +207,21 @@ func findClosestEnemy(hash *comp.SpatialHash, objID types.EntityID, startX, star
 		if cell, exists := hash.Cells[hashKey]; exists { //if unit found in cell
 			for i, id := range cell.UnitIDs { //go over each unit in cell
 				if cell.Team[i] != team && id != objID { //if unit in cell is enemy and not self
-					distSq := (cell.PositionsX[i]-startX)*(cell.PositionsX[i]-startX) + (cell.PositionsY[i]-startY)*(cell.PositionsY[i]-startY) - float32(cell.Radii[i]*cell.Radii[i])
-					//if distance is smaller then closest unit found so far
-					if distSq < minDist {
-						minDist = distSq
-						closestEnemy = id
-						closestX, closestY = cell.PositionsX[i], cell.PositionsY[i]
-						closestRadius = cell.Radii[i]
-						foundEnemy = true
+
+					if (class == "melee" && cell.Type[i] != "air") || class == "range" || class == "air" || class == "structure" { // make sure melee cannot attack air
+
+						distSq := (cell.PositionsX[i]-startX)*(cell.PositionsX[i]-startX) + (cell.PositionsY[i]-startY)*(cell.PositionsY[i]-startY) - float32(cell.Radii[i]*cell.Radii[i])
+						//if distance is smaller then closest unit found so far
+						if distSq < minDist {
+							minDist = distSq
+							closestEnemy = id
+							closestX, closestY = cell.PositionsX[i], cell.PositionsY[i]
+							closestRadius = cell.Radii[i]
+							foundEnemy = true
+						}
+
 					}
+
 				}
 			}
 		}
