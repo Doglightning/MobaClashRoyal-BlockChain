@@ -31,7 +31,7 @@ func SpUpdater(world cardinal.WorldContext) error {
 		}
 
 		if err != nil {
-			fmt.Printf("%v", err)
+			fmt.Printf("%v \n", err)
 			return false
 		}
 
