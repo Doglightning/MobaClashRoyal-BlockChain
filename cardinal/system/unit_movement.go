@@ -396,7 +396,7 @@ func moveUnitTowardsEnemy(position *comp.Position, enemyX float32, enemyY float3
 // attempts to push the blocking unit
 func pushBlockingUnit(world cardinal.WorldContext, hash *comp.SpatialHash, objID types.EntityID, targetX, targetY float32, radius int, team, class string, distance float32, mapName *comp.MapName) {
 	//list of all units colliding with at target position
-	collisionList := CheckCollisionSpatialHashList(hash, targetX, targetY, radius, class)
+	collisionList := CheckCollisionSpatialHashList(hash, targetX, targetY, radius, class, true)
 
 	//try to push blocking units
 	if len(collisionList) > 0 {
@@ -405,6 +405,18 @@ func pushBlockingUnit(world cardinal.WorldContext, hash *comp.SpatialHash, objID
 			if collisionID == objID {
 				continue
 			}
+
+			//get targets attack
+			atk, err := cardinal.GetComponent[comp.Attack](world, collisionID)
+			if err != nil {
+				fmt.Printf("error getting targets attack compoenent (pushBlockingUnit): %v", err)
+				continue
+			}
+
+			if class == "air" && atk.Class != "air" { //air can only push air
+				continue
+			}
+
 			//get targets team
 			targetTeam, err := cardinal.GetComponent[comp.Team](world, collisionID)
 			if err != nil {
@@ -416,13 +428,6 @@ func pushBlockingUnit(world cardinal.WorldContext, hash *comp.SpatialHash, objID
 			targetName, err := cardinal.GetComponent[comp.UnitName](world, collisionID)
 			if err != nil {
 				fmt.Printf("error getting targets name compoenent (pushBlockingUnit): %v", err)
-				continue
-			}
-
-			//get targets attack
-			atk, err := cardinal.GetComponent[comp.Attack](world, collisionID)
-			if err != nil {
-				fmt.Printf("error getting targets attack compoenent (pushBlockingUnit): %v", err)
 				continue
 			}
 
@@ -536,7 +541,7 @@ func pushFromPtBtoA(world cardinal.WorldContext, hash *comp.SpatialHash, id type
 			//move unit towards even outside radius
 			test := moveUnitTowardsEnemy(&comp.Position{PositionVectorX: testX, PositionVectorY: testY}, targetPos.PositionVectorX, targetPos.PositionVectorY, targetRadius.UnitRadius, length, radius)
 			// Check if the position is free of collisions
-			if !CheckCollisionSpatialHash(hash, test.PositionVectorX, test.PositionVectorY, radius, atk.Class) && moveDirectionExsist(test.PositionVectorX, test.PositionVectorY, mapName) {
+			if !CheckCollisionSpatialHash(hash, test.PositionVectorX, test.PositionVectorY, radius, atk.Class, true) && moveDirectionExsist(test.PositionVectorX, test.PositionVectorY, mapName) {
 				return test.PositionVectorX, test.PositionVectorY // Return the first free spot found
 			}
 		}
@@ -547,7 +552,7 @@ func pushFromPtBtoA(world cardinal.WorldContext, hash *comp.SpatialHash, id type
 			testX := targetX + dirX*float32(d) // Start from target position
 			testY := targetY + dirY*float32(d) // Start from target position
 			// Check if the position is free of collisions
-			if !CheckCollisionSpatialHash(hash, testX, testY, radius, atk.Class) {
+			if !CheckCollisionSpatialHash(hash, testX, testY, radius, atk.Class, true) {
 				return testX, testY // Return the first free spot found
 			}
 		}
@@ -560,7 +565,7 @@ func moveFreeSpace(hash *comp.SpatialHash, objID types.EntityID, startX, startY,
 	// Remove the object from its current position
 	RemoveObjectFromSpatialHash(hash, objID, startX, startY, radius)
 	// Find an alternative position if the target is occupied
-	if CheckCollisionSpatialHash(hash, targetX, targetY, radius, class) {
+	if CheckCollisionSpatialHash(hash, targetX, targetY, radius, class, true) {
 		//walk around blocking unit
 		targetX, targetY = moveToNearestFreeSpaceBox(hash, startX, startY, targetX, targetY, float32(radius), mapName, class)
 	}
@@ -605,7 +610,7 @@ func moveToNearestFreeSpaceBox(hash *comp.SpatialHash, startX, startY, targetX, 
 				testY := startY + dirY*d + perpY*float32(w)*step
 
 				// Check if the position is free of collisions
-				if !CheckCollisionSpatialHash(hash, testX, testY, int(radius), class) && moveDirectionExsist(testX, testY, mapName) {
+				if !CheckCollisionSpatialHash(hash, testX, testY, int(radius), class, true) && moveDirectionExsist(testX, testY, mapName) {
 					return testX, testY
 				}
 			}

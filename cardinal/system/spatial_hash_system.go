@@ -80,7 +80,7 @@ func RemoveObjectFromSpatialHash(hash *comp.SpatialHash, objID types.EntityID, x
 
 // CheckCollision checks for collisions given an object's position and radius.
 // It returns a true if collosion
-func CheckCollisionSpatialHash(hash *comp.SpatialHash, x, y float32, radius int, class string) bool {
+func CheckCollisionSpatialHash(hash *comp.SpatialHash, x, y float32, radius int, class string, movement bool) bool {
 	//get range of cells covered
 	startCellX, endCellX, startCellY, endCellY := calculateCellRangeSpatialHash(hash, x, y, radius)
 
@@ -94,14 +94,22 @@ func CheckCollisionSpatialHash(hash *comp.SpatialHash, x, y float32, radius int,
 				for i := range cell.UnitIDs {
 					//make sure melee don't interact with air
 					if (class == "melee" && cell.Type[i] != "air") || class != "melee" {
-						//get unit data
-						ux := cell.PositionsX[i]
-						uy := cell.PositionsY[i]
-						uRadius := cell.Radii[i]
+						// if its movement command
+						// make sure air only interacts with air or structures
+						if (class == "air" && movement && (cell.Type[i] == "air" || cell.Type[i] == "structure")) || class != "air" || !movement {
+							// if its movement command
+							// make sure range don't iteract with air
+							if (class == "range" && movement && cell.Type[i] != "air") || class != "range" || !movement {
+								//get unit data
+								ux := cell.PositionsX[i]
+								uy := cell.PositionsY[i]
+								uRadius := cell.Radii[i]
 
-						//check if intersection occurs
-						if intersectSpatialHash(x, y, radius, ux, uy, uRadius) {
-							return true
+								//check if intersection occurs
+								if intersectSpatialHash(x, y, radius, ux, uy, uRadius) {
+									return true
+								}
+							}
 						}
 
 					}
@@ -114,7 +122,7 @@ func CheckCollisionSpatialHash(hash *comp.SpatialHash, x, y float32, radius int,
 
 // CheckCollisionSpatialHash checks for collisions given an object's position and radius.
 // It returns a list of collided unit IDs.
-func CheckCollisionSpatialHashList(hash *comp.SpatialHash, x, y float32, radius int, class string) []types.EntityID {
+func CheckCollisionSpatialHashList(hash *comp.SpatialHash, x, y float32, radius int, class string, movement bool) []types.EntityID {
 	//get range of cells covered
 	startCellX, endCellX, startCellY, endCellY := calculateCellRangeSpatialHash(hash, x, y, radius)
 	collidedUnits := []types.EntityID{}
@@ -127,17 +135,27 @@ func CheckCollisionSpatialHashList(hash *comp.SpatialHash, x, y float32, radius 
 			if cell, exists := hash.Cells[hashKey]; exists {
 				//check all units in that cell
 				for i, unitID := range cell.UnitIDs {
-					//make sure melee don't interact with air
+					//make sure melee don't interact with air in combat
 					if (class == "melee" && cell.Type[i] != "air") || class != "melee" {
-						//get unit data
-						ux := cell.PositionsX[i]
-						uy := cell.PositionsY[i]
-						uRadius := cell.Radii[i]
+						// if its movement command
+						// make sure air only interacts with air
+						if (class == "air" && movement && (cell.Type[i] == "air" || cell.Type[i] == "structure")) || class != "air" || !movement {
+							// if its movement command
+							// make sure range don't iteract with air
+							if (class == "range" && movement && cell.Type[i] != "air") || class != "range" || !movement {
+								//get unit data
+								ux := cell.PositionsX[i]
+								uy := cell.PositionsY[i]
+								uRadius := cell.Radii[i]
 
-						//check if intersection occurs
-						if intersectSpatialHash(x, y, radius, ux, uy, uRadius) {
-							collidedUnits = append(collidedUnits, unitID)
+								//check if intersection occurs
+								if intersectSpatialHash(x, y, radius, ux, uy, uRadius) {
+									collidedUnits = append(collidedUnits, unitID)
+								}
+							}
+
 						}
+
 					}
 				}
 			}

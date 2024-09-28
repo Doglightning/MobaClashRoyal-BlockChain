@@ -105,7 +105,7 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("error getting SpatialHash component (unit_spawner.go): %w", err)
 			}
 			//check if spawning on a taken spot in collision hash
-			if CheckCollisionSpatialHash(SpatialHash, create.Msg.PositionX, create.Msg.PositionY, unitType.Radius, unitType.Class) {
+			if CheckCollisionSpatialHash(SpatialHash, create.Msg.PositionX, create.Msg.PositionY, unitType.Radius, unitType.Class, true) {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("collision with unit (unit_spawner.go)")
 			}
 
