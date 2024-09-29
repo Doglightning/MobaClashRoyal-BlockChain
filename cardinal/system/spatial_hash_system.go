@@ -165,6 +165,24 @@ func CheckCollisionSpatialHashList(hash *comp.SpatialHash, x, y float32, radius 
 	return collidedUnits
 }
 
+// GetEntitiesInCell retrieves all entity IDs present in the spatial hash cell for a given x and y position.
+func GetEntitiesInCell(hash *comp.SpatialHash, x, y float32) []types.EntityID {
+	// Calculate the cell coordinates that correspond to the given (x, y) position
+	cellX, cellY := calculateSpatialHash(hash, x, y)
+
+	// Construct the hash key for the cell
+	hashKey := fmt.Sprintf("%d,%d", cellX, cellY)
+
+	// Check if the cell exists in the spatial hash
+	if cell, exists := hash.Cells[hashKey]; exists {
+		// Return all entity IDs in this cell
+		return cell.UnitIDs
+	}
+
+	// If the cell doesn't exist, return an empty slice
+	return []types.EntityID{}
+}
+
 // intersect determines if two circles intersect.
 func intersectSpatialHash(x1, y1 float32, r1 int, x2, y2 float32, r2 int) bool {
 	distSq := (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2)

@@ -25,7 +25,7 @@ type UnitType struct {
 // registry of all units in game
 var UnitRegistry = map[string]UnitType{
 	"ArcherLady": {Class: "range", Health: 75, Damage: 30, AttackRate: 30, DamageFrame: 20, Speed: 50, Cost: 3, Radius: 50, AggroRadius: 1400, AttackRadius: 1200, CenterOffset: 150, DmgSp: 25, SpRate: 50, CurrentSP: 0, MaxSP: 100},
-	"FireSpirit": {Class: "range", Health: 100, Damage: 2.5, AttackRate: 20, DamageFrame: 13, Speed: 40, Cost: 2, Radius: 100, AggroRadius: 1400, AttackRadius: 350, CenterOffset: 150, DmgSp: 10, SpRate: 100, CurrentSP: 0, MaxSP: 100},
+	"FireSpirit": {Class: "range", Health: 100, Damage: 2.5, AttackRate: 20, DamageFrame: 13, Speed: 50, Cost: 2, Radius: 100, AggroRadius: 1400, AttackRadius: 350, CenterOffset: 150, DmgSp: 10, SpRate: 100, CurrentSP: 0, MaxSP: 100},
 	"LeafBird":   {Class: "air", Health: 100, Damage: 10, AttackRate: 14, DamageFrame: 9, Speed: 50, Cost: 2, Radius: 75, AggroRadius: 1400, AttackRadius: 10, CenterOffset: 150, DmgSp: 10, SpRate: 25, CurrentSP: 0, MaxSP: 100},
 	"Mage":       {Class: "range", Health: 75, Damage: 15, AttackRate: 20, DamageFrame: 8, Speed: 30, Cost: 3, Radius: 130, AggroRadius: 1400, AttackRadius: 1000, CenterOffset: 150, DmgSp: 25, SpRate: 50, CurrentSP: 0, MaxSP: 100},
 	"Vampire":    {Class: "melee", Health: 100, Damage: 10, AttackRate: 10, DamageFrame: 4, Speed: 50, Cost: 2, Radius: 80, AggroRadius: 1400, AttackRadius: 10, CenterOffset: 150, DmgSp: 10, SpRate: 25, CurrentSP: 0, MaxSP: 100},
@@ -41,7 +41,7 @@ type SpType struct {
 var SpRegistry = map[string]SpType{
 	"ArcherLady": {AttackRate: 30, DamageFrame: 20, DamageEndFrame: 20, StructureTargetable: true},
 	"FireSpirit": {AttackRate: 39, DamageFrame: 14, DamageEndFrame: 27, StructureTargetable: true},
-	"LeafBird":   {AttackRate: 25, DamageFrame: 9, DamageEndFrame: 9, StructureTargetable: false},
+	"LeafBird":   {AttackRate: 25, DamageFrame: 5, DamageEndFrame: 24, StructureTargetable: false},
 	"Mage":       {AttackRate: 15, DamageFrame: 8, DamageEndFrame: 8, StructureTargetable: false},
 	"Vampire":    {AttackRate: 10, DamageFrame: 4, DamageEndFrame: 4, StructureTargetable: true},
 }

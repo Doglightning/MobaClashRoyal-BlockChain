@@ -58,7 +58,7 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 			//get Unit Components
 			uPos, uRadius, uAtk, uTeam, MatchID, err := getUnitComponentsCC(world, id)
 			if err != nil {
-				fmt.Printf("(check_combat.go) -%v", err)
+				fmt.Printf("(check_combat.go) -%v \n", err)
 				return false
 			}
 
@@ -116,14 +116,14 @@ func structureCombatSearch(world cardinal.WorldContext) error {
 					//get Unit Components
 					uPos, uRadius, uAtk, err := getTowerComponentsCC(world, id)
 					if err != nil {
-						fmt.Printf("(structureCombatSearch - check_combat.go) -%v", err)
+						fmt.Printf("(structureCombatSearch - check_combat.go) -%v \n", err)
 						return false
 					}
 
 					//get Unit Components
 					ePos, eRadius, err := getTowerTargetComponentsCC(world, uAtk.Target)
 					if err != nil {
-						fmt.Printf("(structureCombatSearch - check_combat.go) -%v", err)
+						fmt.Printf("(structureCombatSearch - check_combat.go) -%v \n", err)
 						return false
 					}
 
@@ -135,7 +135,7 @@ func structureCombatSearch(world cardinal.WorldContext) error {
 						uAtk.Frame = 0
 						//set attack component
 						if err = cardinal.SetComponent(world, id, uAtk); err != nil {
-							fmt.Printf("error setting attack component (structureCombatSearch - check_combat.go): %v", err)
+							fmt.Printf("error setting attack component (structureCombatSearch - check_combat.go): %v \n", err)
 							return false
 						}
 					}
@@ -146,14 +146,14 @@ func structureCombatSearch(world cardinal.WorldContext) error {
 					//get Unit Components
 					uPos, uRadius, uAtk, uTeam, MatchID, err := getUnitComponentsCC(world, id)
 					if err != nil {
-						fmt.Printf("(structureCombatSearch - check_combat.go) -%v", err)
+						fmt.Printf("(structureCombatSearch - check_combat.go) -%v \n", err)
 						return false
 					}
 
 					// get collision Hash
 					collisionHash, err := getCollisionHashGSS(world, MatchID)
 					if err != nil {
-						fmt.Printf("error retrieving SpartialHash component on tempSpartialHash (structureCombatSearch - check_combat.go): %s", err)
+						fmt.Printf("error retrieving SpartialHash component on tempSpartialHash (structureCombatSearch - check_combat.go): %s  \n", err)
 						return false
 					}
 					//find closest enemy
@@ -167,7 +167,7 @@ func structureCombatSearch(world cardinal.WorldContext) error {
 							uAtk.Target = eID
 							//set attack component
 							if err = cardinal.SetComponent(world, id, uAtk); err != nil {
-								fmt.Printf("error setting attack component (structureCombatSearch - check_combat.go): %v", err)
+								fmt.Printf("error setting attack component (structureCombatSearch - check_combat.go): %v \n", err)
 								return false
 							}
 						}
@@ -252,7 +252,7 @@ func resetCombat(world cardinal.WorldContext, id types.EntityID) error {
 	// reset attack component
 	err := cardinal.UpdateComponent(world, id, func(attack *comp.Attack) *comp.Attack {
 		if attack == nil {
-			fmt.Printf("error retrieving enemy attack component (Phase attack.go): ")
+			fmt.Printf("error retrieving enemy attack component (resetCombat/check combat.go): ")
 			return nil
 		}
 		attack.Combat = false
@@ -260,7 +260,7 @@ func resetCombat(world cardinal.WorldContext, id types.EntityID) error {
 		return attack
 	})
 	if err != nil {
-		return fmt.Errorf("error updating attack comp (Phase attack.go): %v", err)
+		return fmt.Errorf("error updating attack comp (resetCombat/check combat.go): %v", err)
 	}
 	return nil
 }
@@ -271,13 +271,13 @@ func channelingResetCombat(world cardinal.WorldContext, id types.EntityID) error
 	//reset attack component
 	err := cardinal.UpdateComponent(world, id, func(attack *comp.Attack) *comp.Attack {
 		if attack == nil {
-			fmt.Printf("error retrieving enemy attack component (check combat.go): \n")
+			fmt.Printf("error retrieving enemy attack component (channelingResetCombat/check combat.go): \n")
 			return nil
 		}
 		//get special power component
 		sp, err := cardinal.GetComponent[comp.Sp](world, id)
 		if err != nil {
-			fmt.Printf("error retrieving special power comp (check combat.go): \n")
+			fmt.Printf("error retrieving special power comp (channelingResetCombat/check combat.go): \n")
 			return nil
 		}
 
@@ -293,7 +293,7 @@ func channelingResetCombat(world cardinal.WorldContext, id types.EntityID) error
 		return attack
 	})
 	if err != nil {
-		return fmt.Errorf("error updating attack comp (check combat.go): %v", err)
+		return fmt.Errorf("error updating attack comp (channelingResetCombat/check combat.go): %v", err)
 	}
 
 	return nil

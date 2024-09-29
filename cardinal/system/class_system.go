@@ -68,8 +68,6 @@ func ClassAttack(world cardinal.WorldContext, id types.EntityID, name string, at
 		err = archerLadyAttack(world, id, atk)
 	case "Base":
 		err = towerAttack(world, id, atk)
-	case "LeafBird":
-		err = leafBirdAttack(world, atk)
 	case "Mage":
 		err = mageAttack(world, id, atk)
 	case "Tower":
@@ -92,6 +90,8 @@ func ClassAttackSystem(world cardinal.WorldContext, id types.EntityID, atk *comp
 	switch name.UnitName {
 	case "FireSpirit":
 		err = FireSpiritAttack(world, id, atk)
+	case "LeafBird":
+		err = leafBirdAttackSystem(world, id, atk)
 	default:
 		err = MeleeRangeAttack(world, id, atk)
 	}
@@ -106,6 +106,8 @@ func ClassResetCombat(world cardinal.WorldContext, id types.EntityID, name strin
 
 	switch name {
 	case "FireSpirit":
+		err = channelingResetCombat(world, id)
+	case "LeafBird":
 		err = channelingResetCombat(world, id)
 	default:
 		err = resetCombat(world, id)
