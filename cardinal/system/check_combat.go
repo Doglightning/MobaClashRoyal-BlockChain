@@ -34,7 +34,7 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 	})
 	//for each unit not in combat
 	err := cardinal.NewSearch().Entity(
-		filter.Contains(UnitFilters())).
+		filter.Contains(filter.Component[comp.UnitTag]())).
 		Where(combatFilter).Each(world, func(id types.EntityID) bool {
 
 		//get Unit CC component

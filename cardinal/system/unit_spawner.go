@@ -6,6 +6,7 @@ import (
 	"pkg.world.dev/world-engine/cardinal"
 	"pkg.world.dev/world-engine/cardinal/iterators"
 	"pkg.world.dev/world-engine/cardinal/search/filter"
+	"pkg.world.dev/world-engine/cardinal/types"
 
 	comp "MobaClashRoyal/component"
 	"MobaClashRoyal/msg"
@@ -41,30 +42,6 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 			spType, ok := SpRegistry[create.Msg.UnitType]
 			if !ok {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("unit type %s not found in registry (unit_spawner.go)", create.Msg.UnitType)
-			}
-
-			var player1 *comp.Player1
-			var player2 *comp.Player2
-			if create.Msg.Team == "Blue" {
-				//get player1 component from game state
-				player1, err = cardinal.GetComponent[comp.Player1](world, gameState)
-				if err != nil {
-					return msg.CreateUnitResult{Success: false}, fmt.Errorf("error getting player1 component (unit_spawner.go): %w", err)
-				}
-				//check if enough gold to spawn unit
-				if player1.Gold < float32(unitType.Cost) {
-					return msg.CreateUnitResult{Success: false}, fmt.Errorf("not enough gold to spawn %s (unit_spawner.go): ", unitType.Name)
-				}
-			} else {
-				// get player2 component from game state
-				player2, err = cardinal.GetComponent[comp.Player2](world, gameState)
-				if err != nil {
-					return msg.CreateUnitResult{Success: false}, fmt.Errorf("error getting player2 component (unit_spawner.go): %w", err)
-				}
-				//check if enough gold to spawn unit
-				if player2.Gold < float32(unitType.Cost) {
-					return msg.CreateUnitResult{Success: false}, fmt.Errorf("not enough gold to spawn %s (unit_spawner.go): ", unitType.Name)
-				}
 			}
 
 			//check map exsists in registy
@@ -109,32 +86,15 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("collision with unit (unit_spawner.go)")
 			}
 
-			//get new UID
-			UID, err := getNextUID(world, create.Msg.MatchID)
+			err = handLogic(world, gameState, create.Msg.UnitType, create.Msg.Team, unitType.Cost, create.Msg.UID)
 			if err != nil {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("(unit_spawner.go) - %w", err)
 			}
 
-			//check unit spawned is in hand
-			var found bool = false
-			if create.Msg.Team == "Blue" {
-				for _, v := range player1.Hand { //search hand
-					if v == create.Msg.UnitType { // if card == unit spawned
-						found = true
-						break
-					}
-				}
-			} else {
-				for _, v := range player2.Hand { //search hand
-					if v == create.Msg.UnitType { // if card == unit spawned
-						found = true
-						break
-					}
-				}
-			}
-
-			if !found {
-				return msg.CreateUnitResult{Success: false}, fmt.Errorf("card not in hand (unit_spawner.go) ")
+			//get new UID
+			UID, err := getNextUID(world, create.Msg.MatchID)
+			if err != nil {
+				return msg.CreateUnitResult{Success: false}, fmt.Errorf("(unit_spawner.go) - %w", err)
 			}
 
 			zOffSet := create.Msg.PositionZ
@@ -179,6 +139,7 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 				comp.CenterOffset{CenterOffset: unitType.CenterOffset},
 				comp.CC{Stun: 0},
 				comp.EffectsList{EffectsList: make(map[string]int)},
+				comp.UnitTag{},
 			)
 			if err != nil {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("error creating unit (unit_spawner.go): %w", err)
@@ -187,51 +148,103 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 			//add unit to collision hash collision map
 			AddObjectSpatialHash(SpatialHash, entityID, create.Msg.PositionX, create.Msg.PositionY, unitType.Radius, create.Msg.Team, unitType.Class)
 
-			//reduce player gold and then set the component
-			if create.Msg.Team == "Blue" {
-				//reduce Gold
-				player1.Gold -= float32(unitType.Cost)
-				//-1 key means to tell player to remove unit they were holding to transition it to this spawned unit
-				player1.RemovalList[create.Msg.UID] = true
-
-				//hand sorting
-				tempCard := player1.Deck[0]                     //get top deck card
-				player1.Deck = removeFirstElement(player1.Deck) //remove top deck card
-				for i, v := range player1.Hand {                //search hand
-					if v == create.Msg.UnitType { // if card == unit spawned
-						player1.Hand[i] = tempCard             //insert top card to hand
-						player1.Deck = append(player1.Deck, v) // put spawned unit to back of deck
-					}
-				}
-
-				err = cardinal.SetComponent(world, gameState, player1)
-				if err != nil {
-					return msg.CreateUnitResult{Success: false}, fmt.Errorf("error setting player1 component (unit_spawner.go): %w", err)
-				}
-			} else {
-				//reduce Gold
-				player2.Gold -= float32(unitType.Cost)
-				//-1 key means to tell player to remove unit they were holding to transition it to this spawned unit
-				player2.RemovalList[create.Msg.UID] = true
-
-				//hand sorting
-				tempCard := player2.Deck[0]                     //get top deck card
-				player2.Deck = removeFirstElement(player2.Deck) //remove top deck card
-				for i, v := range player2.Hand {                //search hand
-					if v == create.Msg.UnitType { // if card == unit spawned
-						player2.Hand[i] = tempCard             //insert top card to hand
-						player2.Deck = append(player2.Deck, v) // put spawned unit to back of deck
-					}
-				}
-
-				err = cardinal.SetComponent(world, gameState, player2)
-				if err != nil {
-					return msg.CreateUnitResult{Success: false}, fmt.Errorf("error setting player2 component (unit_spawner.go): %w", err)
-				}
-			}
-
 			return msg.CreateUnitResult{Success: true}, nil
 		})
+}
+
+func handLogic(world cardinal.WorldContext, gameState types.EntityID, name, team string, cost, UID int) error {
+
+	var player1 *comp.Player1
+	var player2 *comp.Player2
+	var err error
+	if team == "Blue" {
+		//get player1 component from game state
+		player1, err = cardinal.GetComponent[comp.Player1](world, gameState)
+		if err != nil {
+			return fmt.Errorf("error getting player1 component (unit_spawner.go): %w", err)
+		}
+		//check if enough gold to spawn unit
+		if player1.Gold < float32(cost) {
+			return fmt.Errorf("not enough gold to spawn %s (unit_spawner.go): ", name)
+		}
+	} else {
+		// get player2 component from game state
+		player2, err = cardinal.GetComponent[comp.Player2](world, gameState)
+		if err != nil {
+			return fmt.Errorf("error getting player2 component (unit_spawner.go): %w", err)
+		}
+		//check if enough gold to spawn unit
+		if player2.Gold < float32(cost) {
+			return fmt.Errorf("not enough gold to spawn %s (unit_spawner.go): ", name)
+		}
+	}
+
+	//check unit spawned is in hand
+	var found bool = false
+	if team == "Blue" {
+		for _, v := range player1.Hand { //search hand
+			if v == name { // if card == unit spawned
+				found = true
+				break
+			}
+		}
+	} else {
+		for _, v := range player2.Hand { //search hand
+			if v == name { // if card == unit spawned
+				found = true
+				break
+			}
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("card not in hand (unit_spawner.go) ")
+	}
+
+	//reduce player gold and then set the component
+	if team == "Blue" {
+		//reduce Gold
+		player1.Gold -= float32(cost)
+		//-1 key means to tell player to remove unit they were holding to transition it to this spawned unit
+		player1.RemovalList[UID] = true
+
+		//hand sorting
+		tempCard := player1.Deck[0]                     //get top deck card
+		player1.Deck = removeFirstElement(player1.Deck) //remove top deck card
+		for i, v := range player1.Hand {                //search hand
+			if v == name { // if card == unit spawned
+				player1.Hand[i] = tempCard             //insert top card to hand
+				player1.Deck = append(player1.Deck, v) // put spawned unit to back of deck
+			}
+		}
+
+		err = cardinal.SetComponent(world, gameState, player1)
+		if err != nil {
+			return fmt.Errorf("error setting player1 component (unit_spawner.go): %w", err)
+		}
+	} else {
+		//reduce Gold
+		player2.Gold -= float32(cost)
+		//-1 key means to tell player to remove unit they were holding to transition it to this spawned unit
+		player2.RemovalList[UID] = true
+
+		//hand sorting
+		tempCard := player2.Deck[0]                     //get top deck card
+		player2.Deck = removeFirstElement(player2.Deck) //remove top deck card
+		for i, v := range player2.Hand {                //search hand
+			if v == name { // if card == unit spawned
+				player2.Hand[i] = tempCard             //insert top card to hand
+				player2.Deck = append(player2.Deck, v) // put spawned unit to back of deck
+			}
+		}
+
+		err = cardinal.SetComponent(world, gameState, player2)
+		if err != nil {
+			return fmt.Errorf("error setting player2 component (unit_spawner.go): %w", err)
+		}
+	}
+
+	return nil
 }
 
 func removeFirstElement(slice []string) []string {
