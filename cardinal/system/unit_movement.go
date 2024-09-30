@@ -29,7 +29,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 		//get Unit CC component
 		cc, err := cardinal.GetComponent[comp.CC](world, id)
 		if err != nil {
-			fmt.Printf("error getting unit cc component (unit_movement.go): %v", err)
+			fmt.Printf("error getting unit cc component (unit_movement.go): %v \n", err)
 		}
 
 		if cc.Stun > 0 { //if unit stunned cannot move
@@ -37,9 +37,9 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 		}
 
 		//get Unit Components
-		uPos, uRadius, uAtk, uTeam, uMs, MatchID, mapName, err := getUnitComponentsUM(world, id)
+		uPos, uRadius, uAtk, uTeam, uMs, MatchID, mapName, err := GetComponents7[comp.Position, comp.UnitRadius, comp.Attack, comp.Team, comp.Movespeed, comp.MatchId, comp.MapName](world, id)
 		if err != nil {
-			fmt.Printf("%v", err)
+			fmt.Printf("unit components (unit_movement.go) %v \n", err)
 			continue
 		}
 
@@ -57,7 +57,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 		//get collision Hash
 		collisionHash, err := cardinal.GetComponent[comp.SpatialHash](world, gameState)
 		if err != nil {
-			fmt.Printf("error retrieving SpartialHash component on tempSpartialHash (unit_movement.go): %s", err)
+			fmt.Printf("error retrieving SpartialHash component on tempSpartialHash (unit_movement.go): %s \n", err)
 			continue
 		}
 
@@ -67,9 +67,9 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 		if uAtk.Combat {
 			//get enemyID  from unit target
 			enemyID := uAtk.Target
-			ePos, eRadius, err := getTargetComponentsUM(world, enemyID) //get enemy position and radius components
+			ePos, eRadius, err := GetComponents2[comp.Position, comp.UnitRadius](world, enemyID) //get enemy position and radius components
 			if err != nil {
-				fmt.Printf("(unit_movement.go): %s\n", err)
+				fmt.Printf("combat compoenents (unit_movement.go): %s \n", err)
 				continue
 			}
 			//distance between unit and enemy minus their radius
@@ -82,7 +82,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 				secondIfCondition = false //not in combat but need to make sure not moving with direction map
 				//set attack component
 				if err = cardinal.SetComponent(world, id, uAtk); err != nil {
-					fmt.Printf("error setting attack component (unit_movement.go): %v", err)
+					fmt.Printf("error setting attack component (unit_movement.go): %v \n", err)
 					continue
 				}
 				//move towards enemy in combat with
@@ -100,7 +100,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 						uPos.PositionVectorX, uPos.PositionVectorY = moveFreeSpace(collisionHash, id, tempX, tempY, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, uAtk.Class, mapName)
 						// Set the new position component
 						if err := cardinal.SetComponent(world, id, uPos); err != nil {
-							fmt.Printf("error set component on position (unit movement.go): %v", err)
+							fmt.Printf("error set component on position (unit movement.go): %v \n", err)
 							continue
 						}
 						// Update units new distance from enemy base
@@ -122,7 +122,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 				uAtk.Frame = 0
 				//set attack component
 				if err = cardinal.SetComponent(world, id, uAtk); err != nil {
-					fmt.Printf("error setting attack component (unit_movement.go): %v", err)
+					fmt.Printf("error setting attack component (unit_movement.go): %v \n", err)
 					continue
 				}
 				//in attack range just rotate towards enemy
@@ -131,7 +131,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 				uPos.RotationVectorX, uPos.RotationVectorY = directionVectorBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, ePos.PositionVectorX, ePos.PositionVectorY)
 				// Set the new position component
 				if err := cardinal.SetComponent(world, id, uPos); err != nil {
-					fmt.Printf("error set component on tempPosition (unit movement/MoveUnitTowardsEnemyUM): %v", err)
+					fmt.Printf("error set component on tempPosition (unit movement/MoveUnitTowardsEnemyUM): %v \n", err)
 					continue
 				}
 			}
@@ -150,7 +150,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 					uAtk.Target = eID
 					//set attack component
 					if err = cardinal.SetComponent(world, id, uAtk); err != nil {
-						fmt.Printf("error setting attack component (unit_movement.go): %v", err)
+						fmt.Printf("error setting attack component (unit_movement.go): %v \n", err)
 						continue
 					}
 					//not within attack range
@@ -170,7 +170,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 							// Set the new position component
 							err := cardinal.SetComponent(world, id, uPos)
 							if err != nil {
-								fmt.Printf("error set component on tempPosition (unit movement.go): %v", err)
+								fmt.Printf("error set component on tempPosition (unit movement.go): %v \n", err)
 								continue
 							}
 							if err = updateUnitDistance(world, id, uTeam, uPos, mapName); err != nil {
@@ -194,7 +194,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 					tempY := uPos.PositionVectorY
 					uPos, err = moveUnitDirectionMap(uPos, uTeam, uMs.CurrentMS, mapName)
 					if err != nil {
-						fmt.Printf("(unit_movement.go): %v", err)
+						fmt.Printf("(unit_movement.go): %v \n", err)
 						continue
 					}
 					//attempt to push blocking units
@@ -204,13 +204,13 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 					//set updated position component
 					err := cardinal.SetComponent(world, id, uPos)
 					if err != nil {
-						fmt.Printf("error set component on tempPosition (unit movement/MoveUnitDirectionMapUM): %v", err)
+						fmt.Printf("error set component on tempPosition (unit movement/MoveUnitDirectionMapUM): %v \n", err)
 						continue
 					}
 
 					//update units new distance from enemy base
 					if err = updateUnitDistance(world, id, uTeam, uPos, mapName); err != nil {
-						fmt.Printf("(unit_movement.go): %v", err)
+						fmt.Printf("(unit_movement.go): %v \n", err)
 						continue
 					}
 				}
@@ -409,7 +409,7 @@ func pushBlockingUnit(world cardinal.WorldContext, hash *comp.SpatialHash, objID
 			//get targets attack
 			atk, err := cardinal.GetComponent[comp.Attack](world, collisionID)
 			if err != nil {
-				fmt.Printf("error getting targets attack compoenent (pushBlockingUnit): %v", err)
+				fmt.Printf("error getting targets attack compoenent (pushBlockingUnit): %v \n", err)
 				continue
 			}
 
@@ -420,23 +420,23 @@ func pushBlockingUnit(world cardinal.WorldContext, hash *comp.SpatialHash, objID
 			//get targets team
 			targetTeam, err := cardinal.GetComponent[comp.Team](world, collisionID)
 			if err != nil {
-				fmt.Printf("error getting targets team compoenent (pushBlockingUnit): %v", err)
+				fmt.Printf("error getting targets team compoenent (pushBlockingUnit): %v \n", err)
 				continue
 			}
 
 			//get targets unit name
 			targetName, err := cardinal.GetComponent[comp.UnitName](world, collisionID)
 			if err != nil {
-				fmt.Printf("error getting targets name compoenent (pushBlockingUnit): %v", err)
+				fmt.Printf("error getting targets name compoenent (pushBlockingUnit): %v \n", err)
 				continue
 			}
 
 			//if unit is ally push
 			if targetTeam.Team == team && targetName.UnitName != "Base" && targetName.UnitName != "Tower" {
 				//get targets posisiton and radius components
-				targetPos, targetRadius, err := getTargetComponentsUM(world, collisionID)
+				targetPos, targetRadius, err := GetComponents2[comp.Position, comp.UnitRadius](world, collisionID)
 				if err != nil {
-					fmt.Printf("(pushBlockingUnit): %v", err)
+					fmt.Printf("target compoenents (pushBlockingUnit): %v \n", err)
 					continue
 				}
 
@@ -451,7 +451,7 @@ func pushBlockingUnit(world cardinal.WorldContext, hash *comp.SpatialHash, objID
 				AddObjectSpatialHash(hash, collisionID, targetPos.PositionVectorX, targetPos.PositionVectorY, targetRadius.UnitRadius, targetTeam.Team, atk.Class)
 				//set collided units new position component
 				if err = cardinal.SetComponent(world, collisionID, targetPos); err != nil {
-					fmt.Printf("error setting target pos component (pushBlockingUnit): %v", err)
+					fmt.Printf("error setting target pos component (pushBlockingUnit): %v \n", err)
 					continue
 				}
 			}
@@ -506,7 +506,7 @@ func pushFromPtBtoA(world cardinal.WorldContext, hash *comp.SpatialHash, id type
 	//get attack component
 	atk, err := cardinal.GetComponent[comp.Attack](world, id)
 	if err != nil {
-		fmt.Printf("error getting attack compoenent (pushFromPtBtoA): %v", err)
+		fmt.Printf("error getting attack compoenent (pushFromPtBtoA): %v \n", err)
 		return startX, startY
 	}
 	//get length
@@ -528,9 +528,9 @@ func pushFromPtBtoA(world cardinal.WorldContext, hash *comp.SpatialHash, id type
 	// if in combat must be a posisiton still in attack range of enemy
 	if atk.Combat {
 		//get target components
-		targetPos, targetRadius, err := getTargetComponentsUM(world, atk.Target)
+		targetPos, targetRadius, err := GetComponents2[comp.Position, comp.UnitRadius](world, atk.Target)
 		if err != nil {
-			fmt.Printf("(pushFromPtBtoA): %v", err)
+			fmt.Printf("target components (pushFromPtBtoA): %v \n", err)
 			return startX, startY
 		}
 
@@ -648,87 +648,3 @@ func updateUnitDistance(world cardinal.WorldContext, id types.EntityID, team *co
 	}
 	return nil
 }
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////UTILITY FUNCTIONS//////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// GetUnitComponents fetches all necessary components related to a unit entity.
-func getUnitComponentsUM(world cardinal.WorldContext, unitID types.EntityID) (*comp.Position, *comp.UnitRadius, *comp.Attack, *comp.Team, *comp.Movespeed, *comp.MatchId, *comp.MapName, error) {
-	position, err := cardinal.GetComponent[comp.Position](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Position component (getUnitComponentsUM): %v", err)
-	}
-	unitRadius, err := cardinal.GetComponent[comp.UnitRadius](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Unit Radius component (getUnitComponentsUM): %v", err)
-	}
-	unitAttack, err := cardinal.GetComponent[comp.Attack](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Unit attack component (getUnitComponentsUM): %v", err)
-	}
-	team, err := cardinal.GetComponent[comp.Team](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Team component (getUnitComponentsUM): %v", err)
-	}
-	movespeed, err := cardinal.GetComponent[comp.Movespeed](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Movespeed component (getUnitComponentsUM): %v", err)
-	}
-	matchId, err := cardinal.GetComponent[comp.MatchId](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving MatchId component (getUnitComponentsUM): %v", err)
-	}
-	mapName, err := cardinal.GetComponent[comp.MapName](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Distance component (getUnitComponentsUM): %v", err)
-	}
-	return position, unitRadius, unitAttack, team, movespeed, matchId, mapName, nil
-}
-
-// fetches target components
-func getTargetComponentsUM(world cardinal.WorldContext, enemyID types.EntityID) (enemyPosition *comp.Position, enemyRadius *comp.UnitRadius, err error) {
-
-	enemyPosition, err = cardinal.GetComponent[comp.Position](world, enemyID)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error retrieving enemy Position component (getTargetComponentsUM): %v", err)
-	}
-	enemyRadius, err = cardinal.GetComponent[comp.UnitRadius](world, enemyID)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error retrieving enemy Radius component (getTargetComponentsUM): %v", err)
-	}
-	return enemyPosition, enemyRadius, nil
-}
-
-//BILLARD BALL COLLISION
-// // push a unit when they collide
-// // simulates if position 1 hits position 2 like a billards ball and bounces the position 2 to our new target returns
-// func pushUnitDirection(posX1, posY1, posX2, posY2, dirX, dirY, distance float32) (targetX, targetY float32) {
-// 	deltaX := posX1 - posX2
-// 	deltaY := posY1 - posY2
-// 	length := float32(math.Sqrt(float64(deltaX*deltaX) + float64(deltaY*deltaY))) // Magnitude of the vector
-// 	if length == 0 {                                                              // Avoid division by zero
-// 		fmt.Println("Collision at the same position, no movement. (PushUnitDirection)")
-// 		return posX2, posY2 // Return the current position of the second ball
-// 	}
-// 	// Calculate the normal vector
-// 	normalX := deltaX / length
-// 	normalY := deltaY / length
-
-// 	// Calculate the dot product of the incoming vector and the normal
-// 	dotProduct := dotProduct(dirX, dirY, normalX, normalY)
-
-// 	// Apply the reflection formula
-// 	newDirX := dirX - 2*dotProduct*normalX
-// 	newDirY := dirY - 2*dotProduct*normalY
-
-// 	// Normalize the resulting direction vector
-// 	finalLength := float32(math.Sqrt(float64(newDirX*newDirX + newDirY*newDirY)))
-// 	newDirX /= finalLength
-// 	newDirY /= finalLength
-
-// 	//move position 2 in the direction of newDir by the input distance
-// 	targetX = posX2 + newDirX*distance
-// 	targetY = posY2 + newDirY*distance
-// 	return targetX, targetY
-// }

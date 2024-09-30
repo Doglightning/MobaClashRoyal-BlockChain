@@ -14,7 +14,6 @@ func GetComponents2[T1, T2 types.Component](wCtx cardinal.WorldContext, unitID t
 	if err != nil {
 		return nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T1), err)
 	}
-
 	// Get second component
 	c2, err := cardinal.GetComponent[T2](wCtx, unitID)
 	if err != nil {
@@ -31,13 +30,11 @@ func GetComponents3[T1, T2, T3 types.Component](wCtx cardinal.WorldContext, unit
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T1), err)
 	}
-
 	// Get second component
 	c2, err := cardinal.GetComponent[T2](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T2), err)
 	}
-
 	// Get third component
 	c3, err := cardinal.GetComponent[T3](wCtx, unitID)
 	if err != nil {
@@ -54,19 +51,16 @@ func GetComponents4[T1, T2, T3, T4 types.Component](wCtx cardinal.WorldContext, 
 	if err != nil {
 		return nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T1), err)
 	}
-
 	// Get second component
 	c2, err := cardinal.GetComponent[T2](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T2), err)
 	}
-
 	// Get third component
 	c3, err := cardinal.GetComponent[T3](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T3), err)
 	}
-
 	// Get fourth component
 	c4, err := cardinal.GetComponent[T4](wCtx, unitID)
 	if err != nil {
@@ -83,25 +77,21 @@ func GetComponents5[T1, T2, T3, T4, T5 types.Component](wCtx cardinal.WorldConte
 	if err != nil {
 		return nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T1), err)
 	}
-
 	// Get second component
 	c2, err := cardinal.GetComponent[T2](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T2), err)
 	}
-
 	// Get third component
 	c3, err := cardinal.GetComponent[T3](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T3), err)
 	}
-
 	// Get fourth component
 	c4, err := cardinal.GetComponent[T4](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T4), err)
 	}
-
 	// Get fifth component
 	c5, err := cardinal.GetComponent[T5](wCtx, unitID)
 	if err != nil {
@@ -118,31 +108,26 @@ func GetComponents6[T1, T2, T3, T4, T5, T6 types.Component](wCtx cardinal.WorldC
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T1), err)
 	}
-
 	// Get second component
 	c2, err := cardinal.GetComponent[T2](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T2), err)
 	}
-
 	// Get third component
 	c3, err := cardinal.GetComponent[T3](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T3), err)
 	}
-
 	// Get fourth component
 	c4, err := cardinal.GetComponent[T4](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T4), err)
 	}
-
 	// Get fifth component
 	c5, err := cardinal.GetComponent[T5](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T5), err)
 	}
-
 	// Get sixth component
 	c6, err := cardinal.GetComponent[T6](wCtx, unitID)
 	if err != nil {
@@ -159,37 +144,31 @@ func GetComponents7[T1, T2, T3, T4, T5, T6, T7 types.Component](wCtx cardinal.Wo
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T1), err)
 	}
-
 	// Get second component
 	c2, err := cardinal.GetComponent[T2](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T2), err)
 	}
-
 	// Get third component
 	c3, err := cardinal.GetComponent[T3](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T3), err)
 	}
-
 	// Get fourth component
 	c4, err := cardinal.GetComponent[T4](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T4), err)
 	}
-
 	// Get fifth component
 	c5, err := cardinal.GetComponent[T5](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T5), err)
 	}
-
 	// Get sixth component
 	c6, err := cardinal.GetComponent[T6](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T6), err)
 	}
-
 	// Get seventh component
 	c7, err := cardinal.GetComponent[T7](wCtx, unitID)
 	if err != nil {
@@ -206,43 +185,36 @@ func GetComponents8[T1, T2, T3, T4, T5, T6, T7, T8 types.Component](wCtx cardina
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T1), err)
 	}
-
 	// Get second component
 	c2, err := cardinal.GetComponent[T2](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T2), err)
 	}
-
 	// Get third component
 	c3, err := cardinal.GetComponent[T3](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T3), err)
 	}
-
 	// Get fourth component
 	c4, err := cardinal.GetComponent[T4](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T4), err)
 	}
-
 	// Get fifth component
 	c5, err := cardinal.GetComponent[T5](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T5), err)
 	}
-
 	// Get sixth component
 	c6, err := cardinal.GetComponent[T6](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T6), err)
 	}
-
 	// Get seventh component
 	c7, err := cardinal.GetComponent[T7](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T7), err)
 	}
-
 	// Get eighth component
 	c8, err := cardinal.GetComponent[T8](wCtx, unitID)
 	if err != nil {
@@ -259,49 +231,41 @@ func GetComponents9[T1, T2, T3, T4, T5, T6, T7, T8, T9 types.Component](wCtx car
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T1), err)
 	}
-
 	// Get second component
 	c2, err := cardinal.GetComponent[T2](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T2), err)
 	}
-
 	// Get third component
 	c3, err := cardinal.GetComponent[T3](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T3), err)
 	}
-
 	// Get fourth component
 	c4, err := cardinal.GetComponent[T4](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T4), err)
 	}
-
 	// Get fifth component
 	c5, err := cardinal.GetComponent[T5](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T5), err)
 	}
-
 	// Get sixth component
 	c6, err := cardinal.GetComponent[T6](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T6), err)
 	}
-
 	// Get seventh component
 	c7, err := cardinal.GetComponent[T7](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T7), err)
 	}
-
 	// Get eighth component
 	c8, err := cardinal.GetComponent[T8](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T8), err)
 	}
-
 	// Get ninth component
 	c9, err := cardinal.GetComponent[T9](wCtx, unitID)
 	if err != nil {
@@ -318,55 +282,46 @@ func GetComponents10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10 types.Component](wC
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T1), err)
 	}
-
 	// Get second component
 	c2, err := cardinal.GetComponent[T2](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T2), err)
 	}
-
 	// Get third component
 	c3, err := cardinal.GetComponent[T3](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T3), err)
 	}
-
 	// Get fourth component
 	c4, err := cardinal.GetComponent[T4](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T4), err)
 	}
-
 	// Get fifth component
 	c5, err := cardinal.GetComponent[T5](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T5), err)
 	}
-
 	// Get sixth component
 	c6, err := cardinal.GetComponent[T6](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T6), err)
 	}
-
 	// Get seventh component
 	c7, err := cardinal.GetComponent[T7](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T7), err)
 	}
-
 	// Get eighth component
 	c8, err := cardinal.GetComponent[T8](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T8), err)
 	}
-
 	// Get ninth component
 	c9, err := cardinal.GetComponent[T9](wCtx, unitID)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving component of type %T: %v", *new(T9), err)
 	}
-
 	// Get tenth component
 	c10, err := cardinal.GetComponent[T10](wCtx, unitID)
 	if err != nil {

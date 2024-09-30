@@ -56,7 +56,7 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 
 		if !uAtk.Combat { //not in combat
 			//get Unit Components
-			uPos, uRadius, uAtk, uTeam, MatchID, err := getUnitComponentsCC(world, id)
+			uPos, uRadius, uAtk, uTeam, MatchID, err := GetComponents5[comp.Position, comp.UnitRadius, comp.Attack, comp.Team, comp.MatchId](world, id)
 			if err != nil {
 				fmt.Printf("(check_combat.go) -%v \n", err)
 				return false
@@ -114,16 +114,16 @@ func structureCombatSearch(world cardinal.WorldContext) error {
 
 				if uAtk.Combat { // in combat make sure target still in range
 					//get Unit Components
-					uPos, uRadius, uAtk, err := getTowerComponentsCC(world, id)
+					uPos, uRadius, uAtk, err := GetComponents3[comp.Position, comp.UnitRadius, comp.Attack](world, id)
 					if err != nil {
-						fmt.Printf("(structureCombatSearch - check_combat.go) -%v \n", err)
+						fmt.Printf("3 (structureCombatSearch - check_combat.go) -%v \n", err)
 						return false
 					}
 
 					//get Unit Components
-					ePos, eRadius, err := getTowerTargetComponentsCC(world, uAtk.Target)
+					ePos, eRadius, err := GetComponents2[comp.Position, comp.UnitRadius](world, uAtk.Target)
 					if err != nil {
-						fmt.Printf("(structureCombatSearch - check_combat.go) -%v \n", err)
+						fmt.Printf("2 (structureCombatSearch - check_combat.go) -%v \n", err)
 						return false
 					}
 
@@ -144,9 +144,9 @@ func structureCombatSearch(world cardinal.WorldContext) error {
 
 				if !uAtk.Combat { //not in combat
 					//get Unit Components
-					uPos, uRadius, uAtk, uTeam, MatchID, err := getUnitComponentsCC(world, id)
+					uPos, uRadius, uAtk, uTeam, MatchID, err := GetComponents5[comp.Position, comp.UnitRadius, comp.Attack, comp.Team, comp.MatchId](world, id)
 					if err != nil {
-						fmt.Printf("(structureCombatSearch - check_combat.go) -%v \n", err)
+						fmt.Printf("5 not in combat (structureCombatSearch - check_combat.go) -%v \n", err)
 						return false
 					}
 
@@ -297,65 +297,4 @@ func channelingResetCombat(world cardinal.WorldContext, id types.EntityID) error
 	}
 
 	return nil
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////Default get Component Functions///////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// GetUnitComponents fetches all necessary components related to a unit entity.
-func getUnitComponentsCC(world cardinal.WorldContext, unitID types.EntityID) (*comp.Position, *comp.UnitRadius, *comp.Attack, *comp.Team, *comp.MatchId, error) {
-	position, err := cardinal.GetComponent[comp.Position](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Position component (getUnitComponentsCC): %v", err)
-	}
-	unitRadius, err := cardinal.GetComponent[comp.UnitRadius](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Unit Radius component (getUnitComponentsCC): %v", err)
-	}
-	unitAttack, err := cardinal.GetComponent[comp.Attack](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Unit attack component (getUnitComponentsCC): %v", err)
-	}
-	team, err := cardinal.GetComponent[comp.Team](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Team component (getUnitComponentsCC): %v", err)
-	}
-	matchId, err := cardinal.GetComponent[comp.MatchId](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, nil, fmt.Errorf("error retrieving MatchId component (getUnitComponentsCC): %v", err)
-	}
-	return position, unitRadius, unitAttack, team, matchId, nil
-}
-
-// GetTowerComponents fetches all necessary components related to a Tower entity.
-func getTowerComponentsCC(world cardinal.WorldContext, unitID types.EntityID) (*comp.Position, *comp.UnitRadius, *comp.Attack, error) {
-	position, err := cardinal.GetComponent[comp.Position](world, unitID)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error retrieving Position component (getTowerComponentsCC): %v", err)
-	}
-	unitRadius, err := cardinal.GetComponent[comp.UnitRadius](world, unitID)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error retrieving Unit Radius component (getTowerComponentsCC): %v", err)
-	}
-	unitAttack, err := cardinal.GetComponent[comp.Attack](world, unitID)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error retrieving Unit attack component (getTowerComponentsCC): %v", err)
-	}
-	return position, unitRadius, unitAttack, nil
-}
-
-// GetTowerComponents fetches all necessary components related to a Tower entity.
-func getTowerTargetComponentsCC(world cardinal.WorldContext, unitID types.EntityID) (*comp.Position, *comp.UnitRadius, error) {
-	position, err := cardinal.GetComponent[comp.Position](world, unitID)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error retrieving Position component (getTowerTargetComponentsCC): %v", err)
-	}
-	unitRadius, err := cardinal.GetComponent[comp.UnitRadius](world, unitID)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error retrieving Unit Radius component (getTowerTargetComponentsCC): %v", err)
-	}
-	return position, unitRadius, nil
 }

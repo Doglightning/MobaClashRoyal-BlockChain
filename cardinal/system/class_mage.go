@@ -141,14 +141,14 @@ func MageUpdate(world cardinal.WorldContext, id types.EntityID) error {
 // spawns projectile for mage basic attack
 func mageAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.Attack) error {
 	//get units component
-	unitPosition, matchID, mapName, unitName, err := archerLadyAttackComponentsUA(world, id)
+	unitPosition, matchID, mapName, unitName, err := GetComponents4[comp.Position, comp.MatchId, comp.MapName, comp.UnitName](world, id)
 	if err != nil {
-		return err
+		return fmt.Errorf("unit components (class mageAttack.go): %v ", err)
 	}
 	//get next uid
 	UID, err := getNextUID(world, matchID.MatchId)
 	if err != nil {
-		return fmt.Errorf("(class mage.go): %v ", err)
+		return fmt.Errorf("(class mageAttack.go): %v ", err)
 	}
 	// set offset to units mesh in client
 	newX, newY := RelativeOffsetXY(unitPosition.PositionVectorX, unitPosition.PositionVectorY, unitPosition.RotationVectorX, unitPosition.RotationVectorY, ProjectileRegistry[unitName.UnitName].offSetX, ProjectileRegistry[unitName.UnitName].offSetY)
@@ -172,7 +172,7 @@ func mageAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.Attack
 	)
 
 	if err != nil {
-		return fmt.Errorf("error spawning mage basic attack (class mage.go): %v ", err)
+		return fmt.Errorf("error spawning mage basic attack (class mageAttack.go): %v ", err)
 	}
 
 	return nil

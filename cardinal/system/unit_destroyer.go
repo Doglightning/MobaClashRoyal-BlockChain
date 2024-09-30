@@ -21,9 +21,9 @@ func UnitDestroyerSystem(world cardinal.WorldContext) error {
 		Where(healthFilter).Each(world, func(id types.EntityID) bool {
 
 		//get needed compoenents
-		MatchID, uid, UnitPosition, UnitRadius, err := getUnitComponentsUD(world, id)
+		MatchID, uid, UnitPosition, UnitRadius, err := GetComponents4[comp.MatchId, comp.UID, comp.Position, comp.UnitRadius](world, id)
 		if err != nil {
-			fmt.Printf("(unit_destroyer.go): %v \n", err)
+			fmt.Printf("4 (unit_destroyer.go): %v \n", err)
 			return false
 		}
 
@@ -212,25 +212,4 @@ func destroySPTargetingSelfUD(world cardinal.WorldContext, targetFilter cardinal
 		return fmt.Errorf("error retrieving sp entities (destroyProjectilesTargetingSelfUD): %s", err)
 	}
 	return nil
-}
-
-// fetches unit components needed for spatial hash removal
-func getUnitComponentsUD(world cardinal.WorldContext, id types.EntityID) (matchID *comp.MatchId, uid *comp.UID, unitPosition *comp.Position, unitRadius *comp.UnitRadius, err error) {
-	unitPosition, err = cardinal.GetComponent[comp.Position](world, id)
-	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("error retrieving enemy Position component (unit_destroyer.go): %v", err)
-	}
-	unitRadius, err = cardinal.GetComponent[comp.UnitRadius](world, id)
-	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("error retrieving enemy Radius component (unit_destroyer.go): %v", err)
-	}
-	matchID, err = cardinal.GetComponent[comp.MatchId](world, id)
-	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("error retrieving MatchID component (unit_destroyer.go): %v", err)
-	}
-	uid, err = cardinal.GetComponent[comp.UID](world, id)
-	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("error retrieving UID component (unit_destroyer.go): %v", err)
-	}
-	return matchID, uid, unitPosition, unitRadius, nil
 }

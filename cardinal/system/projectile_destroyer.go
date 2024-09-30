@@ -23,9 +23,9 @@ func ProjectileDestroyerSystem(world cardinal.WorldContext) error {
 		Where(destroyedFilter).Each(world, func(id types.EntityID) bool {
 
 		//get matchid and uid of projectile
-		MatchID, uid, err := getProjectileComponentsPD(world, id)
+		MatchID, uid, err := GetComponents2[comp.MatchId, comp.UID](world, id)
 		if err != nil {
-			fmt.Printf("%v", err)
+			fmt.Printf("get projectile components (projectile_destroyer.go): %v", err)
 			return false
 		}
 
@@ -72,18 +72,4 @@ func ProjectileDestroyerSystem(world cardinal.WorldContext) error {
 	}
 
 	return nil
-}
-
-// fetches projectile components needed
-func getProjectileComponentsPD(world cardinal.WorldContext, id types.EntityID) (matchID *comp.MatchId, uid *comp.UID, err error) {
-
-	matchID, err = cardinal.GetComponent[comp.MatchId](world, id)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error retrieving MatchID component (getProjectileComponentsPD): %v", err)
-	}
-	uid, err = cardinal.GetComponent[comp.UID](world, id)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error retrieving UID component (getProjectileComponentsPD): %v", err)
-	}
-	return matchID, uid, nil
 }

@@ -11,9 +11,3 @@ var MapRegistry = map[string]DMap{
 	},
 	},
 }
-
-// func getDirMaps(mapName string) (mapDirData DMap) {
-// 	mapDirData = MapRegistry[mapName]
-
-// 	return mapDirData
-// }

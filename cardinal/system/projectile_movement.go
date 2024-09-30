@@ -21,9 +21,9 @@ func ProjectileMovementSystem(world cardinal.WorldContext) error {
 		filter.Exact(ProjectileFilters())).
 		Where(classFilter).Each(world, func(projectileID types.EntityID) bool {
 		//get needed projectile components
-		projectileAtk, projectileMs, projectilePos, err := getProjectileComponentsPM(world, projectileID)
+		projectileAtk, projectileMs, projectilePos, err := GetComponents3[comp.Attack, comp.Movespeed, comp.Position](world, projectileID)
 		if err != nil {
-			fmt.Printf("(Projectile_movement.go): %v \n", err)
+			fmt.Printf("projectile components (Projectile_movement.go): %v \n", err)
 			return false
 		}
 		//copy starting position
@@ -34,15 +34,9 @@ func ProjectileMovementSystem(world cardinal.WorldContext) error {
 		}
 
 		//get projectiles targets position component
-		enemyPos, err := cardinal.GetComponent[comp.Position](world, projectileAtk.Target)
+		enemyPos, eCenOffset, err := GetComponents2[comp.Position, comp.CenterOffset](world, projectileAtk.Target)
 		if err != nil {
-			fmt.Printf("error retrieving enemy Position component (Projectile_movement.go): %v \n", err)
-			return false
-		}
-		//get projectiles targets center offset
-		eCenOffset, err := cardinal.GetComponent[comp.CenterOffset](world, projectileAtk.Target)
-		if err != nil {
-			fmt.Printf("error retrieving enemy center offset component (Projectile_movement.go): %v \n", err)
+			fmt.Printf("projectile target components (Projectile_movement.go): %v \n", err)
 			return false
 		}
 
@@ -103,21 +97,4 @@ func hasPassedEnemyPM(oldPos *comp.Position, newPos *comp.Position, enemyPos *co
 
 	// If the dot product is negative, the direction relative to the enemy has changed, meaning the projectile has passed the enemy
 	return dotProduct < 0
-}
-
-// fetches projectile components needed
-func getProjectileComponentsPM(world cardinal.WorldContext, id types.EntityID) (atk *comp.Attack, ms *comp.Movespeed, pos *comp.Position, err error) {
-	atk, err = cardinal.GetComponent[comp.Attack](world, id)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error retrieving attack component (getProjectileComponentsPM): %v", err)
-	}
-	ms, err = cardinal.GetComponent[comp.Movespeed](world, id)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error retrieving movespeed component (getProjectileComponentsPM): %v", err)
-	}
-	pos, err = cardinal.GetComponent[comp.Position](world, id)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error retrieving position component (getProjectileComponentsPM): %v", err)
-	}
-	return atk, ms, pos, nil
 }

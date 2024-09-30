@@ -21,9 +21,9 @@ func TowerDestroyerSystem(world cardinal.WorldContext) error {
 		Where(healthFilter).Each(world, func(id types.EntityID) bool {
 
 		//get needed compoenents
-		MatchID, state, UnitPosition, UnitRadius, team, health, unitName, err := getStructComponentsTD(world, id)
+		MatchID, state, UnitPosition, UnitRadius, team, health, unitName, err := GetComponents7[comp.MatchId, comp.State, comp.Position, comp.UnitRadius, comp.Team, comp.Health, comp.UnitName](world, id)
 		if err != nil {
-			fmt.Printf("(tower destroyer.go): %v \n", err)
+			fmt.Printf("tower components (tower destroyer.go): %v \n", err)
 			return false
 		}
 
@@ -143,37 +143,4 @@ func TowerDestroyerSystem(world cardinal.WorldContext) error {
 		return fmt.Errorf("error retrieving unit entities (tower destroyer.go): %w ", err)
 	}
 	return nil
-}
-
-// fetches unit components needed for spatial hash removal
-func getStructComponentsTD(world cardinal.WorldContext, id types.EntityID) (matchID *comp.MatchId, state *comp.State, unitPosition *comp.Position, unitRadius *comp.UnitRadius, team *comp.Team, health *comp.Health, unitName *comp.UnitName, err error) {
-	unitPosition, err = cardinal.GetComponent[comp.Position](world, id)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving enemy Position component (tower destroyer.go): %v", err)
-	}
-	unitRadius, err = cardinal.GetComponent[comp.UnitRadius](world, id)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving enemy Radius component (tower destroyer.go): %v", err)
-	}
-	matchID, err = cardinal.GetComponent[comp.MatchId](world, id)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving MatchID component (tower destroyer.go): %v", err)
-	}
-	state, err = cardinal.GetComponent[comp.State](world, id)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving state component (tower destroyer.go): %v", err)
-	}
-	team, err = cardinal.GetComponent[comp.Team](world, id)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving Team component (tower destroyer.go): %v", err)
-	}
-	health, err = cardinal.GetComponent[comp.Health](world, id)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving health  component (tower destroyer.go): %v", err)
-	}
-	unitName, err = cardinal.GetComponent[comp.UnitName](world, id)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving unit name  component (tower destroyer.go)): %v", err)
-	}
-	return matchID, state, unitPosition, unitRadius, team, health, unitName, nil
 }

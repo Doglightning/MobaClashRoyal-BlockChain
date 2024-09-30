@@ -11,14 +11,14 @@ import (
 // spawns projectile for tower basic attack
 func towerAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.Attack) error {
 	//get units component
-	unitPosition, matchID, mapName, unitName, err := archerLadyAttackComponentsUA(world, id) //reusing
+	unitPosition, matchID, mapName, unitName, err := GetComponents4[comp.Position, comp.MatchId, comp.MapName, comp.UnitName](world, id) //reusing
 	if err != nil {
-		return err
+		return fmt.Errorf("tower components (class towerAttack.go): %v ", err)
 	}
 	//get next uid
 	UID, err := getNextUID(world, matchID.MatchId)
 	if err != nil {
-		return fmt.Errorf("(class archerlady.go): %v ", err)
+		return fmt.Errorf("(class towerAttack.go): %v ", err)
 	}
 	//create projectile entity
 	_, err = cardinal.Create(world,
@@ -39,7 +39,7 @@ func towerAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.Attac
 	)
 
 	if err != nil {
-		return fmt.Errorf("error spawning archer lady basic attack (class archerlady.go): %v ", err)
+		return fmt.Errorf("error spawning tower basic attack (class towerAttack.go): %v ", err)
 	}
 
 	return nil

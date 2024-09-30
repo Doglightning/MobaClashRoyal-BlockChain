@@ -51,9 +51,9 @@ func archerLadySpawn(world cardinal.WorldContext, id types.EntityID) error {
 	archerLady := NewArcherLadySpawnSP()
 
 	//get needed components
-	uPos, matchID, mapName, team, err := GetSpComponentsAL(world, id)
+	uPos, matchID, mapName, team, err := GetComponents4[comp.Position, comp.MatchId, comp.MapName, comp.Team](world, id)
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return fmt.Errorf("get components (class archerladySpawn): %v", err)
 	}
 	//generate the vectors the volly will follow
 	vectors := generateVectors(uPos.RotationVectorX, uPos.RotationVectorY, archerLady.ArrowSeparationDegree, archerLady.NumArrows)
@@ -62,7 +62,7 @@ func archerLadySpawn(world cardinal.WorldContext, id types.EntityID) error {
 		//get next uid
 		UID, err := getNextUID(world, matchID.MatchId)
 		if err != nil {
-			return fmt.Errorf("(class archerlady.go): %v - ", err)
+			return fmt.Errorf("(class archerladySpawn): %v - ", err)
 		}
 		//create projectile entity
 		cardinal.Create(world,
@@ -96,19 +96,19 @@ func archerLadyUpdate(world cardinal.WorldContext, id types.EntityID) error {
 	//update Sp location
 	err := cardinal.UpdateComponent(world, id, func(pos *comp.Position) *comp.Position {
 		if pos == nil {
-			fmt.Printf("error retrieving enemy position component (class archerlady.go): \n")
+			fmt.Printf("error retrieving enemy position component (class archerladyUpdate): \n")
 			return nil
 		}
 		//get components
-		ms, dist, mID, team, dmg, radi, err := GetUpdateComponentsAL(world, id)
+		ms, dist, mID, team, dmg, radi, err := GetComponents6[comp.Movespeed, comp.Distance, comp.MatchId, comp.Team, comp.Damage, comp.UnitRadius](world, id)
 		if err != nil {
-			fmt.Printf("%v", err)
+			fmt.Printf("SP Components (class archerladyUpdate): %v", err)
 			return nil
 		}
 		//get collision hash
 		collisionHash, err := getCollisionHashGSS(world, mID)
 		if err != nil {
-			fmt.Printf("(class archerlady.go) - \n")
+			fmt.Printf("(class archerladyUpdate): - \n")
 			return nil
 		}
 
@@ -124,15 +124,15 @@ func archerLadyUpdate(world cardinal.WorldContext, id types.EntityID) error {
 			//get collision team component
 			cTeam, err := cardinal.GetComponent[comp.Team](world, value)
 			if err != nil {
-				fmt.Printf("(error getting team component (class archerlady.go): %v \n", err)
+				fmt.Printf("(error getting team component (class archerladyUpdate):: %v \n", err)
 				continue
 			}
 
 			if team.Team != cTeam.Team { // if different teams
 				//get colision position and radius components
-				cPos, cRad, err := getTargetComponentsUM(world, value)
+				cPos, cRad, err := GetComponents2[comp.Position, comp.UnitRadius](world, value)
 				if err != nil {
-					fmt.Printf("(class archerlady.go) -  %v \n", err)
+					fmt.Printf("collision compoenents (class archerladyUpdate): -  %v \n", err)
 					continue
 				}
 				//check if passed over a enemy
@@ -155,7 +155,7 @@ func archerLadyUpdate(world cardinal.WorldContext, id types.EntityID) error {
 			//destroy arrow
 			cardinal.UpdateComponent(world, id, func(destroyed *comp.Destroyed) *comp.Destroyed {
 				if destroyed == nil {
-					fmt.Printf("error retrieving enemy destroyed component (class archerlady.go): \n")
+					fmt.Printf("error retrieving enemy destroyed component (class archerladyUpdate):: \n")
 					return nil
 				}
 				destroyed.Destroyed = true
@@ -164,13 +164,13 @@ func archerLadyUpdate(world cardinal.WorldContext, id types.EntityID) error {
 			//reduce enemy current health
 			cardinal.UpdateComponent(world, closestUnit, func(health *comp.Health) *comp.Health {
 				if health == nil {
-					fmt.Printf("error retrieving collision health component (class archerlady.go): \n")
+					fmt.Printf("error retrieving collision health component ((class archerladyUpdate): \n")
 					return nil
 				}
 				///get target name
 				targetName, err := cardinal.GetComponent[comp.UnitName](world, closestUnit)
 				if err != nil {
-					fmt.Printf("error retrieving target unit name component (class archerlady.go): \n")
+					fmt.Printf("error retrieving target unit name component (class archerladyUpdate): \n")
 					return nil
 				}
 
@@ -197,7 +197,7 @@ func archerLadyUpdate(world cardinal.WorldContext, id types.EntityID) error {
 			//update projectiles destroyed component to True
 			cardinal.UpdateComponent(world, id, func(destroyed *comp.Destroyed) *comp.Destroyed {
 				if destroyed == nil {
-					fmt.Printf("error retrieving enemy destroyed component (class archerlady.go): \n")
+					fmt.Printf("error retrieving enemy destroyed component (class archerladyUpdate): \n")
 					return nil
 				}
 				destroyed.Destroyed = true
@@ -205,7 +205,7 @@ func archerLadyUpdate(world cardinal.WorldContext, id types.EntityID) error {
 			})
 		} else { // else update distance component
 			if err = cardinal.SetComponent(world, id, dist); err != nil {
-				fmt.Printf("error setting distance component (class archerlady.go): \n")
+				fmt.Printf("error setting distance component (class archerladyUpdate): \n")
 				return nil
 			}
 		}
@@ -217,14 +217,14 @@ func archerLadyUpdate(world cardinal.WorldContext, id types.EntityID) error {
 // spawns projectile for archer basic attack
 func archerLadyAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.Attack) error {
 	//get units component
-	unitPosition, matchID, mapName, unitName, err := archerLadyAttackComponentsUA(world, id)
+	unitPosition, matchID, mapName, unitName, err := GetComponents4[comp.Position, comp.MatchId, comp.MapName, comp.UnitName](world, id)
 	if err != nil {
-		return err
+		return fmt.Errorf("unit components (class archerladyAttack.go): %v ", err)
 	}
 	//get next uid
 	UID, err := getNextUID(world, matchID.MatchId)
 	if err != nil {
-		return fmt.Errorf("(class archerlady.go): %v ", err)
+		return fmt.Errorf("(class archerladyAttack.go): %v ", err)
 	}
 
 	//off set units arrow spawn location to match model on client
@@ -249,7 +249,7 @@ func archerLadyAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 	)
 
 	if err != nil {
-		return fmt.Errorf("error spawning archer lady basic attack (class archerlady.go): %v ", err)
+		return fmt.Errorf("error spawning archer lady basic attack (class archerladyAttack.go): %v ", err)
 	}
 
 	return nil
@@ -270,82 +270,4 @@ func generateVectors(dirX, dirY float32, angle float64, count int) [][]float32 {
 		vectors[i] = []float32{rotatedX, rotatedY}
 	}
 	return vectors
-}
-
-// GetSpComponentsAL fetches all necessary components related to a sp entity.
-func GetSpComponentsAL(world cardinal.WorldContext, unitID types.EntityID) (*comp.Position, *comp.MatchId, *comp.MapName, *comp.Team, error) {
-	position, err := cardinal.GetComponent[comp.Position](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("error retrieving Position component (class archerlady.go): %v", err)
-	}
-
-	matchId, err := cardinal.GetComponent[comp.MatchId](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("error retrieving MatchId component (class archerlady.go): %v", err)
-	}
-
-	mapName, err := cardinal.GetComponent[comp.MapName](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("error retrieving mapname component (class archerlady.go): %v", err)
-	}
-
-	team, err := cardinal.GetComponent[comp.Team](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("error retrieving team component (class archerlady.go): %v", err)
-	}
-
-	return position, matchId, mapName, team, nil
-}
-
-// GetSpComponentsAL fetches all necessary components related to a sp entity.
-func GetUpdateComponentsAL(world cardinal.WorldContext, unitID types.EntityID) (*comp.Movespeed, *comp.Distance, *comp.MatchId, *comp.Team, *comp.Damage, *comp.UnitRadius, error) {
-	ms, err := cardinal.GetComponent[comp.Movespeed](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving movespeed component (class archerlady.go): %v", err)
-	}
-	dist, err := cardinal.GetComponent[comp.Distance](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving distance component (class archerlady.go): %v", err)
-	}
-	mID, err := cardinal.GetComponent[comp.MatchId](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving matchID component (class archerlady.go): %v", err)
-	}
-	team, err := cardinal.GetComponent[comp.Team](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving team component (class archerlady.go): %v", err)
-	}
-	dmg, err := cardinal.GetComponent[comp.Damage](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving damage component (class archerlady.go): %v", err)
-	}
-	rad, err := cardinal.GetComponent[comp.UnitRadius](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, fmt.Errorf("error retrieving radius component (class archerlady.go): %v", err)
-	}
-	return ms, dist, mID, team, dmg, rad, nil
-}
-
-// GetUnitComponents fetches all necessary components related to a unit entity.
-func archerLadyAttackComponentsUA(world cardinal.WorldContext, unitID types.EntityID) (*comp.Position, *comp.MatchId, *comp.MapName, *comp.UnitName, error) {
-	position, err := cardinal.GetComponent[comp.Position](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("error retrieving Position component (class archerlady.go): %v ", err)
-	}
-
-	matchId, err := cardinal.GetComponent[comp.MatchId](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("error retrieving MatchId component (class archerlady.go): %v ", err)
-	}
-
-	mapName, err := cardinal.GetComponent[comp.MapName](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("error retrieving mapname component (class archerlady.go): %v ", err)
-	}
-
-	unitName, err := cardinal.GetComponent[comp.UnitName](world, unitID)
-	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("error retrieving UnitName component (class archerlady.go): %v ", err)
-	}
-	return position, matchId, mapName, unitName, nil
 }
