@@ -1,6 +1,10 @@
 package system
 
-import "pkg.world.dev/world-engine/cardinal/types"
+import (
+	"fmt"
+
+	"pkg.world.dev/world-engine/cardinal/types"
+)
 
 type UnitType struct {
 	Name         string
@@ -80,4 +84,21 @@ type StructureData struct {
 var StructureDataRegistry = map[string]StructureData{
 	"Base":  {Class: "structure", Health: 200, Radius: 240, Damage: 15, AttackRate: 20, DamageFrame: 10, AttackRadius: 1700, AggroRadius: 1700, CenterOffset: 230},
 	"Tower": {Class: "structure", Health: 200, Radius: 150, Damage: 15, AttackRate: 20, DamageFrame: 10, AttackRadius: 1700, AggroRadius: 1700, CenterOffset: 230},
+}
+
+// get unit and Sp data
+func getUnitData(name string) (UnitType, SpType, error) {
+	//check if unit being spawned exsists in the unit registry
+	unitType, ok := UnitRegistry[name]
+	if !ok {
+		return UnitType{}, SpType{}, fmt.Errorf("unit type %s not found in registry (unit data.go)", name)
+	}
+
+	//check if unit being spawned exsists in the sp registry
+	spType, ok := SpRegistry[name]
+	if !ok {
+		return UnitType{}, SpType{}, fmt.Errorf("unit type %s not found in registry (unit data.go)", name)
+	}
+
+	return unitType, spType, nil
 }

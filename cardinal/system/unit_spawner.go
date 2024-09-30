@@ -32,40 +32,21 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("no match found with ID or missing components (unit_spawner.go): %s", create.Msg.MatchID)
 			}
 
-			//check if unit being spawned exsists in the unit registry
-			unitType, ok := UnitRegistry[create.Msg.UnitType]
-			if !ok {
-				return msg.CreateUnitResult{Success: false}, fmt.Errorf("unit type %s not found in registry (unit_spawner.go)", create.Msg.UnitType)
+			//get unit data
+			unitType, spType, err := getUnitData(create.Msg.UnitType)
+			if err != nil {
+				return msg.CreateUnitResult{Success: false}, fmt.Errorf("(unit_spawner.go): %w", err)
 			}
 
-			//check if unit being spawned exsists in the sp registry
-			spType, ok := SpRegistry[create.Msg.UnitType]
-			if !ok {
-				return msg.CreateUnitResult{Success: false}, fmt.Errorf("unit type %s not found in registry (unit_spawner.go)", create.Msg.UnitType)
+			//check if mapName exsists and if direction vector exsists at (x, y) location
+			_, err = getMapDirection(create.Msg.PositionX, create.Msg.PositionY, create.Msg.MapName)
+			if err != nil {
+				return msg.CreateUnitResult{Success: false}, fmt.Errorf("(unit_spawner.go): %w", err)
 			}
 
-			//check map exsists in registy
 			mapData, exists := MapDataRegistry[create.Msg.MapName]
 			if !exists {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("error key for MapDataRegistry does not exsist (unit_spawner.go)")
-			}
-
-			// check direction map exsists
-			mapDir, ok := MapRegistry[create.Msg.MapName]
-			if !ok {
-				return msg.CreateUnitResult{Success: false}, fmt.Errorf("error key for MapRegistry does not exsist (unit_spawner.go)")
-			}
-
-			// normalize the units position to the maps grid increments.
-			normalizedX := int(((int(create.Msg.PositionX)-mapData.StartX)/mapData.Increment))*mapData.Increment + mapData.StartX
-			normalizedY := int(((int(create.Msg.PositionY)-mapData.StartY)/mapData.Increment))*mapData.Increment + mapData.StartY
-			// The units (x,y) coordinates normalized and turned into proper key(string) format for seaching map
-			coordKey := fmt.Sprintf("%d,%d", normalizedX, normalizedY)
-
-			// Retrieve direction vector using coordinate key
-			_, ok = mapDir.DMap[coordKey]
-			if !ok {
-				return msg.CreateUnitResult{Success: false}, fmt.Errorf("no direction vector found for the given coordinates (unit_spawner.go)")
 			}
 
 			//calculate distance from enemy spawn
@@ -147,6 +128,11 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 
 			//add unit to collision hash collision map
 			AddObjectSpatialHash(SpatialHash, entityID, create.Msg.PositionX, create.Msg.PositionY, unitType.Radius, create.Msg.Team, unitType.Class)
+
+			err = cardinal.SetComponent(world, gameState, SpatialHash)
+			if err != nil {
+				return msg.CreateUnitResult{Success: false}, fmt.Errorf("error setting hash component (unit_spawner.go): %w", err)
+			}
 
 			return msg.CreateUnitResult{Success: true}, nil
 		})

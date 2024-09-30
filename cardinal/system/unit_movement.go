@@ -264,27 +264,11 @@ func priorityUnitMovement(world cardinal.WorldContext) ([]types.EntityID, error)
 
 // Moves Unit in direction of the map Direction vector
 func moveUnitDirectionMap(position *comp.Position, team *comp.Team, movespeed float32, mapName *comp.MapName) (*comp.Position, error) {
-	//check map data exsists
-	mapData, exists := MapDataRegistry[mapName.MapName]
-	if !exists {
-		return nil, fmt.Errorf("error key for MapDataRegistry does not exsist (MoveUnitDirectionMap)")
-	}
-	//check direction map exsists
-	mapDir, ok := MapRegistry[mapName.MapName]
-	if !ok {
-		return nil, fmt.Errorf("error key for MapRegistry does not exsist (MoveUnitDirectionMap)")
-	}
 
-	//normalize the units position to the maps grid increments.
-	normalizedX := int(((int(position.PositionVectorX)-mapData.StartX)/mapData.Increment))*mapData.Increment + mapData.StartX
-	normalizedY := int(((int(position.PositionVectorY)-mapData.StartY)/mapData.Increment))*mapData.Increment + mapData.StartY
-	//The units (x,y) coordinates normalized and turned into proper key(string) format for seaching map
-	coordKey := fmt.Sprintf("%d,%d", normalizedX, normalizedY)
-
-	// Retrieve direction vector using coordinate key
-	directionVector, exists := mapDir.DMap[coordKey]
-	if !exists {
-		return nil, fmt.Errorf("no direction vector found for the given coordinates (MoveUnitDirectionMap)")
+	//check if mapName exsists and if direction vector exsists at (x, y) location
+	directionVector, err := getMapDirection(position.PositionVectorX, position.PositionVectorY, mapName.MapName)
+	if err != nil {
+		return nil, fmt.Errorf("(MoveUnitDirectionMap): %w", err)
 	}
 
 	var dirX, dirY float32
