@@ -152,14 +152,14 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 		})
 }
 
+// Deals with the logic of playing a card from hand and drawing from deck to replace
 func handLogic(world cardinal.WorldContext, gameState types.EntityID, name, team string, cost, UID int) error {
 
-	var player1 *comp.Player1
-	var player2 *comp.Player2
-	var err error
+	var found bool = false
+
 	if team == "Blue" {
 		//get player1 component from game state
-		player1, err = cardinal.GetComponent[comp.Player1](world, gameState)
+		player1, err := cardinal.GetComponent[comp.Player1](world, gameState)
 		if err != nil {
 			return fmt.Errorf("error getting player1 component (unit_spawner.go): %w", err)
 		}
@@ -167,42 +167,17 @@ func handLogic(world cardinal.WorldContext, gameState types.EntityID, name, team
 		if player1.Gold < float32(cost) {
 			return fmt.Errorf("not enough gold to spawn %s (unit_spawner.go): ", name)
 		}
-	} else {
-		// get player2 component from game state
-		player2, err = cardinal.GetComponent[comp.Player2](world, gameState)
-		if err != nil {
-			return fmt.Errorf("error getting player2 component (unit_spawner.go): %w", err)
-		}
-		//check if enough gold to spawn unit
-		if player2.Gold < float32(cost) {
-			return fmt.Errorf("not enough gold to spawn %s (unit_spawner.go): ", name)
-		}
-	}
-
-	//check unit spawned is in hand
-	var found bool = false
-	if team == "Blue" {
+		//check unit spawned is in hand
 		for _, v := range player1.Hand { //search hand
 			if v == name { // if card == unit spawned
 				found = true
 				break
 			}
 		}
-	} else {
-		for _, v := range player2.Hand { //search hand
-			if v == name { // if card == unit spawned
-				found = true
-				break
-			}
+		if !found {
+			return fmt.Errorf("card not in hand (unit_spawner.go) ")
 		}
-	}
 
-	if !found {
-		return fmt.Errorf("card not in hand (unit_spawner.go) ")
-	}
-
-	//reduce player gold and then set the component
-	if team == "Blue" {
 		//reduce Gold
 		player1.Gold -= float32(cost)
 		//-1 key means to tell player to remove unit they were holding to transition it to this spawned unit
@@ -223,6 +198,26 @@ func handLogic(world cardinal.WorldContext, gameState types.EntityID, name, team
 			return fmt.Errorf("error setting player1 component (unit_spawner.go): %w", err)
 		}
 	} else {
+		// get player2 component from game state
+		player2, err := cardinal.GetComponent[comp.Player2](world, gameState)
+		if err != nil {
+			return fmt.Errorf("error getting player2 component (unit_spawner.go): %w", err)
+		}
+		//check if enough gold to spawn unit
+		if player2.Gold < float32(cost) {
+			return fmt.Errorf("not enough gold to spawn %s (unit_spawner.go): ", name)
+		}
+		//check unit spawned is in hand
+		for _, v := range player2.Hand { //search hand
+			if v == name { // if card == unit spawned
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("card not in hand (unit_spawner.go) ")
+		}
+
 		//reduce Gold
 		player2.Gold -= float32(cost)
 		//-1 key means to tell player to remove unit they were holding to transition it to this spawned unit
