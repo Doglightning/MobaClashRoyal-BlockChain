@@ -72,7 +72,7 @@ func GameStateSpawnerSystem(world cardinal.WorldContext) error {
 			matchFound, err := existingMatchSearch.First(world)
 
 			if err != nil {
-				return msg.CreateMatchResult{Success: false}, fmt.Errorf("error adding Player2 component (game_state_spawner.go): %w", err)
+				return msg.CreateMatchResult{Success: false}, fmt.Errorf("error getting game state for player 2 add comp (game_state_spawner.go): %w", err)
 			}
 
 			//add player2 component
