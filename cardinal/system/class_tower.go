@@ -29,7 +29,7 @@ func TowerConverterSystem(world cardinal.WorldContext) error {
 	})
 	//for each tower still converting teams
 	err := cardinal.NewSearch().Entity(
-		filter.Contains(StructureFilters())).
+		filter.Contains(filter.Component[comp.StructureTag]())).
 		Where(stateFilter).Each(world, func(id types.EntityID) bool {
 
 		tower := NewTower()
@@ -101,6 +101,7 @@ func towerAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.Attac
 		comp.MapName{MapName: mapName.MapName},
 		comp.Attack{Target: atk.Target, Class: "projectile", Damage: StructureDataRegistry[unitName.UnitName].Damage},
 		comp.Destroyed{Destroyed: false},
+		comp.ProjectileTag{},
 	)
 
 	if err != nil {

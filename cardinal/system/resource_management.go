@@ -15,7 +15,7 @@ var goldGen float32 = .1
 func GoldGeneration(world cardinal.WorldContext) error {
 
 	err := cardinal.NewSearch().Entity(
-		filter.Contains(GameStateFilters())).
+		filter.Contains(filter.Component[comp.GameStateTag]())).
 		Each(world, func(id types.EntityID) bool {
 
 			//increment player1 gold

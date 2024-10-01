@@ -7,7 +7,6 @@ import (
 	"pkg.world.dev/world-engine/cardinal/types"
 
 	comp "MobaClashRoyal/component"
-	"MobaClashRoyal/system"
 
 	"pkg.world.dev/world-engine/cardinal"
 )
@@ -232,7 +231,7 @@ func unitStateGS(world cardinal.WorldContext, matchFilter cardinal.FilterFn, res
 func structureStateGS(world cardinal.WorldContext, matchFilter cardinal.FilterFn, response UnitStateResponse) (UnitStateResponse, error) {
 	// get the structure id's
 	StructureSearch := cardinal.NewSearch().Entity(
-		filter.Exact(system.StructureFilters())).
+		filter.Contains(filter.Component[comp.StructureTag]())).
 		Where(matchFilter)
 
 	err := StructureSearch.Each(world, func(id types.EntityID) bool {
@@ -291,11 +290,11 @@ func structureStateGS(world cardinal.WorldContext, matchFilter cardinal.FilterFn
 	return response, nil
 }
 
-// get all structure states
+// get all projectile states
 func projectileStateGS(world cardinal.WorldContext, matchFilter cardinal.FilterFn, response UnitStateResponse) (UnitStateResponse, error) {
 	// get the projectile id's
 	ProjectileSearch := cardinal.NewSearch().Entity(
-		filter.Exact(system.ProjectileFilters())).
+		filter.Contains(filter.Component[comp.ProjectileTag]())).
 		Where(matchFilter)
 
 	err := ProjectileSearch.Each(world, func(id types.EntityID) bool {

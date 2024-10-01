@@ -35,6 +35,7 @@ func GameStateSpawnerSystem(world cardinal.WorldContext) error {
 				teamStateID, err := cardinal.Create(world,
 					comp.MatchId{MatchId: create.Msg.MatchID},
 					comp.UID{UID: 0},
+					comp.GameStateTag{},
 					comp.Player1{
 						Nickname:    create.Tx.PersonaTag,
 						Hand:        []string{"Vampire", "FireSpirit", "Mage"},
@@ -130,6 +131,7 @@ func spawnBasesGSS(world cardinal.WorldContext, matchID string, teamStateID type
 		comp.State{State: "Default"},
 		comp.Attack{Combat: false, Damage: StructureDataRegistry["Base"].Damage, Rate: StructureDataRegistry["Base"].AttackRate, Frame: 0, DamageFrame: StructureDataRegistry["Base"].DamageFrame, Class: StructureDataRegistry["Base"].Class, AttackRadius: StructureDataRegistry["Base"].AttackRadius, AggroRadius: StructureDataRegistry["Base"].AggroRadius},
 		comp.CenterOffset{CenterOffset: StructureDataRegistry["Base"].CenterOffset},
+		comp.StructureTag{},
 	)
 
 	if err != nil {
@@ -155,6 +157,7 @@ func spawnBasesGSS(world cardinal.WorldContext, matchID string, teamStateID type
 		comp.State{State: "Default"},
 		comp.Attack{Combat: false, Damage: StructureDataRegistry["Base"].Damage, Rate: StructureDataRegistry["Base"].AttackRate, Frame: 0, DamageFrame: StructureDataRegistry["Base"].DamageFrame, Class: StructureDataRegistry["Base"].Class, AttackRadius: StructureDataRegistry["Base"].AttackRadius, AggroRadius: StructureDataRegistry["Base"].AggroRadius},
 		comp.CenterOffset{CenterOffset: StructureDataRegistry["Base"].CenterOffset},
+		comp.StructureTag{},
 	)
 
 	if err != nil {
@@ -182,6 +185,7 @@ func spawnBasesGSS(world cardinal.WorldContext, matchID string, teamStateID type
 			comp.State{State: "Default"},
 			comp.Attack{Combat: false, Damage: StructureDataRegistry["Tower"].Damage, Rate: StructureDataRegistry["Tower"].AttackRate, Frame: 0, DamageFrame: StructureDataRegistry["Tower"].DamageFrame, Class: StructureDataRegistry["Tower"].Class, AttackRadius: StructureDataRegistry["Tower"].AttackRadius, AggroRadius: StructureDataRegistry["Tower"].AggroRadius},
 			comp.CenterOffset{CenterOffset: StructureDataRegistry["Tower"].CenterOffset},
+			comp.StructureTag{},
 		)
 
 		if err != nil {
@@ -207,6 +211,7 @@ func spawnBasesGSS(world cardinal.WorldContext, matchID string, teamStateID type
 			comp.State{State: "Default"},
 			comp.Attack{Combat: false, Damage: StructureDataRegistry["Tower"].Damage, Rate: StructureDataRegistry["Tower"].AttackRate, Frame: 0, DamageFrame: StructureDataRegistry["Tower"].DamageFrame, Class: StructureDataRegistry["Tower"].Class, AttackRadius: StructureDataRegistry["Tower"].AttackRadius, AggroRadius: StructureDataRegistry["Tower"].AggroRadius},
 			comp.CenterOffset{CenterOffset: StructureDataRegistry["Tower"].CenterOffset},
+			comp.StructureTag{},
 		)
 
 		if err != nil {
@@ -237,7 +242,7 @@ func getNextUID(world cardinal.WorldContext, matchID string) (int, error) {
 	})
 
 	gameStateSearch := cardinal.NewSearch().Entity(
-		filter.Exact(GameStateFilters())).
+		filter.Contains(filter.Component[comp.GameStateTag]())).
 		Where(matchFilter)
 	//game state
 	gameState, err := gameStateSearch.First(world)
@@ -291,7 +296,7 @@ func getGameStateGSS(world cardinal.WorldContext, mID *comp.MatchId) (types.Enti
 		return m.MatchId == mID.MatchId
 	})
 	foundTeam, err := cardinal.NewSearch().Entity(
-		filter.Exact(GameStateFilters())).
+		filter.Contains(filter.Component[comp.GameStateTag]())).
 		Where(teamFilter).First(world)
 
 	if err != nil {
@@ -313,7 +318,7 @@ func getCollisionHashGSS(world cardinal.WorldContext, mID *comp.MatchId) (*comp.
 		return m.MatchId == mID.MatchId
 	})
 	foundTeam, err := cardinal.NewSearch().Entity(
-		filter.Exact(GameStateFilters())).
+		filter.Contains(filter.Component[comp.GameStateTag]())).
 		Where(teamFilter).First(world)
 
 	if err != nil {

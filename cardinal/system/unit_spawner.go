@@ -23,7 +23,7 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 			})
 			//get game state
 			gameState, err := cardinal.NewSearch().Entity(
-				filter.Exact(GameStateFilters())).
+				filter.Contains(filter.Component[comp.GameStateTag]())).
 				Where(matchFilter).First(world)
 			if err != nil {
 				return msg.CreateUnitResult{Success: false}, fmt.Errorf("error searching for match (unit_spawner.go): %w", err)

@@ -95,7 +95,7 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 func structureCombatSearch(world cardinal.WorldContext) error {
 	//for each structure not in combat
 	err := cardinal.NewSearch().Entity(
-		filter.Contains(StructureFilters())).
+		filter.Contains(filter.Component[comp.StructureTag]())).
 		Each(world, func(id types.EntityID) bool {
 			//get attack component
 			uAtk, err := cardinal.GetComponent[comp.Attack](world, id)

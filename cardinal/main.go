@@ -58,6 +58,9 @@ func MustInitWorld(w *cardinal.World) {
 		cardinal.RegisterComponent[component.CC](w),
 		cardinal.RegisterComponent[component.EffectsList](w),
 		cardinal.RegisterComponent[component.UnitTag](w),
+		cardinal.RegisterComponent[component.StructureTag](w),
+		cardinal.RegisterComponent[component.GameStateTag](w),
+		cardinal.RegisterComponent[component.ProjectileTag](w),
 	)
 
 	// Register messages (user action)
@@ -94,7 +97,7 @@ func MustInitWorld(w *cardinal.World) {
 		system.AttackPhaseSystem,
 		system.SpUpdater,
 		system.ProjectileDestroyerSystem, //destroy phase
-		system.UnitDestroyerSystem,
+		system.DestroyerSystem,
 		system.TowerDestroyerSystem,
 		system.RemovalListSystem, //client replication
 		system.WinCondition,      // game over

@@ -17,7 +17,7 @@ func TowerDestroyerSystem(world cardinal.WorldContext) error {
 	})
 	//for each unit with no hp's ids
 	err := cardinal.NewSearch().Entity(
-		filter.Contains(StructureFilters())).
+		filter.Contains(filter.Component[comp.StructureTag]())).
 		Where(healthFilter).Each(world, func(id types.EntityID) bool {
 
 		//get needed compoenents
@@ -46,7 +46,7 @@ func TowerDestroyerSystem(world cardinal.WorldContext) error {
 		})
 
 		//for units targetting self, reset combat
-		err = resetUnitsTargetingSelfUD(world, targetFilter)
+		err = resetUnitsTargetingSelf(world, targetFilter)
 		if err != nil {
 			fmt.Printf("(tower destroyer.go) %v \n", err)
 			return false

@@ -115,3 +115,16 @@ func ClassResetCombat(world cardinal.WorldContext, id types.EntityID, name strin
 
 	return err
 }
+
+// logic of how a unit destroys itself
+func ClassDestroySystem(world cardinal.WorldContext, id types.EntityID) error {
+	// name, err := cardinal.GetComponent[comp.UnitName](world, id)
+	// if err != nil {
+	// 	return fmt.Errorf("error getting name component (class attack system): %v", err)
+	// }
+
+	//default
+	err := unitDestroyerDefault(world, id)
+
+	return err
+}

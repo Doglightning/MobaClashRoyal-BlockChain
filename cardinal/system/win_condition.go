@@ -17,7 +17,7 @@ func WinCondition(world cardinal.WorldContext) error {
 	})
 	//check all structures with no health
 	err := cardinal.NewSearch().Entity(
-		filter.Exact(StructureFilters())).
+		filter.Contains(filter.Component[comp.StructureTag]())).
 		Where(healthFilter).Each(world, func(id types.EntityID) bool {
 
 		//get structure Health

@@ -246,6 +246,7 @@ func archerLadyAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 		comp.MapName{MapName: mapName.MapName},
 		comp.Attack{Target: atk.Target, Class: "projectile", Damage: UnitRegistry[unitName.UnitName].Damage},
 		comp.Destroyed{Destroyed: false},
+		comp.ProjectileTag{},
 	)
 
 	if err != nil {

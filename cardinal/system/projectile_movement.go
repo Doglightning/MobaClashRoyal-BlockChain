@@ -18,7 +18,7 @@ func ProjectileMovementSystem(world cardinal.WorldContext) error {
 	})
 	//for each projectile id
 	err := cardinal.NewSearch().Entity(
-		filter.Exact(ProjectileFilters())).
+		filter.Contains(filter.Component[comp.ProjectileTag]())).
 		Where(classFilter).Each(world, func(projectileID types.EntityID) bool {
 		//get needed projectile components
 		projectileAtk, projectileMs, projectilePos, err := GetComponents3[comp.Attack, comp.Movespeed, comp.Position](world, projectileID)
