@@ -23,7 +23,7 @@ func GameStateSpawnerSystem(world cardinal.WorldContext) error {
 			})
 
 			// Search for existing matches.
-			existingMatchSearch := cardinal.NewSearch().Entity(filter.Contains(filter.Component[comp.MatchId]())).Where(matchFilter)
+			existingMatchSearch := cardinal.NewSearch().Entity(filter.Contains(filter.Component[comp.GameStateTag]())).Where(matchFilter)
 			count, err := existingMatchSearch.Count(world)
 			if err != nil {
 				return msg.CreateMatchResult{Success: false}, fmt.Errorf("error during search (game_state_spawner.go): %w", err)
@@ -38,7 +38,7 @@ func GameStateSpawnerSystem(world cardinal.WorldContext) error {
 					comp.GameStateTag{},
 					comp.Player1{
 						Nickname:    create.Tx.PersonaTag,
-						Hand:        []string{"Vampire", "FireSpirit", "Mage"},
+						Hand:        []string{"Vampire", "FireSpirit", "ArcherLady"},
 						Deck:        []string{"Vampire"},
 						RemovalList: make(map[int]bool),
 						Gold:        5,
@@ -78,7 +78,7 @@ func GameStateSpawnerSystem(world cardinal.WorldContext) error {
 			//add player2 component
 			err = cardinal.AddComponentTo[comp.Player2](world, matchFound)
 			if err != nil {
-				return msg.CreateMatchResult{Success: false}, fmt.Errorf("error adding Player2 component (game_state_spawner.go): %w", err)
+				return msg.CreateMatchResult{Success: false}, fmt.Errorf("error adding Player2 component 1 (game_state_spawner.go): %w", err)
 			}
 
 			//set player2 compoenent
@@ -95,9 +95,9 @@ func GameStateSpawnerSystem(world cardinal.WorldContext) error {
 				// if error remove the empty player2 component
 				err = cardinal.RemoveComponentFrom[comp.Player2](world, matchFound)
 				if err != nil {
-					return msg.CreateMatchResult{Success: false}, fmt.Errorf("error adding Player2 component (game_state_spawner.go): %w", err)
+					return msg.CreateMatchResult{Success: false}, fmt.Errorf("error adding Player2 component 2(game_state_spawner.go): %w", err)
 				}
-				return msg.CreateMatchResult{Success: false}, fmt.Errorf("error adding Player2 component (game_state_spawner.go): %w", err)
+				return msg.CreateMatchResult{Success: false}, fmt.Errorf("error adding Player2 component 3(game_state_spawner.go): %w", err)
 			}
 
 			return msg.CreateMatchResult{Success: true}, nil

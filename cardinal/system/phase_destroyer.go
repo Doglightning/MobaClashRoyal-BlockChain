@@ -21,43 +21,50 @@ func DestroyerSystem(world cardinal.WorldContext) error {
 	})
 
 	//for each unit with no hp's ids
-	err := cardinal.NewSearch().Entity(filter.Contains()).
-		Where(cardinal.OrFilter(healthFilter, destroyedFilter)).Each(world, func(id types.EntityID) bool {
+	err := cardinal.NewSearch().
+		Entity(
+			filter.Or(
+				filter.Contains(filter.Component[comp.UnitTag]()),
+				filter.Contains(filter.Component[comp.ProjectileTag]()),
+				filter.Contains(filter.Component[comp.StructureTag]()),
+			),
+		).
+		Where(cardinal.OrFilter(healthFilter, destroyedFilter)).
+		Each(world, func(id types.EntityID) bool {
 
-		// get attack component
-		atk, err := cardinal.GetComponent[comp.Attack](world, id)
-		if err != nil {
-			fmt.Printf("error retrieving unit Attack component (phase_Destroyer.go): %v \n", err)
-			return false
-		}
-
-		// // projectile attack logic
-		// if atk.Class == "projectile" {
-		// 	err = ProjectileAttack(world, id, atk)
-		// 	if err != nil {
-		// 		fmt.Printf("%v \n", err)
-		// 		return false
-		// 	}
-
-		// 	// basic melee/range attack logic
-		// } else
-		if atk.Class == "melee" || atk.Class == "range" || atk.Class == "air" {
-			err = ClassDestroySystem(world, id)
+			// get attack component
+			atk, err := cardinal.GetComponent[comp.Attack](world, id)
 			if err != nil {
-				fmt.Printf("%v \n", err)
+				fmt.Printf("error retrieving unit Attack component (phase_Destroyer.go): %v \n", err)
 				return false
 			}
-		}
-		// else if atk.Class == "structure" {
-		// 	err = StructureAttack(world, id, atk)
-		// 	if err != nil {
-		// 		fmt.Printf("%v \n", err)
-		// 		return false
-		// 	}
-		// }
 
-		return true
-	})
+			// projectile destroyer
+			if atk.Class == "projectile" {
+				err = projectileDestroyerDefault(world, id)
+				if err != nil {
+					fmt.Printf("%v \n", err)
+					return false
+				}
+
+				// unit destroyer
+			} else if atk.Class == "melee" || atk.Class == "range" || atk.Class == "air" {
+				err = ClassDestroySystem(world, id)
+				if err != nil {
+					fmt.Printf("%v \n", err)
+					return false
+				}
+				//structure destroyer
+			} else if atk.Class == "structure" {
+				err = structureDestroyerDefault(world, id)
+				if err != nil {
+					fmt.Printf("%v \n", err)
+					return false
+				}
+			}
+
+			return true
+		})
 
 	return err
 }
@@ -136,15 +143,156 @@ func unitDestroyerDefault(world cardinal.WorldContext, id types.EntityID) error 
 	p1.RemovalList[uid.UID] = true //add removed units to players removal list
 	p2.RemovalList[uid.UID] = true
 
-	//add removed unit to player1 removal list component
-	if err := cardinal.SetComponent(world, gameState, p1); err != nil {
-		return fmt.Errorf("error updating player1 component (unit_destroyer): %s ", err)
+	//set collision hash, player1 and player2
+	if err = SetComponents3(world, gameState, CollisionSpartialHash, p1, p2); err != nil {
+		return fmt.Errorf("(unit_destroyer): %v", err)
 	}
 
-	//add removed unit to player2 removal list component
-	if err := cardinal.SetComponent(world, gameState, p2); err != nil {
-		return fmt.Errorf("error updating player2 component (unit_destroyer): %s ", err)
+	return nil
+}
+
+func structureDestroyerDefault(world cardinal.WorldContext, id types.EntityID) error {
+	//get needed compoenents
+	MatchID, state, UnitPosition, UnitRadius, team, health, unitName, err := GetComponents7[comp.MatchId, comp.State, comp.Position, comp.UnitRadius, comp.Team, comp.Health, comp.UnitName](world, id)
+	if err != nil {
+		return fmt.Errorf("tower components (tower destroyer.go): %v", err)
 	}
+
+	//get game state
+	gameState, err := getGameStateGSS(world, MatchID)
+	if err != nil {
+		return fmt.Errorf("(tower destroyer.go) %v", err)
+	}
+	//get player components
+	p1, p2, err := getPlayerComponentsGSS(world, gameState)
+	if err != nil {
+		return fmt.Errorf("(tower destroyer.go) %v", err)
+	}
+
+	//filter for units targeting self
+	targetFilter := cardinal.ComponentFilter(func(m comp.Attack) bool {
+		return m.Target == id
+	})
+
+	//for units targetting self, reset combat
+	err = resetUnitsTargetingSelf(world, targetFilter)
+	if err != nil {
+		return fmt.Errorf("(tower destroyer.go) %v", err)
+	}
+
+	//filter for units targeting self
+	destroyedFilter := cardinal.ComponentFilter(func(m comp.Destroyed) bool {
+		return !m.Destroyed
+	})
+
+	projectileFilter := cardinal.AndFilter(targetFilter, destroyedFilter)
+
+	//for projectiles targetting self destroy
+	err = destroyProjectilesTargetingSelfUD(world, projectileFilter, p1, p2)
+	if err != nil {
+		return fmt.Errorf("(tower destroyer.go) %v", err)
+	}
+
+	//filter for sp targeting self
+	targetFilter = cardinal.ComponentFilter(func(m comp.Target) bool {
+		return m.Target == id
+	})
+	//for app special powers targettting self
+	err = destroySPTargetingSelfUD(world, targetFilter)
+	if err != nil {
+		return fmt.Errorf("(tower destroyer.go) %v", err)
+	}
+
+	//get collision Hash
+	CollisionSpartialHash, err := cardinal.GetComponent[comp.SpatialHash](world, gameState)
+	if err != nil {
+		return fmt.Errorf("error retrieving SpartialHash component on tempSpartialHash (tower destroyer.go): %v", err)
+	}
+	RemoveObjectFromSpatialHash(CollisionSpartialHash, id, UnitPosition.PositionVectorX, UnitPosition.PositionVectorY, UnitRadius.UnitRadius)
+
+	if unitName.UnitName != "Base" { // if a tower change teams
+		if team.Team == "Blue" {
+			//change tower team
+			team.Team = "Red"
+			AddObjectSpatialHash(CollisionSpartialHash, id, UnitPosition.PositionVectorX, UnitPosition.PositionVectorY, UnitRadius.UnitRadius, "Red", "structure")
+		} else {
+			//change tower team
+			team.Team = "Blue"
+			AddObjectSpatialHash(CollisionSpartialHash, id, UnitPosition.PositionVectorX, UnitPosition.PositionVectorY, UnitRadius.UnitRadius, "Blue", "structure")
+		}
+
+		state.State = "Converting"
+		health.CurrentHP = health.MaxHP / 4
+
+		//set state and health and team
+		if err = SetComponents3(world, id, state, health, team); err != nil {
+			return fmt.Errorf("(tower destroyer.go): %v", err)
+		}
+
+	}
+
+	//set combat to false
+	err = cardinal.UpdateComponent(world, id, func(atk *comp.Attack) *comp.Attack {
+		if atk == nil {
+			fmt.Printf("error retrieving attack component (tower destroyer.go): \n")
+			return nil
+		}
+		atk.Combat = false
+		return atk
+	})
+	if err != nil {
+		return fmt.Errorf("error on vampire attack (tower destroyer.go): %v", err)
+	}
+
+	//set collision hash, player1 and player2
+	if err = SetComponents3(world, gameState, CollisionSpartialHash, p1, p2); err != nil {
+		return fmt.Errorf("(tower destroyer.go): %v", err)
+	}
+
+	return nil
+}
+
+func projectileDestroyerDefault(world cardinal.WorldContext, id types.EntityID) error {
+
+	//get matchid and uid of projectile
+	MatchID, uid, err := GetComponents2[comp.MatchId, comp.UID](world, id)
+	if err != nil {
+		return fmt.Errorf("get projectile components (projectile_destroyer): %v", err)
+	}
+
+	//get game state
+	gameState, err := getGameStateGSS(world, MatchID)
+	if err != nil {
+		return fmt.Errorf("(projectile_destroyer.go) - %v", err)
+	}
+
+	//add projectile id to player1 removal list
+	cardinal.UpdateComponent(world, gameState, func(player1 *comp.Player1) *comp.Player1 {
+		if player1 == nil {
+			fmt.Printf("error retrieving player1 component (projectile_destroyer)")
+			return nil
+		}
+		//player1.RemovalList = append(player1.RemovalList, uid.UID)
+		player1.RemovalList[uid.UID] = true
+		return player1
+	})
+
+	//add projectile id to player2 removal list
+	cardinal.UpdateComponent(world, gameState, func(player2 *comp.Player2) *comp.Player2 {
+		if player2 == nil {
+			fmt.Printf("error retrieving player2 component (projectile_destroyer)")
+			return nil
+		}
+		//player1.RemovalList = append(player1.RemovalList, uid.UID)
+		player2.RemovalList[uid.UID] = true
+		return player2
+	})
+
+	//remove projectile
+	if err := cardinal.Remove(world, id); err != nil {
+		return fmt.Errorf("error removing entity (projectile_destroyer): %v", err)
+	}
+
 	return nil
 }
 
@@ -157,13 +305,13 @@ func resetUnitsTargetingSelf(world cardinal.WorldContext, targetFilter cardinal.
 
 		name, err := cardinal.GetComponent[comp.UnitName](world, enemyID)
 		if err != nil {
-			fmt.Printf("error getting unit name component (unit_destroyer.go) \n")
+			fmt.Printf("error getting unit name component (resetUnitsTargetingSelf) \n")
 			return false
 		}
 
 		err = ClassResetCombat(world, enemyID, name.UnitName)
 		if err != nil {
-			fmt.Printf("error running ResetCombat (unit_destroyer.go) \n")
+			fmt.Printf("error running ResetCombat (resetUnitsTargetingSelf) \n")
 			return false
 		}
 
@@ -184,7 +332,7 @@ func resetStructuresTargetingSelfUD(world cardinal.WorldContext, targetFilter ca
 		//reset attack component
 		cardinal.UpdateComponent(world, structID, func(attack *comp.Attack) *comp.Attack {
 			if attack == nil {
-				fmt.Printf("error retrieving enemy attack component (unit_destroyer.go): \n")
+				fmt.Printf("error retrieving enemy attack component (resetStructuresTargetingSelfUD): \n")
 				return nil
 			}
 			attack.Combat = false
@@ -194,7 +342,7 @@ func resetStructuresTargetingSelfUD(world cardinal.WorldContext, targetFilter ca
 		return true
 	})
 	if err != nil {
-		return fmt.Errorf("error retrieving unit entities (resetUnitsTargetingSelfUD): %s", err)
+		return fmt.Errorf("error retrieving unit entities (resetStructuresTargetingSelfUD): %s", err)
 	}
 	return nil
 }
@@ -209,7 +357,7 @@ func destroyProjectilesTargetingSelfUD(world cardinal.WorldContext, targetFilter
 		//get projectile uid
 		projectileUID, err := cardinal.GetComponent[comp.UID](world, projectileID)
 		if err != nil {
-			fmt.Printf("error retrieving projectile UID component (unit_destroyer.go): %s \n", err)
+			fmt.Printf("error retrieving projectile UID component (destroyProjectilesTargetingSelfUD): %s \n", err)
 			return false
 		}
 
@@ -218,7 +366,7 @@ func destroyProjectilesTargetingSelfUD(world cardinal.WorldContext, targetFilter
 
 		//remove entity
 		if err := cardinal.Remove(world, projectileID); err != nil {
-			fmt.Println("Error removing entity projectile (unit_destroyer.go):", err)
+			fmt.Println("Error removing entity projectile (destroyProjectilesTargetingSelfUD):", err)
 			return false
 		}
 		return true
@@ -238,13 +386,13 @@ func destroySPTargetingSelfUD(world cardinal.WorldContext, targetFilter cardinal
 
 		//remove entity
 		if err := cardinal.Remove(world, spID); err != nil {
-			fmt.Printf("Error removing entity sp (unit_destroyer.go): %v \n", err)
+			fmt.Printf("Error removing entity sp (destroySPTargetingSelfUD): %v \n", err)
 			return false
 		}
 		return true
 	})
 	if err != nil {
-		return fmt.Errorf("error retrieving sp entities (destroyProjectilesTargetingSelfUD): %s", err)
+		return fmt.Errorf("error retrieving sp entities (destroySPTargetingSelfUD): %s", err)
 	}
 	return nil
 }
