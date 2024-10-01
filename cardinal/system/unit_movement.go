@@ -30,6 +30,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 		cc, err := cardinal.GetComponent[comp.CC](world, id)
 		if err != nil {
 			fmt.Printf("error getting unit cc component (unit_movement.go): %v \n", err)
+			continue
 		}
 
 		if cc.Stun > 0 { //if unit stunned cannot move
@@ -47,15 +48,8 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 			continue
 		}
 
-		//get game state
-		gameState, err := getGameStateGSS(world, MatchID)
-		if err != nil {
-			fmt.Printf("%v", err)
-			continue
-		}
-
 		//get collision Hash
-		collisionHash, err := cardinal.GetComponent[comp.SpatialHash](world, gameState)
+		collisionHash, err := getCollisionHashGSS(world, MatchID)
 		if err != nil {
 			fmt.Printf("error retrieving SpartialHash component on tempSpartialHash (unit_movement.go): %s \n", err)
 			continue
@@ -65,9 +59,8 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 
 		//if units in combat
 		if uAtk.Combat {
-			//get enemyID  from unit target
-			enemyID := uAtk.Target
-			ePos, eRadius, err := GetComponents2[comp.Position, comp.UnitRadius](world, enemyID) //get enemy position and radius components
+			//get enemy position and radius components
+			ePos, eRadius, err := GetComponents2[comp.Position, comp.UnitRadius](world, uAtk.Target)
 			if err != nil {
 				fmt.Printf("combat compoenents (unit_movement.go): %s \n", err)
 				continue
@@ -92,7 +85,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 					//move towards enemy
 					uPos = moveUnitTowardsEnemy(uPos, ePos.PositionVectorX, ePos.PositionVectorY, eRadius.UnitRadius, uMs.CurrentMS, uRadius.UnitRadius)
 					//check that unit isnt walking through out of bounds towards a found unit
-					exists := moveDirectionExsist(uPos.PositionVectorX, uPos.PositionVectorY, mapName)
+					exists := moveDirectionExsist(uPos.PositionVectorX, uPos.PositionVectorY, mapName.MapName)
 					if exists {
 						//attempt to push blocking units
 						pushBlockingUnit(world, collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uAtk.Class, uTeam.Team, uMs.CurrentMS, mapName)
@@ -161,7 +154,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 						tempY := uPos.PositionVectorY
 						uPos = moveUnitTowardsEnemy(uPos, eX, eY, eRadius, uMs.CurrentMS, uRadius.UnitRadius)
 						//check that unit isnt walking through out of bounds towards a found unit
-						exists := moveDirectionExsist(uPos.PositionVectorX, uPos.PositionVectorY, mapName)
+						exists := moveDirectionExsist(uPos.PositionVectorX, uPos.PositionVectorY, mapName.MapName)
 						if exists {
 							//attempt to push blocking units
 							pushBlockingUnit(world, collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, uAtk.Class, uMs.CurrentMS, mapName)
@@ -291,7 +284,7 @@ func moveUnitDirectionMap(position *comp.Position, team *comp.Team, movespeed fl
 	sumAngle := 0.0 // Sum of rotated angles
 
 	for i := 0; ; i++ {
-		if moveDirectionExsist(tempX, tempY, mapName) {
+		if moveDirectionExsist(tempX, tempY, mapName.MapName) {
 			//update new x,y based on movespeed
 			position.PositionVectorX = tempX
 			position.PositionVectorY = tempY
@@ -318,37 +311,6 @@ func moveUnitDirectionMap(position *comp.Position, team *comp.Team, movespeed fl
 	}
 
 	return position, nil
-}
-
-// Moves Unit in direction of the map Direction vector
-func moveDirectionExsist(x, y float32, mapName *comp.MapName) bool {
-	//check map data exsists
-	mapData, exists := MapDataRegistry[mapName.MapName]
-	if !exists {
-		fmt.Printf("error key for MapDataRegistry does not exsist (MoveUnitDirectionMap)")
-		return false
-	}
-	//check direction map exsists
-	mapDir, ok := MapRegistry[mapName.MapName]
-	if !ok {
-		fmt.Printf("error key for MapRegistry does not exsist (MoveUnitDirectionMap)")
-		return false
-	}
-
-	//normalize the units position to the maps grid increments.
-	normalizedX := int(((int(x)-mapData.StartX)/mapData.Increment))*mapData.Increment + mapData.StartX
-	normalizedY := int(((int(y)-mapData.StartY)/mapData.Increment))*mapData.Increment + mapData.StartY
-	//The units (x,y) coordinates normalized and turned into proper key(string) format for seaching map
-	coordKey := fmt.Sprintf("%d,%d", normalizedX, normalizedY)
-
-	// Retrieve direction vector using coordinate key
-	_, exists = mapDir.DMap[coordKey]
-	if !exists {
-		fmt.Printf("no direction vector found for the given coordinates (MoveUnitDirectionMap)\n")
-		return false
-	}
-
-	return true
 }
 
 // Moves Unit towards enemy position
@@ -401,17 +363,10 @@ func pushBlockingUnit(world cardinal.WorldContext, hash *comp.SpatialHash, objID
 				continue
 			}
 
-			//get targets team
-			targetTeam, err := cardinal.GetComponent[comp.Team](world, collisionID)
+			// get target components
+			targetTeam, targetName, err := GetComponents2[comp.Team, comp.UnitName](world, collisionID)
 			if err != nil {
-				fmt.Printf("error getting targets team compoenent (pushBlockingUnit): %v \n", err)
-				continue
-			}
-
-			//get targets unit name
-			targetName, err := cardinal.GetComponent[comp.UnitName](world, collisionID)
-			if err != nil {
-				fmt.Printf("error getting targets name compoenent (pushBlockingUnit): %v \n", err)
+				fmt.Printf("error getting targets compoenents (pushBlockingUnit): %v \n", err)
 				continue
 			}
 
@@ -449,7 +404,7 @@ func pushBlockingUnit(world cardinal.WorldContext, hash *comp.SpatialHash, objID
 func pushUnitDirection(posX1, posY1, posX2, posY2, dirX2, dirY2, distance float32) (targetX, targetY float32) {
 	//angle to move fowards if hit
 	//(angle) * math.Pi / 180
-	middleWidth := 0.3490658503988659 //angle of 20 degrees
+	middleWidth := 0.26179938779 //angle of 15 degrees
 
 	// Calculate the vector from the incoming ball to the main ball
 	dirToBallX := posX2 - posX1
@@ -525,7 +480,7 @@ func pushFromPtBtoA(world cardinal.WorldContext, hash *comp.SpatialHash, id type
 			//move unit towards even outside radius
 			test := moveUnitTowardsEnemy(&comp.Position{PositionVectorX: testX, PositionVectorY: testY}, targetPos.PositionVectorX, targetPos.PositionVectorY, targetRadius.UnitRadius, length, radius)
 			// Check if the position is free of collisions
-			if !CheckCollisionSpatialHash(hash, test.PositionVectorX, test.PositionVectorY, radius, atk.Class, true) && moveDirectionExsist(test.PositionVectorX, test.PositionVectorY, mapName) {
+			if !CheckCollisionSpatialHash(hash, test.PositionVectorX, test.PositionVectorY, radius, atk.Class, true) && moveDirectionExsist(test.PositionVectorX, test.PositionVectorY, mapName.MapName) {
 				return test.PositionVectorX, test.PositionVectorY // Return the first free spot found
 			}
 		}
@@ -594,7 +549,7 @@ func moveToNearestFreeSpaceBox(hash *comp.SpatialHash, startX, startY, targetX, 
 				testY := startY + dirY*d + perpY*float32(w)*step
 
 				// Check if the position is free of collisions
-				if !CheckCollisionSpatialHash(hash, testX, testY, int(radius), class, true) && moveDirectionExsist(testX, testY, mapName) {
+				if !CheckCollisionSpatialHash(hash, testX, testY, int(radius), class, true) && moveDirectionExsist(testX, testY, mapName.MapName) {
 					return testX, testY
 				}
 			}

@@ -1,6 +1,8 @@
 package system
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // size of collision hash map. (should be atleast 1.5x the size of the largest unit)
 var SpatialGridCellSize = 300
@@ -56,4 +58,32 @@ func getMapDirection(x, y float32, mapName string) ([]float32, error) {
 		return nil, fmt.Errorf("no direction vector found for the given coordinates (getMapDirection)")
 	}
 	return directionVector, nil
+}
+
+// Moves Unit in direction of the map Direction vector
+func moveDirectionExsist(x, y float32, mapName string) bool {
+	//check map data exsists
+	mapData, exists := MapDataRegistry[mapName]
+	if !exists {
+		fmt.Printf("error key for MapDataRegistry does not exsist (MoveUnitDirectionMap) \n")
+		return false
+	}
+	//check direction map exsists
+	mapDir, ok := MapRegistry[mapName]
+	if !ok {
+		fmt.Printf("error key for MapRegistry does not exsist (MoveUnitDirectionMap) \n")
+		return false
+	}
+
+	//The units (x,y) coordinates normalized and turned into proper key(string) format for seaching map
+	coordKey := normalizeMapCoords(x, y, mapData.StartX, mapData.StartY, mapData.Increment)
+
+	// Retrieve direction vector using coordinate key
+	_, exists = mapDir.DMap[coordKey]
+	if !exists {
+		fmt.Printf("no direction vector found for the given coordinates (MoveUnitDirectionMap)\n")
+		return false
+	}
+
+	return true
 }

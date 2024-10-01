@@ -39,9 +39,8 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 			}
 
 			//check if mapName exsists and if direction vector exsists at (x, y) location
-			_, err = getMapDirection(create.Msg.PositionX, create.Msg.PositionY, create.Msg.MapName)
-			if err != nil {
-				return msg.CreateUnitResult{Success: false}, fmt.Errorf("(unit_spawner.go): %w", err)
+			if !moveDirectionExsist(create.Msg.PositionX, create.Msg.PositionY, create.Msg.MapName) {
+				return msg.CreateUnitResult{Success: false}, fmt.Errorf("map name or direction vector does not exsist for location")
 			}
 
 			mapData, exists := MapDataRegistry[create.Msg.MapName]
@@ -94,6 +93,7 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 				comp.Position{PositionVectorX: create.Msg.PositionX, PositionVectorY: create.Msg.PositionY, PositionVectorZ: zOffSet, RotationVectorX: create.Msg.RotationX, RotationVectorY: create.Msg.RotationY, RotationVectorZ: create.Msg.RotationZ},
 				comp.MapName{MapName: create.Msg.MapName},
 				comp.Distance{Distance: tempDistance},
+				//comp.Destroyed{Destroyed: false},
 				comp.UnitRadius{UnitRadius: unitType.Radius},
 				comp.Attack{
 					Combat:       false,
