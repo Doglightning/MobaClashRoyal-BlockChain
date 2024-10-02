@@ -20,10 +20,3 @@ type ProjectileTag struct {
 func (ProjectileTag) Name() string {
 	return "ProjectileTag"
 }
-
-type GameStateTag struct {
-}
-
-func (GameStateTag) Name() string {
-	return "GameStateTag"
-}

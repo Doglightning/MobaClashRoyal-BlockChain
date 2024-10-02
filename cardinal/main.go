@@ -60,7 +60,6 @@ func MustInitWorld(w *cardinal.World) {
 		cardinal.RegisterComponent[component.EffectsList](w),
 		cardinal.RegisterComponent[component.UnitTag](w),
 		cardinal.RegisterComponent[component.StructureTag](w),
-		cardinal.RegisterComponent[component.GameStateTag](w),
 		cardinal.RegisterComponent[component.ProjectileTag](w),
 	)
 

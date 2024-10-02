@@ -21,7 +21,7 @@ func RemovalListSystem(world cardinal.WorldContext) error {
 			})
 			//find game state
 			gameState, err := cardinal.NewSearch().Entity(
-				filter.Contains(filter.Component[comp.GameStateTag]())).
+				filter.Exact(GameStateFilters())).
 				Where(matchFilter).First(world)
 			if err != nil {
 				return msg.RemoveUnitResult{Succsess: false}, fmt.Errorf("error searching for team (Removal_list_system.go): %w", err)

@@ -35,7 +35,6 @@ func GameStateSpawnerSystem(world cardinal.WorldContext) error {
 				teamStateID, err := cardinal.Create(world,
 					comp.MatchId{MatchId: create.Msg.MatchID},
 					comp.UID{UID: 0},
-					comp.GameStateTag{},
 					comp.Player1{
 						Nickname:    create.Tx.PersonaTag,
 						Hand:        []string{"Vampire", "FireSpirit", "ArcherLady"},
@@ -251,7 +250,7 @@ func getNextUID(world cardinal.WorldContext, matchID string) (int, error) {
 	})
 
 	gameStateSearch := cardinal.NewSearch().Entity(
-		filter.Contains(filter.Component[comp.GameStateTag]())).
+		filter.Exact(GameStateFilters())).
 		Where(matchFilter)
 	//game state
 	gameState, err := gameStateSearch.First(world)
@@ -305,7 +304,7 @@ func getGameStateGSS(world cardinal.WorldContext, mID *comp.MatchId) (types.Enti
 		return m.MatchId == mID.MatchId
 	})
 	foundTeam, err := cardinal.NewSearch().Entity(
-		filter.Contains(filter.Component[comp.GameStateTag]())).
+		filter.Exact(GameStateFilters())).
 		Where(teamFilter).First(world)
 
 	if err != nil {
@@ -327,7 +326,7 @@ func getCollisionHashGSS(world cardinal.WorldContext, mID *comp.MatchId) (*comp.
 		return m.MatchId == mID.MatchId
 	})
 	foundTeam, err := cardinal.NewSearch().Entity(
-		filter.Contains(filter.Component[comp.GameStateTag]())).
+		filter.Exact(GameStateFilters())).
 		Where(teamFilter).First(world)
 
 	if err != nil {
@@ -343,4 +342,8 @@ func getCollisionHashGSS(world cardinal.WorldContext, mID *comp.MatchId) (*comp.
 		return nil, fmt.Errorf("collision hash not found (game state spawner): %w", err)
 	}
 	return collisionHash, nil
+}
+
+func GameStateFilters() (filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper) {
+	return filter.Component[comp.MatchId](), filter.Component[comp.UID](), filter.Component[comp.Player1](), filter.Component[comp.Player2](), filter.Component[comp.SpatialHash]()
 }

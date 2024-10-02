@@ -2,6 +2,7 @@ package query
 
 import (
 	comp "MobaClashRoyal/component"
+	"MobaClashRoyal/system"
 	"fmt"
 
 	"pkg.world.dev/world-engine/cardinal"
@@ -32,7 +33,7 @@ func PlayerState(world cardinal.WorldContext, req *PSMatchIdRequest) (*PlayerSta
 	})
 
 	gameState, err := cardinal.NewSearch().Entity(
-		filter.Contains(filter.Component[comp.GameStateTag]())).
+		filter.Exact(system.GameStateFilters())).
 		Where(matchFilter).First(world)
 
 	if err != nil {
