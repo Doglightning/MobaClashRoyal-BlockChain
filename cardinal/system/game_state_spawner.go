@@ -50,19 +50,24 @@ func GameStateSpawnerSystem(world cardinal.WorldContext) error {
 				)
 
 				if err != nil {
-					return msg.CreateMatchResult{Success: false}, fmt.Errorf("error creating match (game_state_spawner.go): %w", err)
+					return msg.CreateMatchResult{Success: false}, fmt.Errorf("error creating match (game_state_spawner.go): %v", err)
 				}
 
 				// get spatial hash for collision map
 				hash, err := cardinal.GetComponent[comp.SpatialHash](world, teamStateID)
 				if err != nil {
-					return msg.CreateMatchResult{Success: false}, fmt.Errorf("error getting hash component (game_state_spawner.go): %w", err)
+					return msg.CreateMatchResult{Success: false}, fmt.Errorf("error getting hash component (game_state_spawner.go): %v", err)
 				}
 
 				//spawn bases
 				err = spawnBasesGSS(world, create.Msg.MatchID, teamStateID, create.Msg.MapName, hash)
 				if err != nil {
 					return msg.CreateMatchResult{Success: false}, err
+				}
+				//set hash
+				err = cardinal.SetComponent(world, teamStateID, hash)
+				if err != nil {
+					return msg.CreateMatchResult{Success: false}, fmt.Errorf("error setting hash (game_state_spawner.go): %v", err)
 				}
 
 				return msg.CreateMatchResult{Success: true}, nil // end logic for player1

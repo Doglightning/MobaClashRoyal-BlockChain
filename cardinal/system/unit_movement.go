@@ -48,6 +48,11 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 			continue
 		}
 
+		gameState, err := getGameStateGSS(world, MatchID)
+		if err != nil {
+			fmt.Printf("error retrieving gamestate id (unit_movement.go): %s \n", err)
+			continue
+		}
 		//get collision Hash
 		collisionHash, err := getCollisionHashGSS(world, MatchID)
 		if err != nil {
@@ -208,6 +213,12 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 					}
 				}
 			}
+		}
+		//set collision Hash
+		err = cardinal.SetComponent(world, gameState, collisionHash)
+		if err != nil {
+			fmt.Printf("error setting SpartialHash component (unit_movement.go): %s \n", err)
+			continue
 		}
 	}
 	return err
