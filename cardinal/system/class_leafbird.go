@@ -47,7 +47,7 @@ func leafBirdSpawn(world cardinal.WorldContext, id types.EntityID) error {
 	// 	return fmt.Errorf("error getting map component (class fireSpirit.go): %v", err)
 	// }
 
-	// gs, _ := getGameStateGSS(world, matchID)
+	gs, _ := getGameStateGSS(world, matchID)
 
 	//get collision hash
 	hash, err := getCollisionHashGSS(world, matchID)
@@ -124,10 +124,10 @@ func leafBirdSpawn(world cardinal.WorldContext, id types.EntityID) error {
 				// // tempX := targetPos.PositionVectorX
 				// // tempY := targetPos.PositionVectorY
 
-				// RemoveObjectFromSpatialHash(hash, collID, targetPos.PositionVectorX, targetPos.PositionVectorX, targetRad.UnitRadius)
+				RemoveObjectFromSpatialHash(hash, collID, targetPos.PositionVectorX, targetPos.PositionVectorX, targetRad.UnitRadius)
 
-				// targetPos.PositionVectorX += pos.RotationVectorX * 1000
-				// targetPos.PositionVectorY += pos.RotationVectorY * 1000
+				targetPos.PositionVectorX += pos.RotationVectorX * leafBird.push
+				targetPos.PositionVectorY += pos.RotationVectorY * leafBird.push
 
 				// // // //check that unit isnt walking through out of bounds towards a found unit
 				// // exists := moveDirectionExsist(targetPos.PositionVectorX, targetPos.PositionVectorY, mapName)
@@ -136,7 +136,7 @@ func leafBirdSpawn(world cardinal.WorldContext, id types.EntityID) error {
 				// if err := cardinal.SetComponent(world, collID, targetPos); err != nil {
 				// 	return fmt.Errorf("error updating special power component (Fire Spirit Attack): %s ", err)
 				// }
-				// AddObjectSpatialHash(hash, collID, targetPos.PositionVectorX, targetPos.PositionVectorX, targetRad.UnitRadius, targetTeam.Team, targetAtk.Class)
+				AddObjectSpatialHash(hash, collID, targetPos.PositionVectorX, targetPos.PositionVectorX, targetRad.UnitRadius, targetTeam.Team, targetClass.Class)
 				// // 	// 	//attempt to push blocking units
 				// // 	// 	pushBlockingUnit(world, hash, collID, targetPos.PositionVectorX, targetPos.PositionVectorY, targetRad.UnitRadius, targetAtk.Class, targetTeam.Team, leafBird.push, mapName)
 				// // 	// 	//move unit.  walk around blocking units
@@ -151,10 +151,15 @@ func leafBirdSpawn(world cardinal.WorldContext, id types.EntityID) error {
 				// // } else {
 				// // AddObjectSpatialHash(hash, collID, tempX, tempY, targetRad.UnitRadius, targetTeam.Team, targetAtk.Class)
 				// // }
-				// // set updated sp component
-				// if err := cardinal.SetComponent(world, gs, hash); err != nil {
-				// 	return fmt.Errorf("error updating special power component (Fire Spirit Attack): %s ", err)
-				// }
+				// set updated sp component
+				if err := cardinal.SetComponent(world, gs, hash); err != nil {
+					return fmt.Errorf("error updating special power component (Fire Spirit Attack): %s ", err)
+				}
+
+				// set updated sp component
+				if err := cardinal.SetComponent(world, collID, targetPos); err != nil {
+					return fmt.Errorf("error 11updating special power component (Fire Spirit Attack): %s ", err)
+				}
 
 			}
 
@@ -168,7 +173,7 @@ func leafBirdAttack(world cardinal.WorldContext, atk *comp.Attack) error {
 	// reduce health by units attack damage
 	err := cardinal.UpdateComponent(world, atk.Target, func(health *comp.Health) *comp.Health {
 		if health == nil {
-			fmt.Printf("error retrieving Health component (Unit_Attack.go) \n")
+			fmt.Printf("error retrieving Health component (leafBirdAttack) \n")
 			return nil
 		}
 		health.CurrentHP -= float32(atk.Damage)
@@ -178,7 +183,7 @@ func leafBirdAttack(world cardinal.WorldContext, atk *comp.Attack) error {
 		return health
 	})
 	if err != nil {
-		return fmt.Errorf("error on vampire attack (class vampire.go): %v", err)
+		return fmt.Errorf("error on leafbird attack (leafBirdAttack): %v", err)
 	}
 
 	return nil
