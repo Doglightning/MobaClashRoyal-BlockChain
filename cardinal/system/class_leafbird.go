@@ -18,7 +18,7 @@ type leafBirdSpawnSP struct {
 // NewFireSpiritSpawnSP creates a new instance of NewFireSpiritSP with default settings.
 func NewLeafBirdSpawnSP() *leafBirdSpawnSP {
 	return &leafBirdSpawnSP{
-		Hieght:    875,
+		Hieght:    925,
 		BaseWidth: 125,
 		push:      50,
 	}
@@ -46,8 +46,6 @@ func leafBirdSpawn(world cardinal.WorldContext, id types.EntityID) error {
 	// if err != nil {
 	// 	return fmt.Errorf("error getting map component (class fireSpirit.go): %v", err)
 	// }
-
-	gs, _ := getGameStateGSS(world, matchID)
 
 	//get collision hash
 	hash, err := getCollisionHashGSS(world, matchID)
@@ -151,19 +149,36 @@ func leafBirdSpawn(world cardinal.WorldContext, id types.EntityID) error {
 				// // } else {
 				// // AddObjectSpatialHash(hash, collID, tempX, tempY, targetRad.UnitRadius, targetTeam.Team, targetAtk.Class)
 				// // }
-				// set updated sp component
-				if err := cardinal.SetComponent(world, gs, hash); err != nil {
-					return fmt.Errorf("error updating special power component (Fire Spirit Attack): %s ", err)
-				}
 
 				// set updated sp component
 				if err := cardinal.SetComponent(world, collID, targetPos); err != nil {
 					return fmt.Errorf("error 11updating special power component (Fire Spirit Attack): %s ", err)
 				}
 
+				// // reduce health by units attack damage
+				// err := cardinal.UpdateComponent(world, collID, func(health *comp.Health) *comp.Health {
+				// 	if health == nil {
+				// 		fmt.Printf("error retrieving Health component (leafBirdAttack) \n")
+				// 		return nil
+				// 	}
+				// 	health.CurrentHP -= float32(1)
+				// 	if health.CurrentHP < 0 {
+				// 		health.CurrentHP = 0 //never have negative health
+				// 	}
+				// 	return health
+				// })
+				// if err != nil {
+				// 	return fmt.Errorf("error on leafbird attack (leafBirdAttack): %v", err)
+				// }
+
 			}
 
 		}
+	}
+	gs, _ := getGameStateGSS(world, matchID)
+	// set updated sp component
+	if err := cardinal.SetComponent(world, gs, hash); err != nil {
+		return fmt.Errorf("error updating special power component (Fire Spirit Attack): %s ", err)
 	}
 
 	return nil
