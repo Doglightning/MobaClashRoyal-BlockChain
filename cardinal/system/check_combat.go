@@ -56,7 +56,7 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 
 		if !uAtk.Combat { //not in combat
 			//get Unit Components
-			uPos, uRadius, uAtk, uTeam, MatchID, err := GetComponents5[comp.Position, comp.UnitRadius, comp.Attack, comp.Team, comp.MatchId](world, id)
+			uPos, uRadius, uAtk, uTeam, MatchID, class, err := GetComponents6[comp.Position, comp.UnitRadius, comp.Attack, comp.Team, comp.MatchId, comp.Class](world, id)
 			if err != nil {
 				fmt.Printf("(check_combat.go) -%v \n", err)
 				return false
@@ -69,7 +69,7 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 				return false
 			}
 			//find closest enemy
-			eID, eX, eY, eRadius, found := findClosestEnemy(collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uAtk.AggroRadius, uTeam.Team, uAtk.Class)
+			eID, eX, eY, eRadius, found := findClosestEnemy(collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uAtk.AggroRadius, uTeam.Team, class.Class)
 			if found { //found enemy
 				// Calculate squared distance between the unit and the enemy, minus their radii
 				adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, eX, eY) - float32(eRadius) - float32(uRadius.UnitRadius)
@@ -144,7 +144,7 @@ func structureCombatSearch(world cardinal.WorldContext) error {
 
 				if !uAtk.Combat { //not in combat
 					//get Unit Components
-					uPos, uRadius, uAtk, uTeam, MatchID, err := GetComponents5[comp.Position, comp.UnitRadius, comp.Attack, comp.Team, comp.MatchId](world, id)
+					uPos, uRadius, uAtk, uTeam, MatchID, class, err := GetComponents6[comp.Position, comp.UnitRadius, comp.Attack, comp.Team, comp.MatchId, comp.Class](world, id)
 					if err != nil {
 						fmt.Printf("5 not in combat (structureCombatSearch - check_combat.go) -%v \n", err)
 						return false
@@ -157,7 +157,7 @@ func structureCombatSearch(world cardinal.WorldContext) error {
 						return false
 					}
 					//find closest enemy
-					eID, eX, eY, eRadius, found := findClosestEnemy(collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uAtk.AggroRadius, uTeam.Team, uAtk.Class)
+					eID, eX, eY, eRadius, found := findClosestEnemy(collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uAtk.AggroRadius, uTeam.Team, class.Class)
 					if found { //found enemy
 						// Calculate squared distance between the unit and the enemy, minus their radii
 						adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, eX, eY) - float32(eRadius) - float32(uRadius.UnitRadius)

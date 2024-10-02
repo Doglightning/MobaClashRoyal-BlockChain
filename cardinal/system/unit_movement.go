@@ -38,7 +38,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 		}
 
 		//get Unit Components
-		uPos, uRadius, uAtk, uTeam, uMs, MatchID, mapName, err := GetComponents7[comp.Position, comp.UnitRadius, comp.Attack, comp.Team, comp.Movespeed, comp.MatchId, comp.MapName](world, id)
+		uPos, uRadius, uAtk, uTeam, uMs, MatchID, mapName, class, err := GetComponents8[comp.Position, comp.UnitRadius, comp.Attack, comp.Team, comp.Movespeed, comp.MatchId, comp.MapName, comp.Class](world, id)
 		if err != nil {
 			fmt.Printf("unit components (unit_movement.go) %v \n", err)
 			continue
@@ -88,9 +88,9 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 					exists := moveDirectionExsist(uPos.PositionVectorX, uPos.PositionVectorY, mapName.MapName)
 					if exists {
 						//attempt to push blocking units
-						pushBlockingUnit(world, collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uAtk.Class, uTeam.Team, uMs.CurrentMS, mapName)
+						pushBlockingUnit(world, collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, class.Class, uTeam.Team, uMs.CurrentMS, mapName)
 						//move unit.  walk around blocking units
-						uPos.PositionVectorX, uPos.PositionVectorY = moveFreeSpace(collisionHash, id, tempX, tempY, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, uAtk.Class, mapName)
+						uPos.PositionVectorX, uPos.PositionVectorY = moveFreeSpace(collisionHash, id, tempX, tempY, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, class.Class, mapName)
 						// Set the new position component
 						if err := cardinal.SetComponent(world, id, uPos); err != nil {
 							fmt.Printf("error set component on position (unit movement.go): %v \n", err)
@@ -133,7 +133,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 		//if units not in combat
 		if !uAtk.Combat && secondIfCondition {
 			//Check for in range Enemies
-			eID, eX, eY, eRadius, found := findClosestEnemy(collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uAtk.AggroRadius, uTeam.Team, uAtk.Class)
+			eID, eX, eY, eRadius, found := findClosestEnemy(collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uAtk.AggroRadius, uTeam.Team, class.Class)
 			if found { //found enemy
 				// Calculate squared distance between the unit and the enemy, minus their radii
 				adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, eX, eY) - float32(eRadius) - float32(uRadius.UnitRadius)
@@ -157,9 +157,9 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 						exists := moveDirectionExsist(uPos.PositionVectorX, uPos.PositionVectorY, mapName.MapName)
 						if exists {
 							//attempt to push blocking units
-							pushBlockingUnit(world, collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, uAtk.Class, uMs.CurrentMS, mapName)
+							pushBlockingUnit(world, collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, class.Class, uMs.CurrentMS, mapName)
 							//move unit.  walk around blocking units
-							uPos.PositionVectorX, uPos.PositionVectorY = moveFreeSpace(collisionHash, id, tempX, tempY, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, uAtk.Class, mapName)
+							uPos.PositionVectorX, uPos.PositionVectorY = moveFreeSpace(collisionHash, id, tempX, tempY, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, class.Class, mapName)
 							// Set the new position component
 							err := cardinal.SetComponent(world, id, uPos)
 							if err != nil {
@@ -191,9 +191,9 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 						continue
 					}
 					//attempt to push blocking units
-					pushBlockingUnit(world, collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, uAtk.Class, uMs.CurrentMS, mapName)
+					pushBlockingUnit(world, collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, class.Class, uMs.CurrentMS, mapName)
 					//move unit.  walk around blocking units
-					uPos.PositionVectorX, uPos.PositionVectorY = moveFreeSpace(collisionHash, id, tempX, tempY, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, uAtk.Class, mapName)
+					uPos.PositionVectorX, uPos.PositionVectorY = moveFreeSpace(collisionHash, id, tempX, tempY, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, class.Class, mapName)
 					//set updated position component
 					err := cardinal.SetComponent(world, id, uPos)
 					if err != nil {
@@ -353,13 +353,13 @@ func pushBlockingUnit(world cardinal.WorldContext, hash *comp.SpatialHash, objID
 			}
 
 			//get targets attack
-			atk, err := cardinal.GetComponent[comp.Attack](world, collisionID)
+			tClass, err := cardinal.GetComponent[comp.Class](world, collisionID)
 			if err != nil {
 				fmt.Printf("error getting targets attack compoenent (pushBlockingUnit): %v \n", err)
 				continue
 			}
 
-			if class == "air" && atk.Class != "air" { //air can only push air
+			if class == "air" && tClass.Class != "air" { //air can only push air
 				continue
 			}
 
@@ -387,7 +387,7 @@ func pushBlockingUnit(world cardinal.WorldContext, hash *comp.SpatialHash, objID
 				targetPos.PositionVectorX, targetPos.PositionVectorY = pushFromPtBtoA(world, hash, collisionID, targetPos.PositionVectorX, targetPos.PositionVectorY, newTargetX, newTargetY, targetRadius.UnitRadius, mapName)
 				// Add the objects position to collosion hash
 
-				AddObjectSpatialHash(hash, collisionID, targetPos.PositionVectorX, targetPos.PositionVectorY, targetRadius.UnitRadius, targetTeam.Team, atk.Class)
+				AddObjectSpatialHash(hash, collisionID, targetPos.PositionVectorX, targetPos.PositionVectorY, targetRadius.UnitRadius, targetTeam.Team, tClass.Class)
 				//set collided units new position component
 				if err = cardinal.SetComponent(world, collisionID, targetPos); err != nil {
 					fmt.Printf("error setting target pos component (pushBlockingUnit): %v \n", err)
@@ -443,11 +443,12 @@ func pushUnitDirection(posX1, posY1, posX2, posY2, dirX2, dirY2, distance float3
 // find closest free point between points B to A
 func pushFromPtBtoA(world cardinal.WorldContext, hash *comp.SpatialHash, id types.EntityID, startX, startY, targetX, targetY float32, radius int, mapName *comp.MapName) (float32, float32) {
 	//get attack component
-	atk, err := cardinal.GetComponent[comp.Attack](world, id)
+	atk, class, err := GetComponents2[comp.Attack, comp.Class](world, id)
 	if err != nil {
-		fmt.Printf("error getting attack compoenent (pushFromPtBtoA): %v \n", err)
+		fmt.Printf("(pushFromPtBtoA): %v \n", err)
 		return startX, startY
 	}
+
 	//get length
 	deltaX := targetX - startX
 	deltaY := targetY - startY
@@ -480,7 +481,7 @@ func pushFromPtBtoA(world cardinal.WorldContext, hash *comp.SpatialHash, id type
 			//move unit towards even outside radius
 			test := moveUnitTowardsEnemy(&comp.Position{PositionVectorX: testX, PositionVectorY: testY}, targetPos.PositionVectorX, targetPos.PositionVectorY, targetRadius.UnitRadius, length, radius)
 			// Check if the position is free of collisions
-			if !CheckCollisionSpatialHash(hash, test.PositionVectorX, test.PositionVectorY, radius, atk.Class, true) && moveDirectionExsist(test.PositionVectorX, test.PositionVectorY, mapName.MapName) {
+			if !CheckCollisionSpatialHash(hash, test.PositionVectorX, test.PositionVectorY, radius, class.Class, true) && moveDirectionExsist(test.PositionVectorX, test.PositionVectorY, mapName.MapName) {
 				return test.PositionVectorX, test.PositionVectorY // Return the first free spot found
 			}
 		}
@@ -491,7 +492,7 @@ func pushFromPtBtoA(world cardinal.WorldContext, hash *comp.SpatialHash, id type
 			testX := targetX + dirX*float32(d) // Start from target position
 			testY := targetY + dirY*float32(d) // Start from target position
 			// Check if the position is free of collisions
-			if !CheckCollisionSpatialHash(hash, testX, testY, radius, atk.Class, true) {
+			if !CheckCollisionSpatialHash(hash, testX, testY, radius, class.Class, true) {
 				return testX, testY // Return the first free spot found
 			}
 		}

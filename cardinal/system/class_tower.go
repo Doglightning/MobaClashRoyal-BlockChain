@@ -89,6 +89,7 @@ func towerAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.Attac
 	_, err = cardinal.Create(world,
 		comp.MatchId{MatchId: matchID.MatchId},
 		comp.UID{UID: UID},
+		comp.Class{Class: "projectile"},
 		comp.UnitName{UnitName: ProjectileRegistry[unitName.UnitName].Name},
 		comp.Movespeed{CurrentMS: ProjectileRegistry[unitName.UnitName].Speed},
 		comp.Position{
@@ -99,7 +100,7 @@ func towerAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.Attac
 			RotationVectorY: unitPosition.RotationVectorY,
 			RotationVectorZ: unitPosition.RotationVectorZ},
 		comp.MapName{MapName: mapName.MapName},
-		comp.Attack{Target: atk.Target, Class: "projectile", Damage: StructureDataRegistry[unitName.UnitName].Damage},
+		comp.Attack{Target: atk.Target, Damage: StructureDataRegistry[unitName.UnitName].Damage},
 		comp.Destroyed{Destroyed: false},
 		comp.ProjectileTag{},
 	)

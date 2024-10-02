@@ -85,6 +85,7 @@ func archerLadySpawn(world cardinal.WorldContext, id types.EntityID) error {
 			comp.Team{Team: team.Team},
 			comp.UnitRadius{UnitRadius: archerLady.RadiusArrows},
 			comp.SpEntity{SpName: archerLady.Name},
+			comp.Class{Class: "sp"},
 		)
 	}
 
@@ -244,7 +245,8 @@ func archerLadyAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 			RotationVectorZ: unitPosition.RotationVectorZ,
 		},
 		comp.MapName{MapName: mapName.MapName},
-		comp.Attack{Target: atk.Target, Class: "projectile", Damage: UnitRegistry[unitName.UnitName].Damage},
+		comp.Class{Class: "projectile"},
+		comp.Attack{Target: atk.Target, Damage: UnitRegistry[unitName.UnitName].Damage},
 		comp.Destroyed{Destroyed: false},
 		comp.ProjectileTag{},
 	)

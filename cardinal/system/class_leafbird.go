@@ -99,13 +99,13 @@ func leafBirdSpawn(world cardinal.WorldContext, id types.EntityID) error {
 			continue
 		}
 
-		targetAtk, err := cardinal.GetComponent[comp.Attack](world, collID)
+		targetClass, err := cardinal.GetComponent[comp.Class](world, collID)
 		if err != nil {
 			fmt.Printf("error getting targets attack compoenent (class fireSpirit.go): %v \n", err)
 			continue
 		}
 
-		if team.Team != targetTeam.Team && targetAtk.Class != "structure" { //dont attack friendlies soilder!!
+		if team.Team != targetTeam.Team && targetClass.Class != "structure" { //dont attack friendlies soilder!!
 
 			targetPos, err := cardinal.GetComponent[comp.Position](world, collID)
 			if err != nil {

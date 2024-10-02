@@ -27,20 +27,21 @@ func DestroyerSystem(world cardinal.WorldContext) error {
 				filter.Contains(filter.Component[comp.UnitTag]()),
 				filter.Contains(filter.Component[comp.ProjectileTag]()),
 				filter.Contains(filter.Component[comp.StructureTag]()),
+				filter.Contains(filter.Component[comp.SpEntity]()),
 			),
 		).
 		Where(cardinal.OrFilter(healthFilter, destroyedFilter)).
 		Each(world, func(id types.EntityID) bool {
 
 			// get attack component
-			atk, err := cardinal.GetComponent[comp.Attack](world, id)
+			class, err := cardinal.GetComponent[comp.Class](world, id)
 			if err != nil {
 				fmt.Printf("error retrieving unit Attack component (phase_Destroyer.go): %v \n", err)
 				return false
 			}
 
 			// projectile destroyer
-			if atk.Class == "projectile" {
+			if class.Class == "projectile" {
 				err = projectileDestroyerDefault(world, id)
 				if err != nil {
 					fmt.Printf("%v \n", err)
@@ -48,15 +49,21 @@ func DestroyerSystem(world cardinal.WorldContext) error {
 				}
 
 				// unit destroyer
-			} else if atk.Class == "melee" || atk.Class == "range" || atk.Class == "air" {
+			} else if class.Class == "melee" || class.Class == "range" || class.Class == "air" {
 				err = ClassDestroySystem(world, id)
 				if err != nil {
 					fmt.Printf("%v \n", err)
 					return false
 				}
 				//structure destroyer
-			} else if atk.Class == "structure" {
+			} else if class.Class == "structure" {
 				err = structureDestroyerDefault(world, id)
+				if err != nil {
+					fmt.Printf("%v \n", err)
+					return false
+				}
+			} else if class.Class == "sp" {
+				err = projectileDestroyerDefault(world, id)
 				if err != nil {
 					fmt.Printf("%v \n", err)
 					return false

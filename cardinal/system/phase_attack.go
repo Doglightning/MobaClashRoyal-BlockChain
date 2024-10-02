@@ -20,15 +20,15 @@ func AttackPhaseSystem(world cardinal.WorldContext) error {
 		filter.Contains(filter.Component[comp.Attack]())).
 		Where(combatFilter).Each(world, func(id types.EntityID) bool {
 
-		// get attack component
-		atk, err := cardinal.GetComponent[comp.Attack](world, id)
+		//get attack and class comps
+		atk, class, err := GetComponents2[comp.Attack, comp.Class](world, id)
 		if err != nil {
-			fmt.Printf("error retrieving unit Attack component (phase_Attack.go): %v \n", err)
+			fmt.Printf("(phase_Attack.go): %v \n", err)
 			return false
 		}
 
 		// projectile attack logic
-		if atk.Class == "projectile" {
+		if class.Class == "projectile" {
 			err = ProjectileAttack(world, id, atk)
 			if err != nil {
 				fmt.Printf("%v \n", err)
@@ -36,13 +36,13 @@ func AttackPhaseSystem(world cardinal.WorldContext) error {
 			}
 
 			// basic melee/range attack logic
-		} else if atk.Class == "melee" || atk.Class == "range" || atk.Class == "air" {
+		} else if class.Class == "melee" || class.Class == "range" || class.Class == "air" {
 			err = ClassAttackSystem(world, id, atk)
 			if err != nil {
 				fmt.Printf("%v \n", err)
 				return false
 			}
-		} else if atk.Class == "structure" {
+		} else if class.Class == "structure" {
 			err = StructureAttack(world, id, atk)
 			if err != nil {
 				fmt.Printf("%v \n", err)

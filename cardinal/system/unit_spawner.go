@@ -93,6 +93,7 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 				comp.Position{PositionVectorX: create.Msg.PositionX, PositionVectorY: create.Msg.PositionY, PositionVectorZ: zOffSet, RotationVectorX: create.Msg.RotationX, RotationVectorY: create.Msg.RotationY, RotationVectorZ: create.Msg.RotationZ},
 				comp.MapName{MapName: create.Msg.MapName},
 				comp.Distance{Distance: tempDistance},
+				comp.Class{Class: unitType.Class},
 				//comp.Destroyed{Destroyed: false},
 				comp.UnitRadius{UnitRadius: unitType.Radius},
 				comp.Attack{
@@ -101,7 +102,6 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 					Rate:         unitType.AttackRate,
 					Frame:        0,
 					DamageFrame:  unitType.DamageFrame,
-					Class:        unitType.Class,
 					AttackRadius: unitType.AttackRadius,
 					AggroRadius:  unitType.AggroRadius,
 					State:        "Default",

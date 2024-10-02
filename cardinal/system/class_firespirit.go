@@ -42,9 +42,9 @@ func fireSpiritSpawn(world cardinal.WorldContext, id types.EntityID) error {
 	}
 
 	//get attack component
-	atk, err := cardinal.GetComponent[comp.Attack](world, id)
+	class, err := cardinal.GetComponent[comp.Class](world, id)
 	if err != nil {
-		return fmt.Errorf("error getting attack component (class fireSpirit.go): %v", err)
+		return fmt.Errorf("error getting class component (class fireSpirit.go): %v", err)
 	}
 
 	//get collision hash
@@ -69,23 +69,23 @@ func fireSpiritSpawn(world cardinal.WorldContext, id types.EntityID) error {
 	collidedEntities := make(map[types.EntityID]bool)
 
 	for i := 0; i < len(points); i += 40 { //dont need to go over everypoint because units average a radius of 80 units
-		collList := CheckCollisionSpatialHashList(hash, points[i].X, points[i].Y, 1, atk.Class, false) //list of all units in collision
-		for _, collID := range collList {                                                              //for each collision
+		collList := CheckCollisionSpatialHashList(hash, points[i].X, points[i].Y, 1, class.Class, false) //list of all units in collision
+		for _, collID := range collList {                                                                //for each collision
 			collidedEntities[collID] = true //add to map
 		}
 	}
-	collList := CheckCollisionSpatialHashList(hash, apex.X, apex.Y, 1, atk.Class, false) //check for apex point
-	for _, collID := range collList {                                                    //for each collision
+	collList := CheckCollisionSpatialHashList(hash, apex.X, apex.Y, 1, class.Class, false) //check for apex point
+	for _, collID := range collList {                                                      //for each collision
 		collidedEntities[collID] = true //add to map
 	}
 
-	collList = CheckCollisionSpatialHashList(hash, baseLeft.X, baseLeft.Y, 1, atk.Class, false) //check for base left point
-	for _, collID := range collList {                                                           //for each collision
-		collidedEntities[collID] = true //add to map
-	}
-
-	collList = CheckCollisionSpatialHashList(hash, baseRight.X, baseRight.Y, 1, atk.Class, false) //check for base right point
+	collList = CheckCollisionSpatialHashList(hash, baseLeft.X, baseLeft.Y, 1, class.Class, false) //check for base left point
 	for _, collID := range collList {                                                             //for each collision
+		collidedEntities[collID] = true //add to map
+	}
+
+	collList = CheckCollisionSpatialHashList(hash, baseRight.X, baseRight.Y, 1, class.Class, false) //check for base right point
+	for _, collID := range collList {                                                               //for each collision
 		collidedEntities[collID] = true //add to map
 	}
 

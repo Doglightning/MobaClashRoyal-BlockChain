@@ -166,8 +166,9 @@ func mageAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.Attack
 			RotationVectorY: unitPosition.RotationVectorY,
 			RotationVectorZ: unitPosition.RotationVectorZ,
 		},
+		comp.Class{Class: "projectile"},
 		comp.MapName{MapName: mapName.MapName},
-		comp.Attack{Target: atk.Target, Class: "projectile", Damage: UnitRegistry[unitName.UnitName].Damage},
+		comp.Attack{Target: atk.Target, Damage: UnitRegistry[unitName.UnitName].Damage},
 		comp.Destroyed{Destroyed: false},
 		comp.ProjectileTag{},
 	)

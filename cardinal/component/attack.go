@@ -11,7 +11,6 @@ type Attack struct {
 	AttackRadius int            `json:"AttackRadius"`
 	AggroRadius  int            `json:"AggroRadius"`
 	Target       types.EntityID `json:"target"`
-	Class        string         `json:"class"`
 
 	State string `json:"State"`
 }

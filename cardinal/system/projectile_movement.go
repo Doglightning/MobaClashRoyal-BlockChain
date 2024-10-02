@@ -13,7 +13,7 @@ import (
 // moves projectiles towards target
 func ProjectileMovementSystem(world cardinal.WorldContext) error {
 	//filter for class type projectile
-	classFilter := cardinal.ComponentFilter(func(m comp.Attack) bool {
+	classFilter := cardinal.ComponentFilter(func(m comp.Class) bool {
 		return m.Class == "projectile"
 	})
 	//for each projectile id

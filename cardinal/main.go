@@ -31,6 +31,7 @@ func MustInitWorld(w *cardinal.World) {
 	// NOTE: You must register your components here for it to be accessible.
 	Must(
 		cardinal.RegisterComponent[component.Attack](w),
+		cardinal.RegisterComponent[component.Class](w),
 		cardinal.RegisterComponent[component.Damage](w),
 		cardinal.RegisterComponent[component.Destroyed](w),
 		cardinal.RegisterComponent[component.DirectionMap](w),
