@@ -23,7 +23,7 @@ func GameStateSpawnerSystem(world cardinal.WorldContext) error {
 			})
 
 			// Search for existing matches.
-			existingMatchSearch := cardinal.NewSearch().Entity(filter.Contains(filter.Component[comp.GameStateTag]())).Where(matchFilter)
+			existingMatchSearch := cardinal.NewSearch().Entity(filter.Contains(filter.Component[comp.MatchId]())).Where(matchFilter)
 			count, err := existingMatchSearch.Count(world)
 			if err != nil {
 				return msg.CreateMatchResult{Success: false}, fmt.Errorf("error during search (game_state_spawner.go): %w", err)
