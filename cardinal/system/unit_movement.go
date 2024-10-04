@@ -33,7 +33,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 			continue
 		}
 
-		if cc.Stun > 0 { //if unit stunned cannot move
+		if cc.Stun > 0 || cc.KnockBack { //if unit stunned cannot move
 			continue
 		}
 

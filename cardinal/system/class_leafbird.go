@@ -22,7 +22,7 @@ func NewLeafBirdSpawnSP() *leafBirdSpawnSP {
 		Hieght:    925,
 		BaseWidth: 125,
 		Push:      50,
-		Damage:    1,
+		Damage:    1.4,
 	}
 }
 
@@ -40,7 +40,7 @@ func leafBirdSp(world cardinal.WorldContext, id types.EntityID) error {
 	//get collision hash
 	gameStateID, hash, err := getCollisionHashAndGameState(world, matchID)
 	if err != nil {
-		return fmt.Errorf("error getting spatial hash compoenent(leafBirdSp): %v", err)
+		return fmt.Errorf("error getting spatial hash compoenent (leafBirdSp): %v", err)
 	}
 
 	//find the 3 points of the fire spirit AoE triangle attack
@@ -75,73 +75,48 @@ func leafBirdSp(world cardinal.WorldContext, id types.EntityID) error {
 		}
 
 		//get targets team
-		targetTeam, err := cardinal.GetComponent[comp.Team](world, collID)
+		targetTeam, targetClass, err := GetComponents2[comp.Team, comp.Class](world, collID)
 		if err != nil {
-			fmt.Printf("error getting targets team compoenent (leafBirdSp): %v \n", err)
+			fmt.Printf("error getting targets compoenents (leafBirdSp): %v \n", err)
 			continue
 		}
 
-		targetClass, err := cardinal.GetComponent[comp.Class](world, collID)
-		if err != nil {
-			fmt.Printf("error getting targets attack compoenent (leafBirdSp): %v \n", err)
-			continue
-		}
+		if team.Team != targetTeam.Team { //dont attack friendlies soilder!!
 
-		if team.Team != targetTeam.Team && targetClass.Class != "structure" { //dont attack friendlies soilder!!
-
-			targetPos, err := cardinal.GetComponent[comp.Position](world, collID)
+			targetPos, targetRad, err := GetComponents2[comp.Position, comp.UnitRadius](world, collID)
 			if err != nil {
-				fmt.Printf("error getting targets Position compoenent (leafBirdSp): %v \n", err)
-				continue
-			}
-
-			targetRad, err := cardinal.GetComponent[comp.UnitRadius](world, collID)
-			if err != nil {
-				fmt.Printf("error getting targets radius compoenent (leafBirdSp): %v \n", err)
+				fmt.Printf("error getting targets compoenents (leafBirdSp): %v \n", err)
 				continue
 			}
 
 			if CircleIntersectsRectangle(Point{X: targetPos.PositionVectorX, Y: targetPos.PositionVectorY}, float32(targetRad.UnitRadius), topLeft, topRight, botRight, botLeft) {
 
-				//check that unit isnt walking through out of bounds towards a found unit
-				if moveDirectionExsist(targetPos.PositionVectorX, targetPos.PositionVectorY, mapName.MapName) {
-					tempX := targetPos.PositionVectorX
-					tempY := targetPos.PositionVectorY
+				if targetClass.Class != "structure" { // cant push structures
 
-					RemoveObjectFromSpatialHash(hash, collID, targetPos.PositionVectorX, targetPos.PositionVectorX, targetRad.UnitRadius)
-
-					targetPos.PositionVectorX += pos.RotationVectorX * leafBird.Push
-					targetPos.PositionVectorY += pos.RotationVectorY * leafBird.Push
-
-					//attempt to push blocking units
-					pushBlockingUnit(world, hash, collID, targetPos.PositionVectorX, targetPos.PositionVectorY, targetRad.UnitRadius, targetClass.Class, targetTeam.Team, leafBird.Push, mapName)
-					//move unit.  walk around blocking units
-					targetPos.PositionVectorX, targetPos.PositionVectorY = moveFreeSpace(hash, collID, tempX, tempY, targetPos.PositionVectorX, targetPos.PositionVectorY, targetRad.UnitRadius, targetTeam.Team, targetClass.Class, mapName)
-					AddObjectSpatialHash(hash, collID, targetPos.PositionVectorX, targetPos.PositionVectorY, targetRad.UnitRadius, targetTeam.Team, targetClass.Class)
-
-					// Update units new distance from enemy base
-					if err = updateUnitDistance(world, collID, targetTeam, targetPos, mapName); err != nil {
-						fmt.Printf("%v \n", err)
-						return nil
+					targetCC, err := cardinal.GetComponent[comp.CC](world, collID)
+					if err != nil {
+						return fmt.Errorf("(leafBirdSp) -  %s ", err)
 					}
 
-					// set updated sp component
-					if err := cardinal.SetComponent(world, collID, targetPos); err != nil {
-						return fmt.Errorf("error 11updating special power component (leafBirdSp): %s ", err)
+					// apply knock back
+					if err := applyKnockBack(world, collID, hash, targetPos, pos, targetRad, targetTeam, targetClass, mapName, targetCC, leafBird.Push); err != nil {
+						return fmt.Errorf("(leafBirdSp) -  %s ", err)
 					}
+
 				}
 
+				//apply damage
 				if err = applyDamage(world, collID, leafBird.Damage); err != nil {
-					return fmt.Errorf("error on leafbird attack (leafBirdSp): %v", err)
+					return fmt.Errorf("(leafBirdSp) - %v", err)
 				}
 
 			}
 
 		}
 	}
-	// set updated sp component
+	// update hash
 	if err := cardinal.SetComponent(world, gameStateID, hash); err != nil {
-		return fmt.Errorf("error updating special power component (leafBirdSp): %s ", err)
+		return fmt.Errorf("error setting hash (leafBirdSp): %s ", err)
 	}
 
 	return nil
