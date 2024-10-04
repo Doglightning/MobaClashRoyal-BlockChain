@@ -221,3 +221,23 @@ func ProjectileAttack(world cardinal.WorldContext, id types.EntityID, projectile
 	})
 	return nil
 }
+
+func applyDamage(world cardinal.WorldContext, id types.EntityID, damage float32) error {
+	// reduce health by units attack damage
+	err := cardinal.UpdateComponent(world, id, func(health *comp.Health) *comp.Health {
+		if health == nil {
+			fmt.Printf("error retrieving Health component (applyDamage - phase attack.go): ")
+			return nil
+		}
+		health.CurrentHP -= damage
+		if health.CurrentHP < 0 {
+			health.CurrentHP = 0 //never have negative health
+		}
+		return health
+	})
+	if err != nil {
+		return fmt.Errorf("error on attack (applyDamage - phase attack.go): %v", err)
+	}
+
+	return nil
+}
