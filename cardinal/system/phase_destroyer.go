@@ -310,13 +310,7 @@ func resetUnitsTargetingSelf(world cardinal.WorldContext, targetFilter cardinal.
 		filter.Contains(filter.Component[comp.UnitTag]())).
 		Where(targetFilter).Each(world, func(enemyID types.EntityID) bool {
 
-		name, err := cardinal.GetComponent[comp.UnitName](world, enemyID)
-		if err != nil {
-			fmt.Printf("error getting unit name component (resetUnitsTargetingSelf) \n")
-			return false
-		}
-
-		err = ClassResetCombat(world, enemyID, name.UnitName)
+		err := ClassResetCombat(world, enemyID)
 		if err != nil {
 			fmt.Printf("error running ResetCombat (resetUnitsTargetingSelf) \n")
 			return false

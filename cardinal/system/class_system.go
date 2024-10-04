@@ -100,11 +100,14 @@ func ClassAttackSystem(world cardinal.WorldContext, id types.EntityID, atk *comp
 }
 
 // on desetry resets combat for units targeting
-func ClassResetCombat(world cardinal.WorldContext, id types.EntityID, name string) error {
+func ClassResetCombat(world cardinal.WorldContext, id types.EntityID) error {
 
-	var err error
+	name, err := cardinal.GetComponent[comp.UnitName](world, id)
+	if err != nil {
+		return fmt.Errorf("error getting name component (class attack system): %v", err)
+	}
 
-	switch name {
+	switch name.UnitName {
 	case "FireSpirit":
 		err = channelingResetCombat(world, id)
 	case "LeafBird":

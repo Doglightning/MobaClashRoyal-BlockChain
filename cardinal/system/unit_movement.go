@@ -75,8 +75,12 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 
 			//if out of attack range but in aggro range
 			if adjustedDistance > float32(uAtk.AttackRadius) && adjustedDistance <= float32(uAtk.AggroRadius) {
-				uAtk.Combat = false
-				uAtk.Frame = 0
+				//reset combat
+				err = ClassResetCombat(world, id)
+				if err != nil {
+					fmt.Printf(" 1(unit_movement.go): %v \n", err)
+					continue
+				}
 				secondIfCondition = false //not in combat but need to make sure not moving with direction map
 				//set attack component
 				if err = cardinal.SetComponent(world, id, uAtk); err != nil {
@@ -116,8 +120,12 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 				}
 				//if out of both attack and aggro range
 			} else if adjustedDistance > float32(uAtk.AggroRadius) {
-				uAtk.Combat = false
-				uAtk.Frame = 0
+				//reset combat
+				err = ClassResetCombat(world, id)
+				if err != nil {
+					fmt.Printf("2 (unit_movement.go): %v \n", err)
+					continue
+				}
 				//set attack component
 				if err = cardinal.SetComponent(world, id, uAtk); err != nil {
 					fmt.Printf("error setting attack component (unit_movement.go): %v \n", err)

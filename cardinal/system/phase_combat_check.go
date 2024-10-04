@@ -32,42 +32,56 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 	combatFilter := cardinal.ComponentFilter(func(m comp.Attack) bool {
 		return !m.Combat
 	})
+	//filter units knocked back
+	ccFilter := cardinal.ComponentFilter(func(m comp.CC) bool {
+		return m.KnockBack
+	})
 	//for each unit not in combat
 	err := cardinal.NewSearch().Entity(
 		filter.Contains(filter.Component[comp.UnitTag]())).
-		Where(combatFilter).Each(world, func(id types.EntityID) bool {
+		Where(cardinal.OrFilter(combatFilter, ccFilter)).Each(world, func(id types.EntityID) bool {
 
 		//get Unit CC component
 		cc, err := cardinal.GetComponent[comp.CC](world, id)
 		if err != nil {
-			fmt.Printf("error getting unit cc component (unit_movement.go): %v \n", err)
+			fmt.Printf("error getting unit cc component (check_combat.go): %v \n", err)
+			return false
 		}
 
 		if cc.Stun > 0 { //if unit stunned cannot attack
-			return false
+			return true
 		}
 
-		//get attack component
-		uAtk, err := cardinal.GetComponent[comp.Attack](world, id)
+		//get Unit Components
+		uPos, uRadius, uAtk, uTeam, MatchID, class, err := GetComponents6[comp.Position, comp.UnitRadius, comp.Attack, comp.Team, comp.MatchId, comp.Class](world, id)
 		if err != nil {
-			fmt.Printf("failed to get attack comp (check_combat.go): %v \n", err)
+			fmt.Printf("(check_combat.go) -%v \n", err)
 			return false
 		}
 
-		if !uAtk.Combat { //not in combat
-			//get Unit Components
-			uPos, uRadius, uAtk, uTeam, MatchID, class, err := GetComponents6[comp.Position, comp.UnitRadius, comp.Attack, comp.Team, comp.MatchId, comp.Class](world, id)
-			if err != nil {
-				fmt.Printf("(check_combat.go) -%v \n", err)
-				return false
-			}
+		// get collision Hash
+		collisionHash, err := getCollisionHashGSS(world, MatchID)
+		if err != nil {
+			fmt.Printf("error retrieving SpartialHash component on tempSpartialHash (check_combat.go): %s \n", err)
+			return false
+		}
 
-			// get collision Hash
-			collisionHash, err := getCollisionHashGSS(world, MatchID)
-			if err != nil {
-				fmt.Printf("error retrieving SpartialHash component on tempSpartialHash (check_combat.go): %s \n", err)
-				return false
-			}
+		// if cc.KnockBack { //reset combat so
+		// 	//get knockback component
+		// 	name, err := cardinal.GetComponent[comp.UnitName](world, id)
+		// 	if err != nil {
+		// 		fmt.Printf("error getting unit knockback component (check_combat.go): %v \n", err)
+		// 		return false
+		// 	}
+		// 	//reset combat
+		// 	err = ClassResetCombat(world, id, name.UnitName)
+		// 	if err != nil {
+		// 		fmt.Printf("error getting unit knockback component (check_combat.go): %v \n", err)
+		// 		return false
+		// 	}
+		// }
+
+		if !uAtk.Combat {
 			//find closest enemy
 			eID, eX, eY, eRadius, found := findClosestEnemy(collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uAtk.AggroRadius, uTeam.Team, class.Class)
 			if found { //found enemy
@@ -83,9 +97,9 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 						return false
 					}
 				}
-
 			}
 		}
+
 		return true
 	})
 	return err
@@ -240,6 +254,20 @@ func findClosestEnemy(hash *comp.SpatialHash, objID types.EntityID, startX, star
 		}
 	}
 	return closestEnemy, closestX, closestY, closestRadius, foundEnemy
+}
+
+func isEnemyInRange(world cardinal.WorldContext, id types.EntityID) (bool, error) {
+
+	// //get enemy position and radius components
+	// ePos, eRadius, err := GetComponents2[comp.Position, comp.UnitRadius](world, uAtk.Target)
+	// if err != nil {
+	// 	fmt.Printf("combat compoenents (unit_movement.go): %s \n", err)
+	// 	return false, nil
+	// }
+	// //distance between unit and enemy minus their radius
+	// adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, ePos.PositionVectorX, ePos.PositionVectorY) - float32(eRadius.UnitRadius) - float32(uRadius.UnitRadius)
+
+	return true, nil
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
