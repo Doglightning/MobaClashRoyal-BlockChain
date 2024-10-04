@@ -66,15 +66,20 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 			return false
 		}
 
-		// if cc.KnockBack { //reset combat so
-		// 	//get knockback component
-		// 	name, err := cardinal.GetComponent[comp.UnitName](world, id)
+		// if cc.KnockBack && uAtk.Combat { //reset combat so
+		// 	//get enemy position and radius components
+		// 	ePos, eRadius, err := GetComponents2[comp.Position, comp.UnitRadius](world, uAtk.Target)
 		// 	if err != nil {
-		// 		fmt.Printf("error getting unit knockback component (check_combat.go): %v \n", err)
+		// 		fmt.Printf("enemy compoenents (check_combat.go): %s \n", err)
 		// 		return false
 		// 	}
+		// 	//distance between unit and enemy minus their radius
+		// 	adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, ePos.PositionVectorX, ePos.PositionVectorY) - float32(eRadius.UnitRadius) - float32(uRadius.UnitRadius)
+		// 	//if out of attack range but in aggro range
+		// 	if adjustedDistance > float32(uAtk.AttackRadius) && adjustedDistance <= float32(uAtk.AggroRadius) {
+
 		// 	//reset combat
-		// 	err = ClassResetCombat(world, id, name.UnitName)
+		// 	err = ClassResetCombat(world, id)
 		// 	if err != nil {
 		// 		fmt.Printf("error getting unit knockback component (check_combat.go): %v \n", err)
 		// 		return false
