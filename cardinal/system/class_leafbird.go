@@ -8,17 +8,17 @@ import (
 	"pkg.world.dev/world-engine/cardinal/types"
 )
 
-// fireSpiritSpawnSP struct contains configuration for an fire spirit in terms of their shooting properties.
-type leafBirdSpawnSP struct {
+// leafBirdSP struct contains configuration for an leafBirdSP in terms of their shooting properties.
+type leafBirdSP struct {
 	Hieght    float32 //triangle hieght
 	BaseWidth float32 //triangle base width
 	Push      float32
 	Damage    float32
 }
 
-// NewFireSpiritSpawnSP creates a new instance of NewFireSpiritSP with default settings.
-func NewLeafBirdSpawnSP() *leafBirdSpawnSP {
-	return &leafBirdSpawnSP{
+// NewleafBirdSPSP creates a new instance of leafBirdSPSP with default settings.
+func NewLeafBirdSP() *leafBirdSP {
+	return &leafBirdSP{
 		Hieght:    925,
 		BaseWidth: 125,
 		Push:      50,
@@ -26,12 +26,12 @@ func NewLeafBirdSpawnSP() *leafBirdSpawnSP {
 	}
 }
 
-// shoots the fire attack every frame
+// AoE knockback and damage
 func leafBirdSp(world cardinal.WorldContext, id types.EntityID) error {
 	//get fire spirit vars
-	leafBird := NewLeafBirdSpawnSP()
+	leafBird := NewLeafBirdSP()
 
-	//get team comp
+	//get unit comps
 	team, matchID, mapName, pos, err := GetComponents4[comp.Team, comp.MatchId, comp.MapName, comp.Position](world, id)
 	if err != nil {
 		return fmt.Errorf("error getting unit comps (leafBirdSp): %v", err)
@@ -40,12 +40,12 @@ func leafBirdSp(world cardinal.WorldContext, id types.EntityID) error {
 	//get collision hash
 	gameStateID, hash, err := getCollisionHashAndGameState(world, matchID)
 	if err != nil {
-		return fmt.Errorf("error getting spatial hash compoenent (leafBirdSp): %v", err)
+		return fmt.Errorf("(leafBirdSp): %v", err)
 	}
 
-	//find the 3 points of the fire spirit AoE triangle attack
+	//find the 4 corners of the AoE rectangle
 	topLeft, topRight, botLeft, botRight := CreateRectangleBase(Point{X: pos.PositionVectorX, Y: pos.PositionVectorY}, Point{X: pos.RotationVectorX, Y: pos.RotationVectorY}, leafBird.BaseWidth, leafBird.Hieght)
-
+	//find the rectangle that contains our AoE normalized to the (x, y) coord system
 	_, topRightA, botLeftB, _ := FindRectangleAABB(topLeft, topRight, botLeft, botRight)
 
 	// Define a map to track unique collisions
@@ -64,7 +64,6 @@ func leafBirdSp(world cardinal.WorldContext, id types.EntityID) error {
 			for _, collID := range collList {         //for each collision
 				collidedEntities[collID] = true //add to map
 			}
-
 		}
 	}
 
@@ -74,7 +73,7 @@ func leafBirdSp(world cardinal.WorldContext, id types.EntityID) error {
 			continue
 		}
 
-		//get targets team
+		//get target team and class components
 		targetTeam, targetClass, err := GetComponents2[comp.Team, comp.Class](world, collID)
 		if err != nil {
 			fmt.Printf("error getting targets compoenents (leafBirdSp): %v \n", err)
@@ -82,17 +81,18 @@ func leafBirdSp(world cardinal.WorldContext, id types.EntityID) error {
 		}
 
 		if team.Team != targetTeam.Team { //dont attack friendlies soilder!!
-
+			//get target position and radius components
 			targetPos, targetRad, err := GetComponents2[comp.Position, comp.UnitRadius](world, collID)
 			if err != nil {
 				fmt.Printf("error getting targets compoenents (leafBirdSp): %v \n", err)
 				continue
 			}
 
+			//does our unit intersect the AoE
 			if CircleIntersectsRectangle(Point{X: targetPos.PositionVectorX, Y: targetPos.PositionVectorY}, float32(targetRad.UnitRadius), topLeft, topRight, botRight, botLeft) {
 
 				if targetClass.Class != "structure" { // cant push structures
-
+					//get cc comp
 					targetCC, err := cardinal.GetComponent[comp.CC](world, collID)
 					if err != nil {
 						return fmt.Errorf("(leafBirdSp) -  %s ", err)
@@ -102,23 +102,18 @@ func leafBirdSp(world cardinal.WorldContext, id types.EntityID) error {
 					if err := applyKnockBack(world, collID, hash, targetPos, pos, targetRad, targetTeam, targetClass, mapName, targetCC, leafBird.Push); err != nil {
 						return fmt.Errorf("(leafBirdSp) -  %s ", err)
 					}
-
 				}
-
 				//apply damage
 				if err = applyDamage(world, collID, leafBird.Damage); err != nil {
 					return fmt.Errorf("(leafBirdSp) - %v", err)
 				}
-
 			}
-
 		}
 	}
 	// update hash
 	if err := cardinal.SetComponent(world, gameStateID, hash); err != nil {
 		return fmt.Errorf("error setting hash (leafBirdSp): %s ", err)
 	}
-
 	return nil
 }
 
@@ -143,16 +138,13 @@ func leafBirdAttackSystem(world cardinal.WorldContext, id types.EntityID, atk *c
 
 	//check if in a SP animation or a regular attack
 	if atk.Frame == 0 && unitSp.CurrentSp >= unitSp.MaxSp { //In special power
-
 		unitSp.Charged = true
-
 	} else if atk.Frame == 0 && unitSp.CurrentSp < unitSp.MaxSp { // in regular attack
 		unitSp.Charged = false
 	}
 
 	//if unit is in its damage frame and not charged
 	if atk.Frame == atk.DamageFrame && !unitSp.Charged {
-
 		//peck em >:D
 		err = applyDamage(world, atk.Target, atk.Damage)
 		if err != nil {
@@ -178,7 +170,6 @@ func leafBirdAttackSystem(world cardinal.WorldContext, id types.EntityID, atk *c
 
 		//return Sp to 0
 		unitSp.CurrentSp = 0
-
 	}
 
 	//if target died in cast (self target) and attack frame is at end of animation or start (don't interupt the fire strike once its going even if target died)
@@ -193,14 +184,9 @@ func leafBirdAttackSystem(world cardinal.WorldContext, id types.EntityID, atk *c
 	}
 	atk.Frame++
 
-	// set updated attack component
-	if err := cardinal.SetComponent(world, id, atk); err != nil {
-		return fmt.Errorf("error updating attack component ( leafBirdAttackSystem): %s ", err)
+	// update atk and sp components
+	if err := SetComponents2(world, id, atk, unitSp); err != nil {
+		return fmt.Errorf("2 (leafBirdAttackSystem): %s ", err)
 	}
-	// set updated sp component
-	if err := cardinal.SetComponent(world, id, unitSp); err != nil {
-		return fmt.Errorf("error updating special power component ( leafBirdAttackSystem): %s ", err)
-	}
-
 	return nil
 }
