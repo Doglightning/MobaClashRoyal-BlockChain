@@ -27,38 +27,20 @@ func NewLeafBirdSpawnSP() *leafBirdSpawnSP {
 }
 
 // shoots the fire attack every frame
-func leafBirdSpawn(world cardinal.WorldContext, id types.EntityID) error {
+func leafBirdSp(world cardinal.WorldContext, id types.EntityID) error {
 	//get fire spirit vars
 	leafBird := NewLeafBirdSpawnSP()
 
 	//get team comp
-	team, err := cardinal.GetComponent[comp.Team](world, id)
+	team, matchID, mapName, pos, err := GetComponents4[comp.Team, comp.MatchId, comp.MapName, comp.Position](world, id)
 	if err != nil {
-		return fmt.Errorf("error getting team component (class fireSpirit.go): %v", err)
-	}
-
-	//get matchID component
-	matchID, err := cardinal.GetComponent[comp.MatchId](world, id)
-	if err != nil {
-		return fmt.Errorf("error getting position component (class fireSpirit.go): %v", err)
-	}
-
-	//get matchID component
-	mapName, err := cardinal.GetComponent[comp.MapName](world, id)
-	if err != nil {
-		return fmt.Errorf("error getting map component (class fireSpirit.go): %v", err)
+		return fmt.Errorf("error getting unit comps (leafBirdSp): %v", err)
 	}
 
 	//get collision hash
-	hash, err := getCollisionHashGSS(world, matchID)
+	gameStateID, hash, err := getCollisionHashAndGameState(world, matchID)
 	if err != nil {
-		return fmt.Errorf("error getting spatial hash compoenent(class fireSpirit.go): %v", err)
-	}
-
-	//get position comp
-	pos, err := cardinal.GetComponent[comp.Position](world, id)
-	if err != nil {
-		return fmt.Errorf("error getting position component (class fireSpirit.go): %v", err)
+		return fmt.Errorf("error getting spatial hash compoenent(leafBirdSp): %v", err)
 	}
 
 	//find the 3 points of the fire spirit AoE triangle attack
@@ -70,7 +52,7 @@ func leafBirdSpawn(world cardinal.WorldContext, id types.EntityID) error {
 	collidedEntities := make(map[types.EntityID]bool)
 
 	if SpatialGridCellSize <= 0 {
-		return fmt.Errorf("invalid SpatialGridCellSize (class fireSpirit.go)")
+		return fmt.Errorf("invalid SpatialGridCellSize (leafBirdSp)")
 	}
 
 	// Loop through all `x` values from the min to max x, stepping by `stepSize`.
@@ -95,13 +77,13 @@ func leafBirdSpawn(world cardinal.WorldContext, id types.EntityID) error {
 		//get targets team
 		targetTeam, err := cardinal.GetComponent[comp.Team](world, collID)
 		if err != nil {
-			fmt.Printf("error getting targets team compoenent (class fireSpirit.go): %v \n", err)
+			fmt.Printf("error getting targets team compoenent (leafBirdSp): %v \n", err)
 			continue
 		}
 
 		targetClass, err := cardinal.GetComponent[comp.Class](world, collID)
 		if err != nil {
-			fmt.Printf("error getting targets attack compoenent (class fireSpirit.go): %v \n", err)
+			fmt.Printf("error getting targets attack compoenent (leafBirdSp): %v \n", err)
 			continue
 		}
 
@@ -109,13 +91,13 @@ func leafBirdSpawn(world cardinal.WorldContext, id types.EntityID) error {
 
 			targetPos, err := cardinal.GetComponent[comp.Position](world, collID)
 			if err != nil {
-				fmt.Printf("error getting targets Position compoenent (class fireSpirit.go): %v \n", err)
+				fmt.Printf("error getting targets Position compoenent (leafBirdSp): %v \n", err)
 				continue
 			}
 
 			targetRad, err := cardinal.GetComponent[comp.UnitRadius](world, collID)
 			if err != nil {
-				fmt.Printf("error getting targets radius compoenent (class fireSpirit.go): %v \n", err)
+				fmt.Printf("error getting targets radius compoenent (leafBirdSp): %v \n", err)
 				continue
 			}
 
@@ -145,22 +127,21 @@ func leafBirdSpawn(world cardinal.WorldContext, id types.EntityID) error {
 
 					// set updated sp component
 					if err := cardinal.SetComponent(world, collID, targetPos); err != nil {
-						return fmt.Errorf("error 11updating special power component (leafBirdAttack): %s ", err)
+						return fmt.Errorf("error 11updating special power component (leafBirdSp): %s ", err)
 					}
 				}
 
 				if err = applyDamage(world, collID, leafBird.Damage); err != nil {
-					return fmt.Errorf("error on leafbird attack (leafBirdAttack): %v", err)
+					return fmt.Errorf("error on leafbird attack (leafBirdSp): %v", err)
 				}
 
 			}
 
 		}
 	}
-	gs, _ := getGameStateGSS(world, matchID)
 	// set updated sp component
-	if err := cardinal.SetComponent(world, gs, hash); err != nil {
-		return fmt.Errorf("error updating special power component (Fire Spirit Attack): %s ", err)
+	if err := cardinal.SetComponent(world, gameStateID, hash); err != nil {
+		return fmt.Errorf("error updating special power component (leafBirdSp): %s ", err)
 	}
 
 	return nil
@@ -215,7 +196,7 @@ func leafBirdAttackSystem(world cardinal.WorldContext, id types.EntityID, atk *c
 		atk.State = "Channeling"
 
 		//SHOT AIR BIOTCH >:D
-		err = leafBirdSpawn(world, id)
+		err = leafBirdSp(world, id)
 		if err != nil {
 			return err
 		}

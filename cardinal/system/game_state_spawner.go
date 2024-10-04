@@ -344,6 +344,31 @@ func getCollisionHashGSS(world cardinal.WorldContext, mID *comp.MatchId) (*comp.
 	return collisionHash, nil
 }
 
+// Returns the collision hash and gamestate id
+func getCollisionHashAndGameState(world cardinal.WorldContext, mID *comp.MatchId) (types.EntityID, *comp.SpatialHash, error) {
+	//get game state to get spatial hash tree
+	gameFilter := cardinal.ComponentFilter[comp.MatchId](func(m comp.MatchId) bool {
+		return m.MatchId == mID.MatchId
+	})
+	gameStateID, err := cardinal.NewSearch().Entity(
+		filter.Exact(GameStateFilters())).
+		Where(gameFilter).First(world)
+
+	if err != nil {
+		return gameStateID, nil, fmt.Errorf("error searching for match (game state spawner): %w", err)
+	}
+
+	if gameStateID == iterators.BadID { // Assuming cardinal.NoEntity represents no result found
+		return gameStateID, nil, fmt.Errorf("no match found with ID or missing components (game state spawner): %s", mID.MatchId)
+	}
+	//get hash
+	collisionHash, err := cardinal.GetComponent[comp.SpatialHash](world, gameStateID)
+	if err != nil {
+		return gameStateID, nil, fmt.Errorf("collision hash not found (game state spawner): %w", err)
+	}
+	return gameStateID, collisionHash, nil
+}
+
 func GameStateFilters() (filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper, filter.ComponentWrapper) {
 	return filter.Component[comp.MatchId](), filter.Component[comp.UID](), filter.Component[comp.Player1](), filter.Component[comp.Player2](), filter.Component[comp.SpatialHash]()
 }
