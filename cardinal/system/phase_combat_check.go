@@ -23,7 +23,7 @@ func CombatCheckSystem(world cardinal.WorldContext) error {
 		fmt.Printf("error searching for structure combat (check_combat.go): %v \n", err)
 	}
 
-	return err
+	return nil
 }
 
 // check if unit not in combat can find a unit to be in combat with
@@ -44,7 +44,7 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 		//get Unit CC component
 		cc, err := cardinal.GetComponent[comp.CC](world, id)
 		if err != nil {
-			fmt.Printf("error getting unit cc component (check_combat.go): %v \n", err)
+			fmt.Printf("error getting unit cc component (unitCombatSearch - check_combat.go): %v \n", err)
 			return false
 		}
 
@@ -55,36 +55,38 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 		//get Unit Components
 		uPos, uRadius, uAtk, uTeam, MatchID, class, err := GetComponents6[comp.Position, comp.UnitRadius, comp.Attack, comp.Team, comp.MatchId, comp.Class](world, id)
 		if err != nil {
-			fmt.Printf("(check_combat.go) -%v \n", err)
+			fmt.Printf("(unitCombatSearch - check_combat.go) -%v \n", err)
 			return false
 		}
 
 		// get collision Hash
 		collisionHash, err := getCollisionHashGSS(world, MatchID)
 		if err != nil {
-			fmt.Printf("error retrieving SpartialHash component on tempSpartialHash (check_combat.go): %s \n", err)
+			fmt.Printf("error retrieving SpartialHash component on tempSpartialHash (cunitCombatSearch - check_combat.go): %s \n", err)
 			return false
 		}
 
-		// if cc.KnockBack && uAtk.Combat { //reset combat so
-		// 	//get enemy position and radius components
-		// 	ePos, eRadius, err := GetComponents2[comp.Position, comp.UnitRadius](world, uAtk.Target)
-		// 	if err != nil {
-		// 		fmt.Printf("enemy compoenents (check_combat.go): %s \n", err)
-		// 		return false
-		// 	}
-		// 	//distance between unit and enemy minus their radius
-		// 	adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, ePos.PositionVectorX, ePos.PositionVectorY) - float32(eRadius.UnitRadius) - float32(uRadius.UnitRadius)
-		// 	//if out of attack range but in aggro range
-		// 	if adjustedDistance > float32(uAtk.AttackRadius) && adjustedDistance <= float32(uAtk.AggroRadius) {
+		if cc.KnockBack && uAtk.Combat { //reset combat so
+			//get enemy position and radius components
+			ePos, eRadius, err := GetComponents2[comp.Position, comp.UnitRadius](world, uAtk.Target)
+			if err != nil {
+				fmt.Printf("enemy compoenents (unitCombatSearch - check_combat.go): %s \n", err)
+				return false
+			}
+			//distance between unit and enemy minus their radius
+			adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, ePos.PositionVectorX, ePos.PositionVectorY) - float32(eRadius.UnitRadius) - float32(uRadius.UnitRadius)
 
-		// 	//reset combat
-		// 	err = ClassResetCombat(world, id)
-		// 	if err != nil {
-		// 		fmt.Printf("error getting unit knockback component (check_combat.go): %v \n", err)
-		// 		return false
-		// 	}
-		// }
+			//if out of attack range but in aggro range OR if out of both attack and aggro range
+			if (adjustedDistance > float32(uAtk.AttackRadius) && adjustedDistance <= float32(uAtk.AggroRadius)) || adjustedDistance > float32(uAtk.AggroRadius) {
+				//reset combat
+				err = ClassResetCombat(world, id, uAtk)
+				if err != nil {
+					fmt.Printf(" 1(unitCombatSearch - check_combat.go): %v \n", err)
+					return false
+				}
+
+			}
+		}
 
 		if !uAtk.Combat {
 			//find closest enemy
@@ -96,13 +98,16 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 				if adjustedDistance <= float32(uAtk.AttackRadius) {
 					uAtk.Combat = true
 					uAtk.Target = eID
-					//set attack component
-					if err = cardinal.SetComponent(world, id, uAtk); err != nil {
-						fmt.Printf("error setting attack component (check_combat.go): %v \n", err)
-						return false
-					}
+					uAtk.Frame = 0
 				}
 			}
+		}
+		cc.KnockBack = false
+
+		//set combat check comps
+		if err = SetComponents2(world, id, uAtk, cc); err != nil {
+			fmt.Printf("main (unitCombatSearch - check_combat.go): %v \n", err)
+			return false
 		}
 
 		return true
@@ -190,7 +195,6 @@ func structureCombatSearch(world cardinal.WorldContext) error {
 								return false
 							}
 						}
-
 					}
 				}
 			}
@@ -261,72 +265,39 @@ func findClosestEnemy(hash *comp.SpatialHash, objID types.EntityID, startX, star
 	return closestEnemy, closestX, closestY, closestRadius, foundEnemy
 }
 
-func isEnemyInRange(world cardinal.WorldContext, id types.EntityID) (bool, error) {
-
-	// //get enemy position and radius components
-	// ePos, eRadius, err := GetComponents2[comp.Position, comp.UnitRadius](world, uAtk.Target)
-	// if err != nil {
-	// 	fmt.Printf("combat compoenents (unit_movement.go): %s \n", err)
-	// 	return false, nil
-	// }
-	// //distance between unit and enemy minus their radius
-	// adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, ePos.PositionVectorX, ePos.PositionVectorY) - float32(eRadius.UnitRadius) - float32(uRadius.UnitRadius)
-
-	return true, nil
-}
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////Default Combat Reset Functions////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func resetCombat(world cardinal.WorldContext, id types.EntityID) error {
-	// reset attack component
-	err := cardinal.UpdateComponent(world, id, func(attack *comp.Attack) *comp.Attack {
-		if attack == nil {
-			fmt.Printf("error retrieving enemy attack component (resetCombat/check combat.go): ")
-			return nil
-		}
-		attack.Combat = false
-		attack.Frame = 0
-		return attack
-	})
-	if err != nil {
-		return fmt.Errorf("error updating attack comp (resetCombat/check combat.go): %v", err)
-	}
-	return nil
+func resetCombat(attack *comp.Attack) {
+
+	attack.Combat = false
+	attack.Frame = 0
+
 }
 
 // overwrite base destruction.
 // if unit being attacked by channel dies don't cancel attack.
-func channelingResetCombat(world cardinal.WorldContext, id types.EntityID) error {
+func channelingResetCombat(world cardinal.WorldContext, id types.EntityID, attack *comp.Attack) error {
 	//reset attack component
-	err := cardinal.UpdateComponent(world, id, func(attack *comp.Attack) *comp.Attack {
-		if attack == nil {
-			fmt.Printf("error retrieving enemy attack component (channelingResetCombat/check combat.go): \n")
-			return nil
-		}
-		//get special power component
-		sp, err := cardinal.GetComponent[comp.Sp](world, id)
-		if err != nil {
-			fmt.Printf("error retrieving special power comp (channelingResetCombat/check combat.go): \n")
-			return nil
-		}
 
-		if attack.Frame < sp.DamageFrame && sp.Charged { //if target dies b4 fire attack goes off
-			//reset units combat
-			attack.Frame = 0
-			attack.Combat = false
-			attack.State = "Default"
-		} else { //if unit started channeling fire
-			attack.State = "Channeling"
-			attack.Target = id //set target to self to not get errors if triggering functions that ref this but unit is dead
-		}
-		return attack
-	})
+	//get special power component
+	sp, err := cardinal.GetComponent[comp.Sp](world, id)
 	if err != nil {
-		return fmt.Errorf("error updating attack comp (channelingResetCombat/check combat.go): %v", err)
+		fmt.Printf("error retrieving special power comp (channelingResetCombat/check combat.go): \n")
+		return nil
+	}
+
+	if attack.Frame < sp.DamageFrame && sp.Charged { //if target dies b4 fire attack goes off
+		//reset units combat
+		attack.Frame = 0
+		attack.Combat = false
+		attack.State = "Default"
+	} else { //if unit started channeling fire
+		attack.State = "Channeling"
+		attack.Target = id //set target to self to not get errors if triggering functions that ref this but unit is dead
 	}
 
 	return nil

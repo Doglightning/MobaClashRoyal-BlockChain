@@ -100,7 +100,7 @@ func ClassAttackSystem(world cardinal.WorldContext, id types.EntityID, atk *comp
 }
 
 // on desetry resets combat for units targeting
-func ClassResetCombat(world cardinal.WorldContext, id types.EntityID) error {
+func ClassResetCombat(world cardinal.WorldContext, id types.EntityID, atk *comp.Attack) error {
 
 	name, err := cardinal.GetComponent[comp.UnitName](world, id)
 	if err != nil {
@@ -109,11 +109,11 @@ func ClassResetCombat(world cardinal.WorldContext, id types.EntityID) error {
 
 	switch name.UnitName {
 	case "FireSpirit":
-		err = channelingResetCombat(world, id)
+		err = channelingResetCombat(world, id, atk)
 	case "LeafBird":
-		err = channelingResetCombat(world, id)
+		err = channelingResetCombat(world, id, atk)
 	default:
-		err = resetCombat(world, id)
+		resetCombat(atk)
 	}
 
 	return err

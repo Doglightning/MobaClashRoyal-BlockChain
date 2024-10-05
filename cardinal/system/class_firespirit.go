@@ -29,34 +29,16 @@ func fireSpiritSpawn(world cardinal.WorldContext, id types.EntityID) error {
 	//get fire spirit vars
 	fireSprit := NewFireSpiritSpawnSP()
 
-	//get team comp
-	team, err := cardinal.GetComponent[comp.Team](world, id)
+	//get sp comps
+	team, matchID, class, pos, err := GetComponents4[comp.Team, comp.MatchId, comp.Class, comp.Position](world, id)
 	if err != nil {
-		return fmt.Errorf("error getting team component (class fireSpirit.go): %v", err)
-	}
-
-	//get matchID component
-	matchID, err := cardinal.GetComponent[comp.MatchId](world, id)
-	if err != nil {
-		return fmt.Errorf("error getting position component (class fireSpirit.go): %v", err)
-	}
-
-	//get attack component
-	class, err := cardinal.GetComponent[comp.Class](world, id)
-	if err != nil {
-		return fmt.Errorf("error getting class component (class fireSpirit.go): %v", err)
+		return fmt.Errorf("get sp comps (class fireSpiritSpawn): %v", err)
 	}
 
 	//get collision hash
 	hash, err := getCollisionHashGSS(world, matchID)
 	if err != nil {
-		return fmt.Errorf("error getting spatial hash compoenent(class fireSpirit.go): %v", err)
-	}
-
-	//get position comp
-	pos, err := cardinal.GetComponent[comp.Position](world, id)
-	if err != nil {
-		return fmt.Errorf("error getting position component (class fireSpirit.go): %v", err)
+		return fmt.Errorf("error getting spatial hash compoenent(class fireSpiritSpawn): %v", err)
 	}
 
 	//find the 3 points of the fire spirit AoE triangle attack
@@ -100,20 +82,10 @@ func fireSpiritSpawn(world cardinal.WorldContext, id types.EntityID) error {
 
 		if team.Team != targetTeam.Team { //dont attack friendlies soilder!!
 
-			// reduce health by units attack damage
-			err = cardinal.UpdateComponent(world, collID, func(health *comp.Health) *comp.Health {
-				if health == nil {
-					fmt.Printf("error retrieving Health component (class fireSpirit.go) \n")
-					return nil
-				}
-				health.CurrentHP -= fireSprit.Damage
-				if health.CurrentHP < 0 {
-					health.CurrentHP = 0 //never have negative health
-				}
-				return health
-			})
+			err = applyDamage(world, collID, fireSprit.Damage)
+
 			if err != nil {
-				fmt.Printf("error updating health (class fireSpirit.go): %v \n", err)
+				fmt.Printf("error apply dmg (class fireSpirit.go): %v \n", err)
 				continue
 			}
 
@@ -162,7 +134,7 @@ func FireSpiritAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 
 	//if unit is in damage frames when charged
 	if unitSp.DamageFrame <= atk.Frame && atk.Frame <= unitSp.DamageEndFrame && unitSp.Charged {
-
+		atk.State = "Channeling"
 		//Shoot Fire >:D
 		err = fireSpiritSpawn(world, id)
 		if err != nil {
@@ -175,7 +147,7 @@ func FireSpiritAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 	}
 
 	//if target died in cast (self target) and attack frame is at end of animation or start (don't interupt the fire strike once its going even if target died)
-	if (atk.Target == id && atk.Frame >= unitSp.Rate-6) || (atk.Target == id && atk.Frame < unitSp.DamageFrame) {
+	if (atk.Target == id && atk.Frame >= unitSp.Rate-6) || (atk.Target == id && atk.Frame < unitSp.DamageFrame) || (atk.Frame >= unitSp.Rate && atk.State == "Channeling") {
 		atk.State = "Default"
 		atk.Combat = false
 	}

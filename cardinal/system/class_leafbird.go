@@ -102,6 +102,10 @@ func leafBirdSp(world cardinal.WorldContext, id types.EntityID) error {
 					if err := applyKnockBack(world, collID, hash, targetPos, pos, targetRad, targetTeam, targetClass, mapName, targetCC, leafBird.Push); err != nil {
 						return fmt.Errorf("(leafBirdSp) -  %s ", err)
 					}
+					// update hash and position
+					if err := SetComponents2(world, id, pos, targetCC); err != nil {
+						return fmt.Errorf("(applyKnockBack): %s ", err)
+					}
 				}
 				//apply damage
 				if err = applyDamage(world, collID, leafBird.Damage); err != nil {
@@ -114,6 +118,7 @@ func leafBirdSp(world cardinal.WorldContext, id types.EntityID) error {
 	if err := cardinal.SetComponent(world, gameStateID, hash); err != nil {
 		return fmt.Errorf("error setting hash (leafBirdSp): %s ", err)
 	}
+
 	return nil
 }
 

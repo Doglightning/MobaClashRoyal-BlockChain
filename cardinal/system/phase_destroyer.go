@@ -310,9 +310,23 @@ func resetUnitsTargetingSelf(world cardinal.WorldContext, targetFilter cardinal.
 		filter.Contains(filter.Component[comp.UnitTag]())).
 		Where(targetFilter).Each(world, func(enemyID types.EntityID) bool {
 
-		err := ClassResetCombat(world, enemyID)
+		// reset attack component
+		err := cardinal.UpdateComponent(world, enemyID, func(attack *comp.Attack) *comp.Attack {
+			if attack == nil {
+				fmt.Printf("error retrieving enemy attack component (resetUnitsTargetingSelf/phase destroyer.go): ")
+				return nil
+			}
+
+			err := ClassResetCombat(world, enemyID, attack)
+			if err != nil {
+				fmt.Printf("error running ResetCombat (resetUnitsTargetingSelf/phase destroyer.go): %v \n", err)
+				return nil
+			}
+
+			return attack
+		})
 		if err != nil {
-			fmt.Printf("error running ResetCombat (resetUnitsTargetingSelf) \n")
+			fmt.Printf("error updating attack comp (resetUnitsTargetingSelf/phase destroyer.go): %v", err)
 			return false
 		}
 
