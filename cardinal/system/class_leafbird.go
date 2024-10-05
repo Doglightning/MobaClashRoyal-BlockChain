@@ -103,7 +103,7 @@ func leafBirdSp(world cardinal.WorldContext, id types.EntityID) error {
 						return fmt.Errorf("(leafBirdSp) -  %s ", err)
 					}
 					// update hash and position
-					if err := SetComponents2(world, id, pos, targetCC); err != nil {
+					if err := SetComponents2(world, collID, targetPos, targetCC); err != nil {
 						return fmt.Errorf("(applyKnockBack): %s ", err)
 					}
 				}
