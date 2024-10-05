@@ -32,7 +32,7 @@ func GameStateSpawnerSystem(world cardinal.WorldContext) error {
 			// No match found.
 			if count == 0 {
 				//Create new gamestate
-				teamStateID, err := cardinal.Create(world,
+				_, err := cardinal.Create(world,
 					comp.MatchId{MatchId: create.Msg.MatchID},
 					comp.UID{UID: 0},
 					comp.Player1{
@@ -50,23 +50,6 @@ func GameStateSpawnerSystem(world cardinal.WorldContext) error {
 
 				if err != nil {
 					return msg.CreateMatchResult{Success: false}, fmt.Errorf("error creating match (game_state_spawner.go): %v", err)
-				}
-
-				// get spatial hash for collision map
-				hash, err := cardinal.GetComponent[comp.SpatialHash](world, teamStateID)
-				if err != nil {
-					return msg.CreateMatchResult{Success: false}, fmt.Errorf("error getting hash component (game_state_spawner.go): %v", err)
-				}
-
-				//spawn bases
-				err = spawnBasesGSS(world, create.Msg.MatchID, teamStateID, create.Msg.MapName, hash)
-				if err != nil {
-					return msg.CreateMatchResult{Success: false}, err
-				}
-				//set hash
-				err = cardinal.SetComponent(world, teamStateID, hash)
-				if err != nil {
-					return msg.CreateMatchResult{Success: false}, fmt.Errorf("error setting hash (game_state_spawner.go): %v", err)
 				}
 
 				return msg.CreateMatchResult{Success: true}, nil // end logic for player1
@@ -102,6 +85,23 @@ func GameStateSpawnerSystem(world cardinal.WorldContext) error {
 					return msg.CreateMatchResult{Success: false}, fmt.Errorf("error adding Player2 component 2(game_state_spawner.go): %w", err)
 				}
 				return msg.CreateMatchResult{Success: false}, fmt.Errorf("error adding Player2 component 3(game_state_spawner.go): %w", err)
+			}
+
+			// get spatial hash for collision map
+			teamStateID, hash, err := getCollisionHashAndGameState(world, &comp.MatchId{MatchId: create.Msg.MatchID})
+			if err != nil {
+				return msg.CreateMatchResult{Success: false}, fmt.Errorf("error getting hash component (game_state_spawner.go): %v", err)
+			}
+
+			//spawn bases
+			err = spawnBasesGSS(world, create.Msg.MatchID, teamStateID, create.Msg.MapName, hash)
+			if err != nil {
+				return msg.CreateMatchResult{Success: false}, err
+			}
+			//set hash
+			err = cardinal.SetComponent(world, teamStateID, hash)
+			if err != nil {
+				return msg.CreateMatchResult{Success: false}, fmt.Errorf("error setting hash (game_state_spawner.go): %v", err)
 			}
 
 			return msg.CreateMatchResult{Success: true}, nil
