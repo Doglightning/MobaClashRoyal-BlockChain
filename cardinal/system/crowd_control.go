@@ -8,7 +8,7 @@ import (
 	"pkg.world.dev/world-engine/cardinal/types"
 )
 
-func applyKnockBack(world cardinal.WorldContext, id types.EntityID, hash *comp.SpatialHash, pos *comp.Position, dir *comp.Position, rad *comp.UnitRadius, team *comp.Team, class *comp.Class, mapName *comp.MapName, cc *comp.CC, push float32) error {
+func applyKnockBack(world cardinal.WorldContext, id types.EntityID, hash *comp.SpatialHash, pos *comp.Position, dir *comp.Position, rad *comp.UnitRadius, team *comp.Team, class *comp.Class, mapName *comp.MapName, cc *comp.CC, push float32, angle, rotation float64) error {
 	//can't push structures
 	if class.Class != "structure" {
 
@@ -18,11 +18,22 @@ func applyKnockBack(world cardinal.WorldContext, id types.EntityID, hash *comp.S
 		if !moveDirectionExsist(tempX, tempY, mapName.MapName) {
 			//find closest occupiable lication from target location to current
 			tempX, tempY = pushFromPtBtoA(world, hash, id, pos.PositionVectorX, pos.PositionVectorY, tempX, tempY, rad.UnitRadius, mapName)
+
+			if distanceBetweenTwoPoints(pos.PositionVectorX, pos.PositionVectorY, tempX, tempY) <= 0 {
+
+				position := &comp.Position{PositionVectorX: pos.PositionVectorX, PositionVectorY: pos.PositionVectorY}
+
+				findInboundsRotation(angle, rotation, position, dir.RotationVectorX, dir.RotationVectorY, push, mapName)
+
+				tempX = position.PositionVectorX
+				tempY = position.PositionVectorY
+
+			}
 		}
 		RemoveObjectFromSpatialHash(hash, id, pos.PositionVectorX, pos.PositionVectorX, rad.UnitRadius)
 
 		//attempt to push blocking units
-		pushBlockingUnit(world, hash, id, tempX, tempY, rad.UnitRadius, team.Team, class.Class, push*2, mapName)
+		pushBlockingUnit(world, hash, id, tempX, tempY, rad.UnitRadius, team.Team, class.Class, push, mapName)
 		//move unit.  walk around blocking units
 		pos.PositionVectorX, pos.PositionVectorY = moveFreeSpace(hash, id, pos.PositionVectorX, pos.PositionVectorY, tempX, tempY, rad.UnitRadius, team.Team, class.Class, mapName)
 		AddObjectSpatialHash(hash, id, pos.PositionVectorX, pos.PositionVectorY, rad.UnitRadius, team.Team, class.Class)

@@ -282,14 +282,20 @@ func moveUnitDirectionMap(position *comp.Position, team *comp.Team, movespeed fl
 		dirX = directionVector[0] * -1 //reverse direction for red
 		dirY = directionVector[1] * -1
 	}
+	//if unit walking out of bounds find in bounds rotation
+	findInboundsRotation(5, 180, position, dirX, dirY, movespeed, mapName)
 
+	return position, nil
+}
+
+// checks alternation left and right rotations until finds inbounds location
+func findInboundsRotation(angle, rotation float64, position *comp.Position, dirX, dirY, movespeed float32, mapName *comp.MapName) {
 	//update new x,y based on movespeed
 	tempX := position.PositionVectorX + (dirX * movespeed)
 	tempY := position.PositionVectorY + (dirY * movespeed)
 	tempDirX := dirX
 	tempDirY := dirY
 
-	angle := 5.0    // Degrees to rotate each step
 	sumAngle := 0.0 // Sum of rotated angles
 
 	for i := 0; ; i++ {
@@ -313,13 +319,11 @@ func moveUnitDirectionMap(position *comp.Position, team *comp.Team, movespeed fl
 		tempX = position.PositionVectorX + (dirX * movespeed)
 		tempY = position.PositionVectorY + (dirY * movespeed)
 
-		// Check if the rotation has reached 180 degrees
-		if math.Abs(sumAngle) >= 180 {
+		// Check if the rotation has reached rotation degrees
+		if math.Abs(sumAngle) >= rotation {
 			break
 		}
 	}
-
-	return position, nil
 }
 
 // Moves Unit towards enemy position

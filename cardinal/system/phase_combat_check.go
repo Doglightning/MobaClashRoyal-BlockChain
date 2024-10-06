@@ -290,14 +290,14 @@ func channelingResetCombat(world cardinal.WorldContext, id types.EntityID, attac
 		return nil
 	}
 
-	if attack.Frame < sp.DamageFrame && sp.Charged { //if target dies b4 fire attack goes off
+	if attack.Frame < sp.DamageFrame && sp.Charged || !sp.Charged { //if target dies b4 fire attack goes off
 		//reset units combat
 		attack.Frame = 0
 		attack.Combat = false
 		attack.State = "Default"
 	} else { //if unit started channeling fire
 		attack.State = "Channeling"
-		attack.Target = id //set target to self to not get errors if triggering functions that ref this but unit is dead
+		// attack.Target = id //set target to self to not get errors if triggering functions that ref this but unit is dead
 	}
 
 	return nil
