@@ -89,7 +89,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 					exists := moveDirectionExsist(uPos.PositionVectorX, uPos.PositionVectorY, mapName.MapName)
 					if exists {
 						//attempt to push blocking units
-						pushBlockingUnit(world, collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, class.Class, uTeam.Team, uMs.CurrentMS, mapName)
+						pushBlockingUnit(world, collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, class.Class, uMs.CurrentMS, mapName)
 						//move unit.  walk around blocking units
 						uPos.PositionVectorX, uPos.PositionVectorY = moveFreeSpace(collisionHash, id, tempX, tempY, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, class.Class, mapName)
 						// Set the new position component
