@@ -22,7 +22,7 @@ func applyKnockBack(world cardinal.WorldContext, id types.EntityID, hash *comp.S
 		RemoveObjectFromSpatialHash(hash, id, pos.PositionVectorX, pos.PositionVectorX, rad.UnitRadius)
 
 		//attempt to push blocking units
-		pushBlockingUnit(world, hash, id, tempX, tempY, rad.UnitRadius, class.Class, team.Team, push, mapName)
+		pushBlockingUnit(world, hash, id, tempX, tempY, rad.UnitRadius, team.Team, class.Class, push*2, mapName)
 		//move unit.  walk around blocking units
 		pos.PositionVectorX, pos.PositionVectorY = moveFreeSpace(hash, id, pos.PositionVectorX, pos.PositionVectorY, tempX, tempY, rad.UnitRadius, team.Team, class.Class, mapName)
 		AddObjectSpatialHash(hash, id, pos.PositionVectorX, pos.PositionVectorY, rad.UnitRadius, team.Team, class.Class)
