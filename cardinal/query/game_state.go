@@ -181,6 +181,7 @@ func unitStateGS(world cardinal.WorldContext, matchFilter cardinal.FilterFn, res
 		}
 		unit.Combat = unitAttack.Combat
 		unit.AttackFrame = unitAttack.Frame
+		unit.AttackRate = unitAttack.Rate
 
 		// Fetch SP component
 		unitSp, err := cardinal.GetComponent[comp.Sp](world, id)

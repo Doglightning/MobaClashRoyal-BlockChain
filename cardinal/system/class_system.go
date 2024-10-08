@@ -68,6 +68,8 @@ func ClassAttack(world cardinal.WorldContext, id types.EntityID, name string, at
 		err = archerLadyAttack(world, id, atk)
 	case "Base":
 		err = towerAttack(world, id, atk)
+	case "LavaGolem":
+		err = lavaGolemAttack(world, atk)
 	case "Mage":
 		err = mageAttack(world, id, atk)
 	case "Tower":
