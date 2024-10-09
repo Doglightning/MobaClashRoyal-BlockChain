@@ -80,6 +80,7 @@ func MeleeRangeAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 
 	//check if in a SP animation or a regular attack
 	if atk.Frame == 0 && unitSp.CurrentSp >= unitSp.MaxSp { //In special power
+		unitSp.Charged = true
 
 		if !unitSp.StructureTargetable {
 			//get Target name
@@ -88,13 +89,19 @@ func MeleeRangeAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 				return fmt.Errorf("error retrieving target name component (phase_Attack.go): %v", err)
 			}
 			if tarName.UnitName == "Base" || tarName.UnitName == "Tower" {
-				unitSp.Charged = false
-			} else {
-				unitSp.Charged = true
+
+				found, err := findClosestEnemySP(world, id, unitSp) //setup sp target and combat if unit is in charge but cannot target structures
+				if err != nil {
+					return fmt.Errorf("(phase_Attack.go): %v", err)
+				}
+
+				if !found {
+					unitSp.Charged = false
+				}
+
 			}
-		} else {
-			unitSp.Charged = true
 		}
+
 	} else if atk.Frame == 0 && unitSp.CurrentSp < unitSp.MaxSp { // in regular attack
 		unitSp.Charged = false
 	}
@@ -112,7 +119,7 @@ func MeleeRangeAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 		if unitSp.Charged {
 
 			//spawn special power
-			err = spSpawner(world, id, unitName.UnitName)
+			err = spSpawner(world, id, unitName.UnitName, unitSp)
 			if err != nil {
 				return err
 			}

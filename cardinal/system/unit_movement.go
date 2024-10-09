@@ -38,7 +38,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 		}
 
 		//get Unit Components
-		uPos, uRadius, uAtk, uTeam, uMs, MatchID, mapName, class, err := GetComponents8[comp.Position, comp.UnitRadius, comp.Attack, comp.Team, comp.Movespeed, comp.MatchId, comp.MapName, comp.Class](world, id)
+		uPos, uRadius, uAtk, uSp, uTeam, uMs, MatchID, mapName, class, err := GetComponents9[comp.Position, comp.UnitRadius, comp.Attack, comp.Sp, comp.Team, comp.Movespeed, comp.MatchId, comp.MapName, comp.Class](world, id)
 		if err != nil {
 			fmt.Printf("unit components (unit_movement.go) %v \n", err)
 			continue
@@ -58,9 +58,16 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 		secondIfCondition := true
 
 		//if units in combat
-		if uAtk.Combat {
+		if uAtk.Combat || uSp.Combat {
+			var targetID types.EntityID
+
+			if uAtk.Combat { // get target id if targeting Sp or normal attack
+				targetID = uAtk.Target
+			} else if uSp.Combat {
+				targetID = uSp.Target
+			}
 			//get enemy position and radius components
-			ePos, eRadius, err := GetComponents2[comp.Position, comp.UnitRadius](world, uAtk.Target)
+			ePos, eRadius, err := GetComponents2[comp.Position, comp.UnitRadius](world, targetID)
 			if err != nil {
 				fmt.Printf("combat compoenents (unit_movement.go): %s \n", err)
 				continue
@@ -70,6 +77,16 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 
 			//if out of attack range but in aggro range
 			if adjustedDistance > float32(uAtk.AttackRadius) && adjustedDistance <= float32(uAtk.AggroRadius) {
+				if uSp.Combat {
+					uSp.Combat = false //stop special because its not in range anymore
+					uAtk.Frame = 0
+					uSp.Target = 0
+					if err := cardinal.SetComponent(world, id, uSp); err != nil {
+						fmt.Printf("error setting sp comp (unit movement.go): %s \n", err)
+					}
+					continue
+				}
+
 				//reset combat
 				err = ClassResetCombat(world, id, uAtk)
 				if err != nil {
@@ -112,6 +129,16 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 				}
 				//if out of both attack and aggro range
 			} else if adjustedDistance > float32(uAtk.AggroRadius) {
+				if uSp.Combat {
+					uSp.Combat = false //stop special because its not in range anymore
+					uAtk.Frame = 0
+					uSp.Target = 0
+					if err := cardinal.SetComponent(world, id, uSp); err != nil {
+						fmt.Printf("error setting sp comp (unit movement.go): %s \n", err)
+					}
+					continue
+				}
+
 				//reset combat
 				err = ClassResetCombat(world, id, uAtk)
 				if err != nil {
@@ -132,9 +159,9 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 
 		}
 		//if units not in combat
-		if !uAtk.Combat && secondIfCondition {
+		if !uAtk.Combat && !uSp.Combat && secondIfCondition {
 			//Check for in range Enemies
-			eID, eX, eY, eRadius, found := findClosestEnemy(collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uAtk.AggroRadius, uTeam.Team, class.Class)
+			eID, eX, eY, eRadius, found := findClosestEnemy(collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uAtk.AggroRadius, uTeam.Team, class.Class, true)
 			if found { //found enemy
 				// Calculate squared distance between the unit and the enemy, minus their radii
 				adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, eX, eY) - float32(eRadius) - float32(uRadius.UnitRadius)

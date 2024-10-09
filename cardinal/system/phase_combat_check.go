@@ -36,6 +36,7 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 	ccFilter := cardinal.ComponentFilter(func(m comp.CC) bool {
 		return m.KnockBack
 	})
+
 	//for each unit not in combat
 	err := cardinal.NewSearch().Entity(
 		filter.Contains(filter.Component[comp.UnitTag]())).
@@ -53,7 +54,7 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 		}
 
 		//get Unit Components
-		uPos, uRadius, uAtk, uTeam, MatchID, class, err := GetComponents6[comp.Position, comp.UnitRadius, comp.Attack, comp.Team, comp.MatchId, comp.Class](world, id)
+		uPos, uRadius, uAtk, uSp, uTeam, MatchID, class, err := GetComponents7[comp.Position, comp.UnitRadius, comp.Attack, comp.Sp, comp.Team, comp.MatchId, comp.Class](world, id)
 		if err != nil {
 			fmt.Printf("(unitCombatSearch - check_combat.go) -%v \n", err)
 			return false
@@ -88,9 +89,33 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 			}
 		}
 
+		if cc.KnockBack && uSp.Combat { //reset sp combat so
+			//get enemy position and radius components
+			ePos, eRadius, err := GetComponents2[comp.Position, comp.UnitRadius](world, uSp.Target)
+			if err != nil {
+				fmt.Printf("enemy compoenents (unitCombatSearch - check_combat.go): %s \n", err)
+				return false
+			}
+			//distance between unit and enemy minus their radius
+			adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, ePos.PositionVectorX, ePos.PositionVectorY) - float32(eRadius.UnitRadius) - float32(uRadius.UnitRadius)
+
+			//if out of attack range but in aggro range OR if out of both attack and aggro range
+			if (adjustedDistance > float32(uAtk.AttackRadius) && adjustedDistance <= float32(uAtk.AggroRadius)) || adjustedDistance > float32(uAtk.AggroRadius) {
+				uSp.Combat = false //stop special because its not in range anymore
+				uAtk.Frame = 0
+				uSp.Target = 0
+
+				if err := cardinal.SetComponent(world, id, uSp); err != nil {
+					fmt.Printf("error setting sp comp (unitCombatSearch - check_combat.go): %s \n", err)
+					return false
+				}
+
+			}
+		}
+
 		if !uAtk.Combat {
 			//find closest enemy
-			eID, eX, eY, eRadius, found := findClosestEnemy(collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uAtk.AggroRadius, uTeam.Team, class.Class)
+			eID, eX, eY, eRadius, found := findClosestEnemy(collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uAtk.AggroRadius, uTeam.Team, class.Class, true)
 			if found { //found enemy
 				// Calculate squared distance between the unit and the enemy, minus their radii
 				adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, eX, eY) - float32(eRadius) - float32(uRadius.UnitRadius)
@@ -181,7 +206,7 @@ func structureCombatSearch(world cardinal.WorldContext) error {
 						return false
 					}
 					//find closest enemy
-					eID, eX, eY, eRadius, found := findClosestEnemy(collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uAtk.AggroRadius, uTeam.Team, class.Class)
+					eID, eX, eY, eRadius, found := findClosestEnemy(collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uAtk.AggroRadius, uTeam.Team, class.Class, true)
 					if found { //found enemy
 						// Calculate squared distance between the unit and the enemy, minus their radii
 						adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, eX, eY) - float32(eRadius) - float32(uRadius.UnitRadius)
@@ -204,7 +229,7 @@ func structureCombatSearch(world cardinal.WorldContext) error {
 }
 
 // FindClosestEnemy performs a BFS search from the unit's position outward within the attack radius.
-func findClosestEnemy(hash *comp.SpatialHash, objID types.EntityID, startX, startY float32, attackRadius int, team, class string) (types.EntityID, float32, float32, int, bool) {
+func findClosestEnemy(hash *comp.SpatialHash, objID types.EntityID, startX, startY float32, attackRadius int, team, class string, targetStruct bool) (types.EntityID, float32, float32, int, bool) {
 	queue := list.New()                                                              //queue of cells to check
 	visited := make(map[string]bool)                                                 //cells checked
 	queue.PushBack(&comp.Position{PositionVectorX: startX, PositionVectorY: startY}) //insert starting position to queue
@@ -232,6 +257,10 @@ func findClosestEnemy(hash *comp.SpatialHash, objID types.EntityID, startX, star
 				if cell.Team[i] != team && id != objID { //if unit in cell is enemy and not self
 
 					if (class == "melee" && cell.Type[i] != "air") || class == "range" || class == "air" || class == "structure" { // make sure melee cannot attack air
+
+						if !targetStruct && cell.Type[i] == "structure" { //if cannot target structures and target is a strutures
+							continue
+						}
 
 						distSq := (cell.PositionsX[i]-startX)*(cell.PositionsX[i]-startX) + (cell.PositionsY[i]-startY)*(cell.PositionsY[i]-startY) - float32(cell.Radii[i]*cell.Radii[i])
 						//if distance is smaller then closest unit found so far
@@ -263,6 +292,36 @@ func findClosestEnemy(hash *comp.SpatialHash, objID types.EntityID, startX, star
 		}
 	}
 	return closestEnemy, closestX, closestY, closestRadius, foundEnemy
+}
+
+// /for attack phase.  unit is attacking structure but cannot use sp on structures
+// this functions finds closest targetable enemy and sets sp combat and target
+func findClosestEnemySP(world cardinal.WorldContext, id types.EntityID, sp *comp.Sp) (bool, error) {
+	//get Unit Components
+	uPos, uRadius, uAtk, uTeam, MatchID, class, err := GetComponents6[comp.Position, comp.UnitRadius, comp.Attack, comp.Team, comp.MatchId, comp.Class](world, id)
+	if err != nil {
+		return false, fmt.Errorf("(unitCombatSearch - check_combat.go) -%v ", err)
+	}
+
+	// get collision Hash
+	collisionHash, err := getCollisionHashGSS(world, MatchID)
+	if err != nil {
+		return false, fmt.Errorf("error retrieving SpartialHash component on tempSpartialHash (cunitCombatSearch - check_combat.go): %s ", err)
+	}
+
+	//find closest enemy
+	eID, eX, eY, eRadius, found := findClosestEnemy(collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uAtk.AggroRadius, uTeam.Team, class.Class, false)
+	if found { //found enemy
+		// Calculate squared distance between the unit and the enemy, minus their radii
+		adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, eX, eY) - float32(eRadius) - float32(uRadius.UnitRadius)
+		//if within attack range
+		if adjustedDistance <= float32(uAtk.AttackRadius) {
+			sp.Combat = true
+			sp.Target = eID
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

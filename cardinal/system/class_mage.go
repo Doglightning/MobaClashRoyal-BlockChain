@@ -21,15 +21,25 @@ func NewMageUpdateSP() *mageUpdateSP {
 }
 
 // Stuns mages target
-func MageSpawnSP(world cardinal.WorldContext, id types.EntityID) error {
+func MageSpawnSP(world cardinal.WorldContext, id types.EntityID, unitSp *comp.Sp) error {
 	// get unit attack component
 	unitAtk, err := cardinal.GetComponent[comp.Attack](world, id)
 	if err != nil {
-		return fmt.Errorf("error retrieving unit Attack component (class mage.go): %w", err)
+		return fmt.Errorf("error retrieving unit Attack/sp component (class mage.go): %w", err)
+	}
+
+	var tarId types.EntityID
+	if unitSp.Combat {
+		tarId = unitSp.Target
+		unitSp.Combat = false
+		unitSp.Target = 0
+
+	} else {
+		tarId = unitAtk.Target
 	}
 
 	//Add stun effect to target effects list
-	err = cardinal.UpdateComponent(world, unitAtk.Target, func(effect *comp.EffectsList) *comp.EffectsList {
+	err = cardinal.UpdateComponent(world, tarId, func(effect *comp.EffectsList) *comp.EffectsList {
 		if effect == nil {
 			fmt.Printf("error retrieving effect list (class mage.go) \n")
 			return nil
@@ -59,7 +69,7 @@ func MageSpawnSP(world cardinal.WorldContext, id types.EntityID) error {
 		comp.UID{UID: UID},
 		comp.SpEntity{SpName: "MageSP"},
 		comp.IntTracker{Num: 0}, //tracks duration
-		comp.Target{Target: unitAtk.Target},
+		comp.Target{Target: tarId},
 	)
 	if err != nil {
 		return fmt.Errorf("error creating stun entity (class mage.go): %v", err)

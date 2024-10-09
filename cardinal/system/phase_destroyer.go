@@ -105,6 +105,17 @@ func unitDestroyerDefault(world cardinal.WorldContext, id types.EntityID) error 
 		return fmt.Errorf("(unit_destroyer) %v ", err)
 	}
 
+	//filter for units targeting self
+	targetSpFilter := cardinal.ComponentFilter(func(m comp.Sp) bool {
+		return m.Target == id
+	})
+
+	//for unit Sp targettign self
+	err = resetUnitSpTargetingSelf(world, targetSpFilter)
+	if err != nil {
+		return fmt.Errorf("(unit_destroyer) %v ", err)
+	}
+
 	//for Structures targetting self, reset combat
 	err = resetStructuresTargetingSelfUD(world, targetFilter)
 	if err != nil {
@@ -327,6 +338,54 @@ func resetUnitsTargetingSelf(world cardinal.WorldContext, targetFilter cardinal.
 		})
 		if err != nil {
 			fmt.Printf("error updating attack comp (resetUnitsTargetingSelf/phase destroyer.go): %v", err)
+			return false
+		}
+
+		return true
+	})
+	if err != nil {
+		return fmt.Errorf("error retrieving unit entities (resetUnitsTargetingSelfUD): %s", err)
+	}
+	return nil
+}
+
+// for each unit sp targeting targetFilter, attack frame to 0 and resest sp combat and target
+func resetUnitSpTargetingSelf(world cardinal.WorldContext, targetFilter cardinal.FilterFn) error {
+	//for each targetting unit
+	err := cardinal.NewSearch().Entity(
+		filter.Contains(filter.Component[comp.UnitTag]())).
+		Where(targetFilter).Each(world, func(enemyID types.EntityID) bool {
+
+		// reset attack component
+		err := cardinal.UpdateComponent(world, enemyID, func(attack *comp.Attack) *comp.Attack {
+			if attack == nil {
+				fmt.Printf("error retrieving enemy attack component (resetUnitSpTargetingSelf/phase destroyer.go): ")
+				return nil
+			}
+
+			attack.DamageFrame = 0
+
+			return attack
+		})
+		if err != nil {
+			fmt.Printf("error updating attack comp (resetUnitSpTargetingSelf/phase destroyer.go): %v", err)
+			return false
+		}
+
+		// reset sp component
+		err = cardinal.UpdateComponent(world, enemyID, func(sp *comp.Sp) *comp.Sp {
+			if sp == nil {
+				fmt.Printf("error retrieving enemy sp component (resetUnitSpTargetingSelf/phase destroyer.go): ")
+				return nil
+			}
+
+			sp.Target = 0
+			sp.Combat = false
+
+			return sp
+		})
+		if err != nil {
+			fmt.Printf("error updating sp comp (resetUnitSpTargetingSelf/phase destroyer.go): %v", err)
 			return false
 		}
 

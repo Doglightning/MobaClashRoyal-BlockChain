@@ -42,7 +42,7 @@ func SpUpdater(world cardinal.WorldContext) error {
 }
 
 // spawns the special attack
-func spSpawner(world cardinal.WorldContext, id types.EntityID, name string) error {
+func spSpawner(world cardinal.WorldContext, id types.EntityID, name string, sp *comp.Sp) error {
 	var err error
 
 	switch name {
@@ -51,7 +51,7 @@ func spSpawner(world cardinal.WorldContext, id types.EntityID, name string) erro
 	case "FireSpirit":
 		err = fireSpiritSpawn(world, id)
 	case "Mage":
-		err = MageSpawnSP(world, id)
+		err = MageSpawnSP(world, id, sp)
 	case "Vampire":
 		err = vampireSpawnSP(world, id)
 	}
