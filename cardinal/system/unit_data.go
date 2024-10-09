@@ -41,15 +41,16 @@ type SpType struct {
 	DamageFrame         int  `json:"damageframe"` // Frame damage goes off (most animations have a wind down so the dmage goes off in the middle somewhere)
 	DamageEndFrame      int  `json:"damageendframe"`
 	StructureTargetable bool `json:"StructureTargetable"`
+	AttackRadius        int  `json:"AttackRadius"`
 }
 
 var SpRegistry = map[string]SpType{
-	"ArcherLady": {AttackRate: 30, DamageFrame: 20, DamageEndFrame: 20, StructureTargetable: true},
-	"FireSpirit": {AttackRate: 39, DamageFrame: 14, DamageEndFrame: 27, StructureTargetable: true},
-	"LavaGolem":  {AttackRate: 15, DamageFrame: 7, DamageEndFrame: 7, StructureTargetable: true},
-	"LeafBird":   {AttackRate: 25, DamageFrame: 5, DamageEndFrame: 24, StructureTargetable: true},
-	"Mage":       {AttackRate: 15, DamageFrame: 8, DamageEndFrame: 8, StructureTargetable: false},
-	"Vampire":    {AttackRate: 10, DamageFrame: 4, DamageEndFrame: 4, StructureTargetable: true},
+	"ArcherLady": {AttackRate: 30, DamageFrame: 20, DamageEndFrame: 20, StructureTargetable: true, AttackRadius: 1200},
+	"FireSpirit": {AttackRate: 39, DamageFrame: 14, DamageEndFrame: 27, StructureTargetable: true, AttackRadius: 350},
+	"LavaGolem":  {AttackRate: 15, DamageFrame: 7, DamageEndFrame: 7, StructureTargetable: true, AttackRadius: 350},
+	"LeafBird":   {AttackRate: 25, DamageFrame: 5, DamageEndFrame: 24, StructureTargetable: true, AttackRadius: 10},
+	"Mage":       {AttackRate: 15, DamageFrame: 8, DamageEndFrame: 8, StructureTargetable: false, AttackRadius: 1000},
+	"Vampire":    {AttackRate: 10, DamageFrame: 4, DamageEndFrame: 4, StructureTargetable: true, AttackRadius: 10},
 }
 
 type ProjectileType struct {

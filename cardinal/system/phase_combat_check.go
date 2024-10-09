@@ -67,6 +67,13 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 			return false
 		}
 
+		var atkRadius int
+		if uSp.CurrentSp >= uSp.MaxSp {
+			atkRadius = uSp.AttackRadius
+		} else {
+			atkRadius = uAtk.AttackRadius
+		}
+
 		if cc.KnockBack && uAtk.Combat { //reset combat so
 			//get enemy position and radius components
 			ePos, eRadius, err := GetComponents2[comp.Position, comp.UnitRadius](world, uAtk.Target)
@@ -78,7 +85,7 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 			adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, ePos.PositionVectorX, ePos.PositionVectorY) - float32(eRadius.UnitRadius) - float32(uRadius.UnitRadius)
 
 			//if out of attack range but in aggro range OR if out of both attack and aggro range
-			if (adjustedDistance > float32(uAtk.AttackRadius) && adjustedDistance <= float32(uAtk.AggroRadius)) || adjustedDistance > float32(uAtk.AggroRadius) {
+			if (adjustedDistance > float32(atkRadius) && adjustedDistance <= float32(uAtk.AggroRadius)) || adjustedDistance > float32(uAtk.AggroRadius) {
 				//reset combat
 				err = ClassResetCombat(world, id, uAtk)
 				if err != nil {
@@ -100,7 +107,7 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 			adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, ePos.PositionVectorX, ePos.PositionVectorY) - float32(eRadius.UnitRadius) - float32(uRadius.UnitRadius)
 
 			//if out of attack range but in aggro range OR if out of both attack and aggro range
-			if (adjustedDistance > float32(uAtk.AttackRadius) && adjustedDistance <= float32(uAtk.AggroRadius)) || adjustedDistance > float32(uAtk.AggroRadius) {
+			if (adjustedDistance > float32(atkRadius) && adjustedDistance <= float32(uAtk.AggroRadius)) || adjustedDistance > float32(uAtk.AggroRadius) {
 				uSp.Combat = false //stop special because its not in range anymore
 				uAtk.Frame = 0
 				uSp.Target = 0
@@ -120,7 +127,7 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 				// Calculate squared distance between the unit and the enemy, minus their radii
 				adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, eX, eY) - float32(eRadius) - float32(uRadius.UnitRadius)
 				//if within attack range
-				if adjustedDistance <= float32(uAtk.AttackRadius) {
+				if adjustedDistance <= float32(atkRadius) {
 					uAtk.Combat = true
 					uAtk.Target = eID
 					uAtk.Frame = 0

@@ -57,6 +57,13 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 
 		secondIfCondition := true
 
+		var atkRadius int
+		if uSp.CurrentSp >= uSp.MaxSp {
+			atkRadius = uSp.AttackRadius
+		} else {
+			atkRadius = uAtk.AttackRadius
+		}
+
 		//if units in combat
 		if uAtk.Combat || uSp.Combat {
 			var targetID types.EntityID
@@ -72,11 +79,12 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 				fmt.Printf("combat compoenents (unit_movement.go): %s \n", err)
 				continue
 			}
+
 			//distance between unit and enemy minus their radius
 			adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, ePos.PositionVectorX, ePos.PositionVectorY) - float32(eRadius.UnitRadius) - float32(uRadius.UnitRadius)
 
 			//if out of attack range but in aggro range
-			if adjustedDistance > float32(uAtk.AttackRadius) && adjustedDistance <= float32(uAtk.AggroRadius) {
+			if adjustedDistance > float32(atkRadius) && adjustedDistance <= float32(uAtk.AggroRadius) {
 				if uSp.Combat {
 					uSp.Combat = false //stop special because its not in range anymore
 					uAtk.Frame = 0
@@ -166,7 +174,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 				// Calculate squared distance between the unit and the enemy, minus their radii
 				adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, eX, eY) - float32(eRadius) - float32(uRadius.UnitRadius)
 				//if within attack range
-				if adjustedDistance <= float32(uAtk.AttackRadius) {
+				if adjustedDistance <= float32(atkRadius) {
 					uAtk.Combat = true
 					uAtk.Target = eID
 					uAtk.Frame = 0
