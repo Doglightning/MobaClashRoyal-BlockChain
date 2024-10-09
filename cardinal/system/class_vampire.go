@@ -39,13 +39,8 @@ func vampireUpdateSP(world cardinal.WorldContext, id types.EntityID) error {
 	if targetHP.CurrentHP != 0 { // do not heal because unit will never die if its always healing at 0
 		targetHP.CurrentHP += vampire.healAmount //heal unit
 
-		//check if unit being spawned exsists in the unit registry
-		unitType, exsist := UnitRegistry["Vampire"]
-		if !exsist {
-			return fmt.Errorf("vampire type not found in registry (sp_vampire.go)")
-		}
-		if targetHP.CurrentHP > unitType.Health { //cap healing at vampire max hp
-			targetHP.CurrentHP = unitType.Health
+		if targetHP.CurrentHP > targetHP.MaxHP { //cap healing at vampire max hp
+			targetHP.CurrentHP = targetHP.MaxHP
 		}
 		//update health component
 		if err := cardinal.SetComponent(world, targetID.Target, targetHP); err != nil {
