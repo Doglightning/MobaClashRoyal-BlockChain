@@ -31,9 +31,6 @@ func MageSpawnSP(world cardinal.WorldContext, id types.EntityID, unitSp *comp.Sp
 	var tarId types.EntityID
 	if unitSp.Combat {
 		tarId = unitSp.Target
-		unitSp.Combat = false
-		unitSp.Target = 0
-
 	} else {
 		tarId = unitAtk.Target
 	}

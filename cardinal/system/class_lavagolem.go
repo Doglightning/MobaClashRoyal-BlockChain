@@ -94,7 +94,7 @@ func vampireUpdateSPs(world cardinal.WorldContext, id types.EntityID) error {
 }
 
 // spawning the vampire special power
-func vampireSpawnSPs(world cardinal.WorldContext, id types.EntityID) error {
+func lavaGolemSpawnSP(world cardinal.WorldContext, id types.EntityID) error {
 
 	//Add heal spiral effect to the effects list
 	err := cardinal.UpdateComponent(world, id, func(effect *comp.EffectsList) *comp.EffectsList {

@@ -47,7 +47,7 @@ type SpType struct {
 var SpRegistry = map[string]SpType{
 	"ArcherLady": {AttackRate: 30, DamageFrame: 20, DamageEndFrame: 20, StructureTargetable: true, AttackRadius: 1200},
 	"FireSpirit": {AttackRate: 39, DamageFrame: 14, DamageEndFrame: 27, StructureTargetable: true, AttackRadius: 350},
-	"LavaGolem":  {AttackRate: 15, DamageFrame: 7, DamageEndFrame: 7, StructureTargetable: true, AttackRadius: 350},
+	"LavaGolem":  {AttackRate: 15, DamageFrame: 7, DamageEndFrame: 7, StructureTargetable: false, AttackRadius: 350},
 	"LeafBird":   {AttackRate: 25, DamageFrame: 5, DamageEndFrame: 24, StructureTargetable: true, AttackRadius: 10},
 	"Mage":       {AttackRate: 15, DamageFrame: 8, DamageEndFrame: 8, StructureTargetable: false, AttackRadius: 1000},
 	"Vampire":    {AttackRate: 10, DamageFrame: 4, DamageEndFrame: 4, StructureTargetable: true, AttackRadius: 10},

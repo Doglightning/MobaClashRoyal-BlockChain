@@ -50,6 +50,8 @@ func spSpawner(world cardinal.WorldContext, id types.EntityID, name string, sp *
 		err = archerLadySpawn(world, id)
 	case "FireSpirit":
 		err = fireSpiritSpawn(world, id)
+	case "LavaGolem":
+		err = lavaGolemSpawnSP(world, id)
 	case "Mage":
 		err = MageSpawnSP(world, id, sp)
 	case "Vampire":
@@ -115,7 +117,7 @@ func ClassResetCombat(world cardinal.WorldContext, id types.EntityID, atk *comp.
 	case "LeafBird":
 		err = channelingResetCombat(world, id, atk)
 	default:
-		resetCombat(atk)
+		resetCombat(world, id, atk)
 	}
 
 	return err

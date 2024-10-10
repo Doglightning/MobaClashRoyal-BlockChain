@@ -68,10 +68,10 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 		if uAtk.Combat || uSp.Combat {
 			var targetID types.EntityID
 
-			if uAtk.Combat { // get target id if targeting Sp or normal attack
-				targetID = uAtk.Target
-			} else if uSp.Combat {
+			if uSp.Combat { // get target id if targeting Sp or normal attack
 				targetID = uSp.Target
+			} else if uAtk.Combat {
+				targetID = uAtk.Target
 			}
 			//get enemy position and radius components
 			ePos, eRadius, err := GetComponents2[comp.Position, comp.UnitRadius](world, targetID)
@@ -156,8 +156,10 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 
 				//in attack range just rotate towards enemy
 			} else {
+
 				// Compute direction vector towards the enemy
 				uPos.RotationVectorX, uPos.RotationVectorY = directionVectorBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, ePos.PositionVectorX, ePos.PositionVectorY)
+
 				// Set the new position component
 				if err := cardinal.SetComponent(world, id, uPos); err != nil {
 					fmt.Printf("error set component on tempPosition (unit movement/MoveUnitTowardsEnemyUM): %v \n", err)

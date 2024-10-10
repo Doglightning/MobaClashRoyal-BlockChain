@@ -337,10 +337,22 @@ func findClosestEnemySP(world cardinal.WorldContext, id types.EntityID, sp *comp
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func resetCombat(attack *comp.Attack) {
+func resetCombat(world cardinal.WorldContext, id types.EntityID, attack *comp.Attack) error {
+
+	//get special power component
+	sp, err := cardinal.GetComponent[comp.Sp](world, id)
+	if err != nil {
+		fmt.Printf("error retrieving special power comp (ResetCombat/check combat.go): \n")
+		return nil
+	}
+
+	if !sp.Combat { //if unit is in sp dont reset attack
+		attack.Frame = 0
+	}
 
 	attack.Combat = false
-	attack.Frame = 0
+
+	return nil
 
 }
 

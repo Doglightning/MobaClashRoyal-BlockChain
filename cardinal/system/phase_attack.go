@@ -147,6 +147,9 @@ func MeleeRangeAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 	//if attack frame is at max and not sp charged  OR attack fram at sp max and charged
 	if (atk.Frame >= atk.Rate && !unitSp.Charged) || (atk.Frame >= unitSp.Rate && unitSp.Charged) {
 		atk.Frame = -1
+
+		unitSp.Combat = false
+		unitSp.Target = 0
 	}
 
 	atk.Frame++

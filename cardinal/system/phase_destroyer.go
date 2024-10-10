@@ -363,7 +363,7 @@ func resetUnitSpTargetingSelf(world cardinal.WorldContext, targetFilter cardinal
 				return nil
 			}
 
-			attack.DamageFrame = 0
+			attack.Frame = 0
 
 			return attack
 		})
