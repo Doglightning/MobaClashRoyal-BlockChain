@@ -322,7 +322,7 @@ func findClosestEnemySP(world cardinal.WorldContext, id types.EntityID, sp *comp
 		// Calculate squared distance between the unit and the enemy, minus their radii
 		adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, eX, eY) - float32(eRadius) - float32(uRadius.UnitRadius)
 		//if within attack range
-		if adjustedDistance <= float32(uAtk.AttackRadius) {
+		if adjustedDistance <= float32(sp.AttackRadius) {
 			sp.Combat = true
 			sp.Target = eID
 			return true, nil
