@@ -222,6 +222,13 @@ func archerLadyAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 	if err != nil {
 		return fmt.Errorf("unit components (class archerladyAttack.go): %v ", err)
 	}
+
+	//get target component
+	ePosition, eCenOffset, err := GetComponents2[comp.Position, comp.CenterOffset](world, atk.Target)
+	if err != nil {
+		return fmt.Errorf("target components (class archerladyAttack.go): %v ", err)
+	}
+
 	//get next uid
 	UID, err := getNextUID(world, matchID.MatchId)
 	if err != nil {
@@ -230,6 +237,11 @@ func archerLadyAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 
 	//off set units arrow spawn location to match model on client
 	newX, newY := RelativeOffsetXY(unitPosition.PositionVectorX, unitPosition.PositionVectorY, unitPosition.RotationVectorX, unitPosition.RotationVectorY, ProjectileRegistry[unitName.UnitName].offSetX, ProjectileRegistry[unitName.UnitName].offSetY)
+
+	//carrot rotation towards enemy
+	rotX, rotY, rotZ := directionVectorBetweenTwoPoints3D(newX, newY, unitPosition.PositionVectorZ+ProjectileRegistry[unitName.UnitName].offSetZ, ePosition.PositionVectorX, ePosition.PositionVectorY, ePosition.PositionVectorZ+eCenOffset.CenterOffset)
+
+	fmt.Printf("spawn: %f, %f, %f", rotX, rotY, rotZ)
 	//create projectile entity
 	_, err = cardinal.Create(world,
 		comp.MatchId{MatchId: matchID.MatchId},
@@ -240,9 +252,9 @@ func archerLadyAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 			PositionVectorX: newX,
 			PositionVectorY: newY,
 			PositionVectorZ: unitPosition.PositionVectorZ + ProjectileRegistry[unitName.UnitName].offSetZ,
-			RotationVectorX: unitPosition.RotationVectorX,
-			RotationVectorY: unitPosition.RotationVectorY,
-			RotationVectorZ: unitPosition.RotationVectorZ,
+			RotationVectorX: rotX,
+			RotationVectorY: rotY,
+			RotationVectorZ: rotZ,
 		},
 		comp.MapName{MapName: mapName.MapName},
 		comp.Class{Class: "projectile"},

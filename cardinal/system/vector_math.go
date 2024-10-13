@@ -41,7 +41,25 @@ func directionVectorBetweenTwoPoints(x1, y1, x2, y2 float32) (float32, float32) 
 	deltaY := y2 - y1
 	magnitude := float32(math.Sqrt(math.Pow(float64(deltaX), 2) + math.Pow(float64(deltaY), 2)))
 
+	if magnitude == 0 {
+		return 0, 0
+	}
+
 	return deltaX / magnitude, deltaY / magnitude
+}
+
+func directionVectorBetweenTwoPoints3D(x1, y1, z1, x2, y2, z2 float32) (float32, float32, float32) {
+	// Compute direction vector towards the enemy
+	deltaX := x2 - x1
+	deltaY := y2 - y1
+	deltaZ := z2 - z1
+	magnitude := float32(math.Sqrt(float64(deltaX*deltaX + deltaY*deltaY + deltaZ*deltaZ)))
+
+	if magnitude == 0 {
+		return 0, 0, 0
+	}
+
+	return deltaX / magnitude, deltaY / magnitude, deltaZ / magnitude
 }
 
 // rotate returns a new vector, rotated by the given angle (in degrees)

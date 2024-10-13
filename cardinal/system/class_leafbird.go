@@ -59,10 +59,9 @@ func leafBirdSp(world cardinal.WorldContext, id types.EntityID) error {
 	for x := botLeftB.X; x <= topRightA.X+float32(SpatialGridCellSize); x += float32(SpatialGridCellSize) {
 		// Loop through all `y` values from the min to max y, stepping by `stepSize`.
 		for y := botLeftB.Y; y <= topRightA.Y+float32(SpatialGridCellSize); y += float32(SpatialGridCellSize) {
-			fmt.Printf("x: %f  y: %f \n", x, y)
+
 			collList := GetEntitiesInCell(hash, x, y) //list of all units in cell
 			for _, collID := range collList {         //for each collision
-				fmt.Printf("collidedEntities: %d \n", collID)
 				collidedEntities[collID] = true //add to map
 			}
 		}

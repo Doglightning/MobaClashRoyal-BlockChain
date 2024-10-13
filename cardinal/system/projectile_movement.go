@@ -3,7 +3,6 @@ package system
 import (
 	comp "MobaClashRoyal/component"
 	"fmt"
-	"math"
 
 	"pkg.world.dev/world-engine/cardinal"
 	"pkg.world.dev/world-engine/cardinal/search/filter"
@@ -40,16 +39,18 @@ func ProjectileMovementSystem(world cardinal.WorldContext) error {
 			return false
 		}
 
-		// Compute direction vector towards the enemy
-		deltaX := enemyPos.PositionVectorX - projectilePos.PositionVectorX
-		deltaY := enemyPos.PositionVectorY - projectilePos.PositionVectorY
-		deltaZ := enemyPos.PositionVectorZ - projectilePos.PositionVectorZ + eCenOffset.CenterOffset
-		magnitude := float32(math.Sqrt(float64(deltaX*deltaX + deltaY*deltaY + deltaZ*deltaZ)))
+		// // Compute direction vector towards the enemy
+		// deltaX := enemyPos.PositionVectorX - projectilePos.PositionVectorX
+		// deltaY := enemyPos.PositionVectorY - projectilePos.PositionVectorY
+		// deltaZ := enemyPos.PositionVectorZ + eCenOffset.CenterOffset - projectilePos.PositionVectorZ
+		// magnitude := float32(math.Sqrt(float64(deltaX*deltaX + deltaY*deltaY + deltaZ*deltaZ)))
 
-		// Normalize the direction vector
-		projectilePos.RotationVectorX = deltaX / magnitude
-		projectilePos.RotationVectorY = deltaY / magnitude
-		projectilePos.RotationVectorZ = deltaZ / magnitude
+		// // Normalize the direction vector
+		// projectilePos.RotationVectorX = deltaX / magnitude
+		// projectilePos.RotationVectorY = deltaY / magnitude
+		// projectilePos.RotationVectorZ = deltaZ / magnitude
+
+		projectilePos.RotationVectorX, projectilePos.RotationVectorY, projectilePos.RotationVectorZ = directionVectorBetweenTwoPoints3D(projectilePos.PositionVectorX, projectilePos.PositionVectorY, projectilePos.PositionVectorZ, enemyPos.PositionVectorX, enemyPos.PositionVectorY, enemyPos.PositionVectorZ+eCenOffset.CenterOffset)
 
 		// Compute new position based on movespeed and direction
 		projectilePos.PositionVectorX += projectilePos.RotationVectorX * projectileMs.CurrentMS
