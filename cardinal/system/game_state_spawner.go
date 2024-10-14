@@ -72,8 +72,8 @@ func GameStateSpawnerSystem(world cardinal.WorldContext) error {
 			err = cardinal.SetComponent(world, matchFound,
 				&comp.Player2{
 					Nickname:    create.Tx.PersonaTag,
-					Hand:        []string{"Vampire", "LavaGolem", "Mage"},
-					Deck:        []string{"ArcherLady", "FireSpirit", "LeafBird"},
+					Hand:        []string{"Vampire", "LavaGolem", "LeafBird"},
+					Deck:        []string{"ArcherLady", "FireSpirit", "Mage"},
 					RemovalList: make(map[int]bool),
 					Gold:        5,
 				})

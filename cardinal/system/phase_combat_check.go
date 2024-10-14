@@ -66,7 +66,7 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 				atkRadius = uAtk.AttackRadius
 			}
 
-			if uAtk.Combat || uSp.Combat {
+			if (uAtk.Combat || uSp.Combat) && uAtk.Target != 0 {
 				var targetID types.EntityID
 
 				if uSp.Combat { // get target id if targeting Sp or normal attack
@@ -84,13 +84,16 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 				//distance between unit and enemy minus their radius
 				adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, ePos.PositionVectorX, ePos.PositionVectorY) - float32(eRadius.UnitRadius) - float32(uRadius.UnitRadius)
 				//if out of attack range
-				if adjustedDistance > float32(atkRadius) {
+
+				if adjustedDistance > float32(atkRadius)+10 {
+
 					if uSp.Combat {
 						uSp.Combat = false //stop special because its not in range anymore
 						uAtk.Frame = 0
 						uSp.Target = 0
 
 					} else {
+
 						//reset combat
 						err = ClassResetCombat(world, id, uAtk)
 						if err != nil {
@@ -110,7 +113,8 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 					// Calculate squared distance between the unit and the enemy, minus their radii
 					adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, eX, eY) - float32(eRadius) - float32(uRadius.UnitRadius)
 					//if within attack range
-					if adjustedDistance <= float32(atkRadius) {
+					if adjustedDistance <= float32(atkRadius)+20 {
+
 						uAtk.Combat = true
 						uAtk.Target = eID
 						uAtk.Frame = 0
@@ -118,11 +122,18 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 						uAtk.Target = eID
 					}
 
+				} else {
+					//reset combat
+					err = ClassResetCombat(world, id, uAtk)
+					if err != nil {
+						fmt.Printf("2 (unitCombatSearch - check_combat.go): %v \n", err)
+						return false
+					}
 				}
 			}
 
 			//check if in a SP animation or a regular attack
-			if uAtk.Frame == 0 && uSp.CurrentSp >= uSp.MaxSp && uAtk.Combat { //In special power
+			if uAtk.Frame == 0 && uSp.CurrentSp >= uSp.MaxSp && uAtk.Target != 0 { //In special power
 				uSp.Charged = true
 
 				if !uSp.StructureTargetable {

@@ -138,7 +138,7 @@ func FireSpiritAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 	}
 
 	//if target died in cast (self target) and attack frame is at end of animation or start (don't interupt the fire strike once its going even if target died)
-	if (atk.Target == id && atk.Frame >= unitSp.Rate-6) || (atk.Target == id && atk.Frame < unitSp.DamageFrame) || (atk.Frame >= unitSp.Rate && atk.State == "Channeling") {
+	if (atk.Target == 0 && atk.Frame >= unitSp.Rate-6) || (atk.Target == 0 && atk.Frame < unitSp.DamageFrame) || (atk.Frame >= unitSp.Rate && atk.State == "Channeling") {
 		atk.State = "Default"
 		atk.Combat = false
 	}

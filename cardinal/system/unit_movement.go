@@ -26,10 +26,11 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 
 	//go through all Unit ID's
 	for _, id := range priorityUnitIDs {
-		//get Unit CC component
-		cc, err := cardinal.GetComponent[comp.CC](world, id)
+
+		//get Unit Components
+		uPos, uRadius, uAtk, uSp, uTeam, uMs, MatchID, mapName, class, cc, err := GetComponents10[comp.Position, comp.UnitRadius, comp.Attack, comp.Sp, comp.Team, comp.Movespeed, comp.MatchId, comp.MapName, comp.Class, comp.CC](world, id)
 		if err != nil {
-			fmt.Printf("error getting unit cc component (unit_movement.go): %v \n", err)
+			fmt.Printf("unit components (unit_movement.go) %v \n", err)
 			continue
 		}
 
@@ -39,18 +40,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 				fmt.Printf("error setting unit cc component (unit_movement.go): %v \n", err)
 			}
 			continue
-		} else if cc.Stun > 0 || cc.KnockBack { //if unit stunned cannot move
-			continue
-		}
-
-		//get Unit Components
-		uPos, uRadius, uAtk, uSp, uTeam, uMs, MatchID, mapName, class, err := GetComponents9[comp.Position, comp.UnitRadius, comp.Attack, comp.Sp, comp.Team, comp.Movespeed, comp.MatchId, comp.MapName, comp.Class](world, id)
-		if err != nil {
-			fmt.Printf("unit components (unit_movement.go) %v \n", err)
-			continue
-		}
-
-		if uAtk.State == "Channeling" { //if unit chenneling cannot move
+		} else if cc.Stun > 0 || uAtk.State == "Channeling" { //if unit stunned or channeling cannot move
 			continue
 		}
 
