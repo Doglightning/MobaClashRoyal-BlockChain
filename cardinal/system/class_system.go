@@ -117,7 +117,7 @@ func ClassResetCombat(world cardinal.WorldContext, id types.EntityID, atk *comp.
 	case "LeafBird":
 		err = channelingResetCombat(world, id, atk)
 	default:
-		resetCombat(world, id, atk)
+		err = resetCombat(world, id, atk)
 	}
 
 	return err

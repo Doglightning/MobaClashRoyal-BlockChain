@@ -114,15 +114,6 @@ func FireSpiritAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 		return fmt.Errorf("error retrieving special power component (Fire Spirit Attack): %v", err)
 	}
 
-	//check if in a SP animation or a regular attack
-	if atk.Frame == 0 && unitSp.CurrentSp >= unitSp.MaxSp { //In special power
-
-		unitSp.Charged = true
-
-	} else if atk.Frame == 0 && unitSp.CurrentSp < unitSp.MaxSp { // in regular attack
-		unitSp.Charged = false
-	}
-
 	//if unit is in its damage frame and not charged
 	if atk.Frame == atk.DamageFrame && !unitSp.Charged {
 		unitSp.CurrentSp += unitSp.SpRate //increase sp after attack

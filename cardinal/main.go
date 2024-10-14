@@ -91,9 +91,9 @@ func MustInitWorld(w *cardinal.World) {
 		system.GoldGeneration, //prespawn phase
 		system.TowerConverterSystem,
 		system.UnitSpawnerSystem,  //spawn phase
+		system.CombatCheckSystem,  //pre attack phase
 		system.UnitMovementSystem, //move phase
 		system.ProjectileMovementSystem,
-		system.CombatCheckSystem, //pre attack phase
 		system.AttackPhaseSystem,
 		system.SpUpdater,
 		system.DestroyerSystem,   //destroy phase

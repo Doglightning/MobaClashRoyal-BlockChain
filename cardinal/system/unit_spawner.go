@@ -105,6 +105,7 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 					AttackRadius: unitType.AttackRadius,
 					AggroRadius:  unitType.AggroRadius,
 					State:        "Default",
+					Target:       0,
 				},
 				comp.Sp{
 					DmgSp:               unitType.DmgSp,
@@ -118,6 +119,7 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 					StructureTargetable: spType.StructureTargetable,
 					Combat:              false,
 					AttackRadius:        spType.AttackRadius,
+					Target:              0,
 				},
 				comp.CenterOffset{CenterOffset: unitType.CenterOffset},
 				comp.CC{Stun: 0, KnockBack: false},

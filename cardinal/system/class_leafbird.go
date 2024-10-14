@@ -72,16 +72,16 @@ func leafBirdSp(world cardinal.WorldContext, id types.EntityID) error {
 		if collID == id {
 			continue
 		}
-		fmt.Printf("collidedEntities: %d \n", len(collidedEntities))
+
 		//get target team and class components
 		targetTeam, targetClass, err := GetComponents2[comp.Team, comp.Class](world, collID)
 		if err != nil {
 			fmt.Printf("error getting targets compoenents (leafBirdSp): %v \n", err)
 			continue
 		}
-		fmt.Printf("team: %s    targetTeam.Team: %s \n", team.Team, targetTeam.Team)
+
 		if team.Team != targetTeam.Team { //dont attack friendlies soilder!!
-			fmt.Printf("2 team: %s    targetTeam.Team: %s \n", team.Team, targetTeam.Team)
+
 			//get target position and radius components
 			targetPos, targetRad, err := GetComponents2[comp.Position, comp.UnitRadius](world, collID)
 			if err != nil {
@@ -140,13 +140,6 @@ func leafBirdAttackSystem(world cardinal.WorldContext, id types.EntityID, atk *c
 	unitSp, err := cardinal.GetComponent[comp.Sp](world, id)
 	if err != nil {
 		return fmt.Errorf("error retrieving special power component ( leafBirdAttackSystem): %v", err)
-	}
-
-	//check if in a SP animation or a regular attack
-	if atk.Frame == 0 && unitSp.CurrentSp >= unitSp.MaxSp { //In special power
-		unitSp.Charged = true
-	} else if atk.Frame == 0 && unitSp.CurrentSp < unitSp.MaxSp { // in regular attack
-		unitSp.Charged = false
 	}
 
 	//if unit is in its damage frame and not charged

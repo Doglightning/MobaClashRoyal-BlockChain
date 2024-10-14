@@ -33,7 +33,13 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 			continue
 		}
 
-		if cc.Stun > 0 || cc.KnockBack { //if unit stunned cannot move
+		if cc.KnockBack {
+			cc.KnockBack = false
+			if err := cardinal.SetComponent(world, id, cc); err != nil {
+				fmt.Printf("error setting unit cc component (unit_movement.go): %v \n", err)
+			}
+			continue
+		} else if cc.Stun > 0 || cc.KnockBack { //if unit stunned cannot move
 			continue
 		}
 
@@ -55,24 +61,23 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 			continue
 		}
 
-		secondIfCondition := true
-
-		var atkRadius int
-		if uSp.CurrentSp >= uSp.MaxSp {
-			atkRadius = uSp.AttackRadius
-		} else {
-			atkRadius = uAtk.AttackRadius
-		}
-
-		//if units in combat
-		if uAtk.Combat || uSp.Combat {
+		//if unit targeting something
+		if uSp.Target != 0 || uAtk.Target != 0 {
 			var targetID types.EntityID
 
-			if uSp.Combat { // get target id if targeting Sp or normal attack
+			if uSp.Target != 0 { // get target id if targeting Sp or normal attack
 				targetID = uSp.Target
-			} else if uAtk.Combat {
+			} else if uAtk.Target != 0 {
 				targetID = uAtk.Target
 			}
+
+			var atkRadius int
+			if uSp.CurrentSp >= uSp.MaxSp {
+				atkRadius = uSp.AttackRadius
+			} else {
+				atkRadius = uAtk.AttackRadius
+			}
+
 			//get enemy position and radius components
 			ePos, eRadius, err := GetComponents2[comp.Position, comp.UnitRadius](world, targetID)
 			if err != nil {
@@ -85,24 +90,6 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 
 			//if out of attack range but in aggro range
 			if adjustedDistance > float32(atkRadius) && adjustedDistance <= float32(uAtk.AggroRadius) {
-				if uSp.Combat {
-					uSp.Combat = false //stop special because its not in range anymore
-					uAtk.Frame = 0
-					uSp.Target = 0
-					if err := cardinal.SetComponent(world, id, uSp); err != nil {
-						fmt.Printf("error setting sp comp (unit movement.go): %s \n", err)
-					}
-					continue
-				}
-
-				//reset combat
-				err = ClassResetCombat(world, id, uAtk)
-				if err != nil {
-					fmt.Printf(" 1(unit_movement.go): %v \n", err)
-					continue
-				}
-
-				secondIfCondition = false //not in combat but need to make sure not moving with direction map
 
 				//move towards enemy in combat with
 				if uMs.CurrentMS > 0 {
@@ -117,11 +104,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 						pushBlockingUnit(world, collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, class.Class, uMs.CurrentMS, mapName)
 						//move unit.  walk around blocking units
 						uPos.PositionVectorX, uPos.PositionVectorY = moveFreeSpace(collisionHash, id, tempX, tempY, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, class.Class, mapName)
-						// Set the new position component
-						if err := cardinal.SetComponent(world, id, uPos); err != nil {
-							fmt.Printf("error set component on position (unit movement.go): %v \n", err)
-							continue
-						}
+
 						// Update units new distance from enemy base
 						if err = updateUnitDistance(world, id, uTeam, uPos, mapName); err != nil {
 							fmt.Printf("%v", err)
@@ -132,117 +115,44 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 						uPos.PositionVectorX = tempX
 						uPos.PositionVectorY = tempY
 						//move with direction map
-						secondIfCondition = true
 					}
 				}
-				//if out of both attack and aggro range
-			} else if adjustedDistance > float32(uAtk.AggroRadius) {
-				if uSp.Combat {
-					uSp.Combat = false //stop special because its not in range anymore
-					uAtk.Frame = 0
-					uSp.Target = 0
-					if err := cardinal.SetComponent(world, id, uSp); err != nil {
-						fmt.Printf("error setting sp comp (unit movement.go): %s \n", err)
-					}
-					continue
-				}
-
-				//reset combat
-				err = ClassResetCombat(world, id, uAtk)
-				if err != nil {
-					fmt.Printf("2 (unit_movement.go): %v \n", err)
-					continue
-				}
-
 				//in attack range just rotate towards enemy
 			} else {
 
 				// Compute direction vector towards the enemy
 				uPos.RotationVectorX, uPos.RotationVectorY = directionVectorBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, ePos.PositionVectorX, ePos.PositionVectorY)
 
-				// Set the new position component
-				if err := cardinal.SetComponent(world, id, uPos); err != nil {
-					fmt.Printf("error set component on tempPosition (unit movement/MoveUnitTowardsEnemyUM): %v \n", err)
-					continue
-				}
 			}
 
 		}
 		//if units not in combat
-		if !uAtk.Combat && !uSp.Combat && secondIfCondition {
+		if !uAtk.Combat && !uSp.Combat && uAtk.Target == 0 {
 			//Check for in range Enemies
-			eID, eX, eY, eRadius, found := findClosestEnemy(collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uAtk.AggroRadius, uTeam.Team, class.Class, true)
-			if found { //found enemy
-				// Calculate squared distance between the unit and the enemy, minus their radii
-				adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, eX, eY) - float32(eRadius) - float32(uRadius.UnitRadius)
-				//if within attack range
-				if adjustedDistance <= float32(atkRadius) {
-					uAtk.Combat = true
-					uAtk.Target = eID
-					uAtk.Frame = 0
 
-					//not within attack range
-				} else {
-					if uMs.CurrentMS > 0 { // move towards enemy
-						// //Store Original X and Y
-						tempX := uPos.PositionVectorX
-						tempY := uPos.PositionVectorY
-						uPos = moveUnitTowardsEnemy(uPos, eX, eY, eRadius, uMs.CurrentMS, uRadius.UnitRadius)
-						//check that unit isnt walking through out of bounds towards a found unit
-						exists := moveDirectionExsist(uPos.PositionVectorX, uPos.PositionVectorY, mapName.MapName)
-						if exists {
-							//attempt to push blocking units
-							pushBlockingUnit(world, collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, class.Class, uMs.CurrentMS, mapName)
-							//move unit.  walk around blocking units
-							uPos.PositionVectorX, uPos.PositionVectorY = moveFreeSpace(collisionHash, id, tempX, tempY, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, class.Class, mapName)
-							// Set the new position component
-							err := cardinal.SetComponent(world, id, uPos)
-							if err != nil {
-								fmt.Printf("error set component on tempPosition (unit movement.go): %v \n", err)
-								continue
-							}
-							if err = updateUnitDistance(world, id, uTeam, uPos, mapName); err != nil {
-								fmt.Printf("%v", err)
-								continue
-							}
-						} else {
-							//no unit found because requires walking through map
-							found = false
-							uPos.PositionVectorX = tempX
-							uPos.PositionVectorY = tempY
-						}
-					}
+			//no enemies found and not in combat, move with direction map.
+			if uMs.CurrentMS > 0 {
+				// //Store Original X and Y
+				tempX := uPos.PositionVectorX
+				tempY := uPos.PositionVectorY
+				uPos, err = moveUnitDirectionMap(uPos, uTeam, uMs.CurrentMS, mapName)
+				if err != nil {
+					fmt.Printf("(unit_movement.go): %v \n", err)
+					continue
+				}
+				//attempt to push blocking units
+				pushBlockingUnit(world, collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, class.Class, uMs.CurrentMS, mapName)
+				//move unit.  walk around blocking units
+				uPos.PositionVectorX, uPos.PositionVectorY = moveFreeSpace(collisionHash, id, tempX, tempY, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, class.Class, mapName)
+				//set updated position component
+
+				//update units new distance from enemy base
+				if err = updateUnitDistance(world, id, uTeam, uPos, mapName); err != nil {
+					fmt.Printf("(unit_movement.go): %v \n", err)
+					continue
 				}
 			}
-			if !found {
-				//no enemies found and not in combat, move with direction map.
-				if uMs.CurrentMS > 0 {
-					// //Store Original X and Y
-					tempX := uPos.PositionVectorX
-					tempY := uPos.PositionVectorY
-					uPos, err = moveUnitDirectionMap(uPos, uTeam, uMs.CurrentMS, mapName)
-					if err != nil {
-						fmt.Printf("(unit_movement.go): %v \n", err)
-						continue
-					}
-					//attempt to push blocking units
-					pushBlockingUnit(world, collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, class.Class, uMs.CurrentMS, mapName)
-					//move unit.  walk around blocking units
-					uPos.PositionVectorX, uPos.PositionVectorY = moveFreeSpace(collisionHash, id, tempX, tempY, uPos.PositionVectorX, uPos.PositionVectorY, uRadius.UnitRadius, uTeam.Team, class.Class, mapName)
-					//set updated position component
-					err := cardinal.SetComponent(world, id, uPos)
-					if err != nil {
-						fmt.Printf("error set component on tempPosition (unit movement/MoveUnitDirectionMapUM): %v \n", err)
-						continue
-					}
 
-					//update units new distance from enemy base
-					if err = updateUnitDistance(world, id, uTeam, uPos, mapName); err != nil {
-						fmt.Printf("(unit_movement.go): %v \n", err)
-						continue
-					}
-				}
-			}
 		}
 		//set collision Hash
 		err = cardinal.SetComponent(world, gameState, collisionHash)
@@ -251,7 +161,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 			continue
 		}
 		//set attack component
-		if err = cardinal.SetComponent(world, id, uAtk); err != nil {
+		if err = SetComponents2(world, id, uAtk, uPos); err != nil {
 			fmt.Printf("error setting attack component (unit_movement.go): %v \n", err)
 			continue
 		}

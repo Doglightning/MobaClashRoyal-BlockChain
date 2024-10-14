@@ -241,7 +241,6 @@ func archerLadyAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 	//carrot rotation towards enemy
 	rotX, rotY, rotZ := directionVectorBetweenTwoPoints3D(newX, newY, unitPosition.PositionVectorZ+ProjectileRegistry[unitName.UnitName].offSetZ, ePosition.PositionVectorX, ePosition.PositionVectorY, ePosition.PositionVectorZ+eCenOffset.CenterOffset)
 
-	fmt.Printf("spawn: %f, %f, %f", rotX, rotY, rotZ)
 	//create projectile entity
 	_, err = cardinal.Create(world,
 		comp.MatchId{MatchId: matchID.MatchId},

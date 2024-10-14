@@ -28,122 +28,137 @@ func CombatCheckSystem(world cardinal.WorldContext) error {
 
 // check if unit not in combat can find a unit to be in combat with
 func unitCombatSearch(world cardinal.WorldContext) error {
-	// filter not in combat units
-	combatFilter := cardinal.ComponentFilter(func(m comp.Attack) bool {
-		return !m.Combat
-	})
-	//filter units knocked back
-	ccFilter := cardinal.ComponentFilter(func(m comp.CC) bool {
-		return m.KnockBack
-	})
 
 	//for each unit not in combat
 	err := cardinal.NewSearch().Entity(
 		filter.Contains(filter.Component[comp.UnitTag]())).
-		Where(cardinal.OrFilter(combatFilter, ccFilter)).Each(world, func(id types.EntityID) bool {
+		Each(world, func(id types.EntityID) bool {
 
-		//get Unit CC component
-		cc, err := cardinal.GetComponent[comp.CC](world, id)
-		if err != nil {
-			fmt.Printf("error getting unit cc component (unitCombatSearch - check_combat.go): %v \n", err)
-			return false
-		}
-
-		if cc.Stun > 0 { //if unit stunned cannot attack
-			return true
-		}
-
-		//get Unit Components
-		uPos, uRadius, uAtk, uSp, uTeam, MatchID, class, err := GetComponents7[comp.Position, comp.UnitRadius, comp.Attack, comp.Sp, comp.Team, comp.MatchId, comp.Class](world, id)
-		if err != nil {
-			fmt.Printf("(unitCombatSearch - check_combat.go) -%v \n", err)
-			return false
-		}
-
-		// get collision Hash
-		collisionHash, err := getCollisionHashGSS(world, MatchID)
-		if err != nil {
-			fmt.Printf("error retrieving SpartialHash component on tempSpartialHash (cunitCombatSearch - check_combat.go): %s \n", err)
-			return false
-		}
-
-		var atkRadius int
-		if uSp.CurrentSp >= uSp.MaxSp {
-			atkRadius = uSp.AttackRadius
-		} else {
-			atkRadius = uAtk.AttackRadius
-		}
-
-		if cc.KnockBack && uAtk.Combat { //reset combat so
-			//get enemy position and radius components
-			ePos, eRadius, err := GetComponents2[comp.Position, comp.UnitRadius](world, uAtk.Target)
+			//get Unit CC component
+			cc, err := cardinal.GetComponent[comp.CC](world, id)
 			if err != nil {
-				fmt.Printf("enemy compoenents (unitCombatSearch - check_combat.go): %s \n", err)
+				fmt.Printf("error getting unit cc component (unitCombatSearch - check_combat.go): %v \n", err)
 				return false
 			}
-			//distance between unit and enemy minus their radius
-			adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, ePos.PositionVectorX, ePos.PositionVectorY) - float32(eRadius.UnitRadius) - float32(uRadius.UnitRadius)
 
-			//if out of attack range but in aggro range OR if out of both attack and aggro range
-			if (adjustedDistance > float32(atkRadius) && adjustedDistance <= float32(uAtk.AggroRadius)) || adjustedDistance > float32(uAtk.AggroRadius) {
-				//reset combat
-				err = ClassResetCombat(world, id, uAtk)
+			if cc.Stun > 0 { //if unit stunned cannot attack
+				return true
+			}
+
+			//get Unit Components
+			uPos, uRadius, uAtk, uSp, uTeam, MatchID, class, err := GetComponents7[comp.Position, comp.UnitRadius, comp.Attack, comp.Sp, comp.Team, comp.MatchId, comp.Class](world, id)
+			if err != nil {
+				fmt.Printf("unit comps (unitCombatSearch - check_combat.go) -%v \n", err)
+				return false
+			}
+
+			// get collision Hash
+			collisionHash, err := getCollisionHashGSS(world, MatchID)
+			if err != nil {
+				fmt.Printf("error retrieving SpartialHash component on tempSpartialHash (unitCombatSearch - check_combat.go): %s \n", err)
+				return false
+			}
+
+			var atkRadius int
+			if uSp.CurrentSp >= uSp.MaxSp {
+				atkRadius = uSp.AttackRadius
+			} else {
+				atkRadius = uAtk.AttackRadius
+			}
+
+			if uAtk.Combat || uSp.Combat {
+				var targetID types.EntityID
+
+				if uSp.Combat { // get target id if targeting Sp or normal attack
+					targetID = uSp.Target
+				} else if uAtk.Combat {
+					targetID = uAtk.Target
+				}
+				//get enemy position and radius components
+				ePos, eRadius, err := GetComponents2[comp.Position, comp.UnitRadius](world, targetID)
 				if err != nil {
-					fmt.Printf(" 1(unitCombatSearch - check_combat.go): %v \n", err)
+					fmt.Printf("combat compoenents (unitCombatSearch - check_combat.go): %s \n", err)
 					return false
 				}
 
-			}
-		}
+				//distance between unit and enemy minus their radius
+				adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, ePos.PositionVectorX, ePos.PositionVectorY) - float32(eRadius.UnitRadius) - float32(uRadius.UnitRadius)
+				//if out of attack range
+				if adjustedDistance > float32(atkRadius) {
+					if uSp.Combat {
+						uSp.Combat = false //stop special because its not in range anymore
+						uAtk.Frame = 0
+						uSp.Target = 0
 
-		if cc.KnockBack && uSp.Combat { //reset sp combat so
-			//get enemy position and radius components
-			ePos, eRadius, err := GetComponents2[comp.Position, comp.UnitRadius](world, uSp.Target)
-			if err != nil {
-				fmt.Printf("enemy compoenents (unitCombatSearch - check_combat.go): %s \n", err)
+					} else {
+						//reset combat
+						err = ClassResetCombat(world, id, uAtk)
+						if err != nil {
+							fmt.Printf("2 (unitCombatSearch - check_combat.go): %v \n", err)
+							return false
+						}
+					}
+
+				}
+
+			}
+
+			if !uAtk.Combat && !uSp.Combat {
+				//find closest enemy
+				eID, eX, eY, eRadius, found := findClosestEnemy(collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uAtk.AggroRadius, uTeam.Team, class.Class, true)
+				if found { //found enemy
+					// Calculate squared distance between the unit and the enemy, minus their radii
+					adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, eX, eY) - float32(eRadius) - float32(uRadius.UnitRadius)
+					//if within attack range
+					if adjustedDistance <= float32(atkRadius) {
+						uAtk.Combat = true
+						uAtk.Target = eID
+						uAtk.Frame = 0
+					} else if adjustedDistance > float32(atkRadius) && adjustedDistance <= float32(uAtk.AggroRadius) {
+						uAtk.Target = eID
+					}
+
+				}
+			}
+
+			//check if in a SP animation or a regular attack
+			if uAtk.Frame == 0 && uSp.CurrentSp >= uSp.MaxSp && uAtk.Combat { //In special power
+				uSp.Charged = true
+
+				if !uSp.StructureTargetable {
+					//get Target name
+					tarName, err := cardinal.GetComponent[comp.UnitName](world, uAtk.Target)
+					if err != nil {
+						fmt.Printf("error retrieving target name component (unitCombatSearch - check_combat.go): %v \n", err)
+						return false
+					}
+					if tarName.UnitName == "Base" || tarName.UnitName == "Tower" {
+
+						found, err := findClosestEnemySP(world, id, uSp) //setup sp target and combat if unit is in charge but cannot target structures
+						if err != nil {
+							fmt.Printf("(unitCombatSearch - check_combat.go): %v \n", err)
+							return false
+						}
+
+						if !found {
+							uSp.Charged = false
+						}
+
+					}
+				}
+
+			} else if uAtk.Frame == 0 && uSp.CurrentSp < uSp.MaxSp { // in regular attack
+				uSp.Charged = false
+			}
+
+			//set combat check comps
+			if err = SetComponents2(world, id, uAtk, uSp); err != nil {
+				fmt.Printf("main (unitCombatSearch - check_combat.go): %v \n", err)
 				return false
 			}
-			//distance between unit and enemy minus their radius
-			adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, ePos.PositionVectorX, ePos.PositionVectorY) - float32(eRadius.UnitRadius) - float32(uRadius.UnitRadius)
 
-			//if out of attack range but in aggro range OR if out of both attack and aggro range
-			if (adjustedDistance > float32(atkRadius) && adjustedDistance <= float32(uAtk.AggroRadius)) || adjustedDistance > float32(uAtk.AggroRadius) {
-				uSp.Combat = false //stop special because its not in range anymore
-				uAtk.Frame = 0
-				uSp.Target = 0
-
-				if err := cardinal.SetComponent(world, id, uSp); err != nil {
-					fmt.Printf("error setting sp comp (unitCombatSearch - check_combat.go): %s \n", err)
-					return false
-				}
-
-			}
-		}
-
-		if !uAtk.Combat {
-			//find closest enemy
-			eID, eX, eY, eRadius, found := findClosestEnemy(collisionHash, id, uPos.PositionVectorX, uPos.PositionVectorY, uAtk.AggroRadius, uTeam.Team, class.Class, true)
-			if found { //found enemy
-				// Calculate squared distance between the unit and the enemy, minus their radii
-				adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, eX, eY) - float32(eRadius) - float32(uRadius.UnitRadius)
-				//if within attack range
-				if adjustedDistance <= float32(atkRadius) {
-					uAtk.Combat = true
-					uAtk.Target = eID
-					uAtk.Frame = 0
-				}
-			}
-		}
-		cc.KnockBack = false
-
-		//set combat check comps
-		if err = SetComponents2(world, id, uAtk, cc); err != nil {
-			fmt.Printf("main (unitCombatSearch - check_combat.go): %v \n", err)
-			return false
-		}
-
-		return true
-	})
+			return true
+		})
 	return err
 }
 
@@ -349,7 +364,7 @@ func resetCombat(world cardinal.WorldContext, id types.EntityID, attack *comp.At
 	if !sp.Combat { //if unit is in sp dont reset attack
 		attack.Frame = 0
 	}
-
+	attack.Target = 0
 	attack.Combat = false
 
 	return nil
@@ -372,9 +387,11 @@ func channelingResetCombat(world cardinal.WorldContext, id types.EntityID, attac
 		//reset units combat
 		attack.Frame = 0
 		attack.Combat = false
+		attack.Target = 0
 		attack.State = "Default"
 	} else { //if unit started channeling fire
 		attack.State = "Channeling"
+		attack.Target = 0
 		// attack.Target = id //set target to self to not get errors if triggering functions that ref this but unit is dead
 	}
 
