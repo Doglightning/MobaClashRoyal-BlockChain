@@ -62,7 +62,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 			}
 
 			var atkRadius int
-			if uSp.CurrentSp >= uSp.MaxSp {
+			if uSp.Charged {
 				atkRadius = uSp.AttackRadius
 			} else {
 				atkRadius = uAtk.AttackRadius
