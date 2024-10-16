@@ -10,8 +10,7 @@ import (
 
 // leafBirdSP struct contains configuration for an leafBirdSP in terms of their shooting properties.
 type lavaGolemDataSP struct {
-	Hieght float32 //triangle hieght
-	Width  float32 //triangle base width
+	Radius float32
 	Push   float32
 	Speed  float32
 	Damage float32
@@ -20,8 +19,7 @@ type lavaGolemDataSP struct {
 // NewleafBirdSPSP creates a new instance of leafBirdSPSP with default settings.
 func NewLavaGolemDataSP() *lavaGolemDataSP {
 	return &lavaGolemDataSP{
-		Hieght: 125,
-		Width:  125,
+		Radius: float32(UnitRegistry["LavaGolem"].Radius) + float32(SpRegistry["LavaGolem"].AttackRadius),
 		Push:   550,
 		Speed:  150,
 		Damage: 30,
@@ -41,22 +39,9 @@ func lavaGolemSpawnSP(world cardinal.WorldContext, id types.EntityID) error {
 	lavaGolem := NewLavaGolemDataSP()
 
 	//get unit comps
-	team, matchID, _, pos, atk, sp, err := GetComponents6[comp.Team, comp.MatchId, comp.MapName, comp.Position, comp.Attack, comp.Sp](world, id)
+	team, matchID, pos, err := GetComponents3[comp.Team, comp.MatchId, comp.Position](world, id)
 	if err != nil {
 		return fmt.Errorf("error getting unit comps (lavaGolemSp): %v", err)
-	}
-
-	var targetID types.EntityID
-
-	if sp.Target != 0 { // get target id if targeting Sp or normal attack
-		targetID = sp.Target
-	} else if atk.Target != 0 {
-		targetID = atk.Target
-	}
-	//get unit comps
-	ePos, err := cardinal.GetComponent[comp.Position](world, targetID)
-	if err != nil {
-		return fmt.Errorf("error getting enemy comps (lavaGolemSp): %v", err)
 	}
 
 	//get collision hash
@@ -66,7 +51,7 @@ func lavaGolemSpawnSP(world cardinal.WorldContext, id types.EntityID) error {
 	}
 
 	//find the 4 corners of the AoE rectangle
-	topLeft, topRight, botLeft, botRight := CreateRectangleAroundPoint(Point{X: ePos.PositionVectorX, Y: ePos.PositionVectorY}, Point{X: pos.RotationVectorX, Y: pos.RotationVectorY}, lavaGolem.Width, lavaGolem.Hieght)
+	topLeft, topRight, botLeft, botRight := CreateRectangleAroundPoint(Point{X: pos.PositionVectorX, Y: pos.PositionVectorY}, Point{X: pos.RotationVectorX, Y: pos.RotationVectorY}, lavaGolem.Radius, lavaGolem.Radius)
 	//find the rectangle that contains our AoE normalized to the (x, y) coord system
 	_, topRightA, botLeftB, _ := FindRectangleAABB(topLeft, topRight, botLeft, botRight)
 
