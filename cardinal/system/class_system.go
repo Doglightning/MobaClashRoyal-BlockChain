@@ -24,6 +24,8 @@ func SpUpdater(world cardinal.WorldContext) error {
 		switch spEntity.SpName {
 		case "ArcherLadySP":
 			err = archerLadyUpdate(world, id)
+		case "KnockUp":
+			err = knockUpUpdate(world, id)
 		case "MageSP":
 			err = MageUpdate(world, id)
 		case "VampireSP":

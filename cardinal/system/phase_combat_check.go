@@ -85,7 +85,8 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 				adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, ePos.PositionVectorX, ePos.PositionVectorY) - float32(eRadius.UnitRadius) - float32(uRadius.UnitRadius)
 				//if out of attack range
 
-				if adjustedDistance > float32(atkRadius)+10 {
+				if adjustedDistance > float32(atkRadius)+50 {
+					fmt.Printf("%f %f \n", adjustedDistance, float32(atkRadius+uAtk.ResetRadius))
 
 					if uSp.Combat {
 						uSp.Combat = false //stop special because its not in range anymore
@@ -113,7 +114,7 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 					// Calculate squared distance between the unit and the enemy, minus their radii
 					adjustedDistance := distanceBetweenTwoPoints(uPos.PositionVectorX, uPos.PositionVectorY, eX, eY) - float32(eRadius) - float32(uRadius.UnitRadius)
 					//if within attack range
-					if adjustedDistance <= float32(atkRadius)+20 {
+					if adjustedDistance <= float32(atkRadius) {
 
 						uAtk.Combat = true
 						uAtk.Target = eID
@@ -400,6 +401,7 @@ func channelingResetCombat(world cardinal.WorldContext, id types.EntityID, attac
 		attack.Combat = false
 		attack.Target = 0
 		attack.State = "Default"
+
 	} else { //if unit started channeling fire
 		attack.State = "Channeling"
 		attack.Target = 0

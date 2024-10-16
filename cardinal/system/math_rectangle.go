@@ -21,6 +21,23 @@ func CreateRectangleBase(midBase Point, direction Point, halfWidth, fullLength f
 	return topLeft, topRight, bottomLeft, bottomRight
 }
 
+func CreateRectangleAroundPoint(center Point, direction Point, halfWidth, halfLength float32) (Point, Point, Point, Point) {
+	// Normalize the direction vector and calculate half-length vector along the direction
+	halfLengths := scaleVector(direction, halfLength)
+
+	// Calculate the perpendicular vector for the width
+	perpendicularVector := rotate90Clockwise(direction)
+	halfWidthVector := scaleVector(perpendicularVector, halfWidth)
+
+	// Calculate all corners relative to the center
+	topLeft := addPoints(addPoints(center, halfLengths), scaleVector(halfWidthVector, -1))
+	topRight := addPoints(addPoints(center, halfLengths), halfWidthVector)
+	bottomLeft := addPoints(addPoints(center, scaleVector(halfLengths, -1)), scaleVector(halfWidthVector, -1))
+	bottomRight := addPoints(addPoints(center, scaleVector(halfLengths, -1)), halfWidthVector)
+
+	return topLeft, topRight, bottomLeft, bottomRight
+}
+
 // FindAABB calculates the axis-aligned bounding box that contains the given rectangle.
 // It takes the four corners of a rotated rectangle and returns the corners of the AABB.
 func FindRectangleAABB(corner1, corner2, corner3, corner4 Point) (Point, Point, Point, Point) {

@@ -104,6 +104,7 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 					DamageFrame:  unitType.DamageFrame,
 					AttackRadius: unitType.AttackRadius,
 					AggroRadius:  unitType.AggroRadius,
+					ResetRadius:  unitType.ResetRadius,
 					State:        "Default",
 					Target:       0,
 				},
@@ -180,6 +181,7 @@ func handLogic(world cardinal.WorldContext, gameState types.EntityID, name, team
 			if v == name { // if card == unit spawned
 				player1.Hand[i] = tempCard             //insert top card to hand
 				player1.Deck = append(player1.Deck, v) // put spawned unit to back of deck
+				break
 			}
 		}
 
@@ -220,6 +222,7 @@ func handLogic(world cardinal.WorldContext, gameState types.EntityID, name, team
 			if v == name { // if card == unit spawned
 				player2.Hand[i] = tempCard             //insert top card to hand
 				player2.Deck = append(player2.Deck, v) // put spawned unit to back of deck
+				break
 			}
 		}
 

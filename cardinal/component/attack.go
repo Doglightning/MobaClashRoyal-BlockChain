@@ -10,6 +10,7 @@ type Attack struct {
 	DamageFrame  int            `json:"attackframe"` // Frame damage goes off (most animations have a wind down so the dmage goes off in the middle somewhere)
 	AttackRadius int            `json:"AttackRadius"`
 	AggroRadius  int            `json:"AggroRadius"`
+	ResetRadius  int            `json:"ResetRadius"`
 	Target       types.EntityID `json:"target"`
 
 	State string `json:"State"`

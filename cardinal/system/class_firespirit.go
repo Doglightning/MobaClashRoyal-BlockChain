@@ -141,6 +141,7 @@ func FireSpiritAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 	if (atk.Target == 0 && atk.Frame >= unitSp.Rate-6) || (atk.Target == 0 && atk.Frame < unitSp.DamageFrame) || (atk.Frame >= unitSp.Rate && atk.State == "Channeling") {
 		atk.State = "Default"
 		atk.Combat = false
+		atk.Frame = 0
 	}
 
 	//if attack frame is at max and not sp charged  OR attack fram at sp max and charged

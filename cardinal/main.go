@@ -61,6 +61,7 @@ func MustInitWorld(w *cardinal.World) {
 		cardinal.RegisterComponent[component.UnitTag](w),
 		cardinal.RegisterComponent[component.StructureTag](w),
 		cardinal.RegisterComponent[component.ProjectileTag](w),
+		cardinal.RegisterComponent[component.KnockUp](w),
 	)
 
 	// Register messages (user action)

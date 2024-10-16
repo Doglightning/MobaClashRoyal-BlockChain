@@ -8,143 +8,125 @@ import (
 	"pkg.world.dev/world-engine/cardinal/types"
 )
 
-// vampireSP struct contains configuration for an vampires special properties.
-type vampireSPs struct {
-	healCount  int
-	healAmount float32
+// leafBirdSP struct contains configuration for an leafBirdSP in terms of their shooting properties.
+type lavaGolemDataSP struct {
+	Hieght float32 //triangle hieght
+	Width  float32 //triangle base width
+	Push   float32
+	Speed  float32
+	Damage float32
 }
 
-// NewVampireSP creates a new instance of vampireSP with default settings.
-func NewVampireSPs() *vampireSPs {
-	return &vampireSPs{
-		healCount:  25,
-		healAmount: .8,
+// NewleafBirdSPSP creates a new instance of leafBirdSPSP with default settings.
+func NewLavaGolemDataSP() *lavaGolemDataSP {
+	return &lavaGolemDataSP{
+		Hieght: 125,
+		Width:  125,
+		Push:   550,
+		Speed:  150,
+		Damage: 30,
 	}
 }
 
 // updates SP entity per tick
 func vampireUpdateSPs(world cardinal.WorldContext, id types.EntityID) error {
-	vampire := NewVampireSPs() // get vampire vars
-	// get target id
-	targetID, err := cardinal.GetComponent[comp.Target](world, id)
-	if err != nil {
-		return fmt.Errorf("error getting attack comp (sp_vampire.go): %w", err)
-	}
-	// get targets health component
-	targetHP, err := cardinal.GetComponent[comp.Health](world, targetID.Target)
-	if err != nil {
-		return fmt.Errorf("error getting health comp (sp_vampire.go): %w", err)
-	}
 
-	if targetHP.CurrentHP != 0 { // do not heal because unit will never die if its always healing at 0
-		targetHP.CurrentHP += vampire.healAmount //heal unit
-
-		//check if unit being spawned exsists in the unit registry
-		unitType, exsist := UnitRegistry["Vampire"]
-		if !exsist {
-			return fmt.Errorf("vampire type not found in registry (sp_vampire.go)")
-		}
-		if targetHP.CurrentHP > unitType.Health { //cap healing at vampire max hp
-			targetHP.CurrentHP = unitType.Health
-		}
-		//update health component
-		if err := cardinal.SetComponent(world, targetID.Target, targetHP); err != nil {
-			return fmt.Errorf("error setting target health comp (sp_vampire.go): %w", err)
-		}
-	}
-	// get tracker holding number of frames heal has gone off (heal count)
-	healCount, err := cardinal.GetComponent[comp.IntTracker](world, id)
-	if err != nil {
-		return fmt.Errorf("error retrieving int tracker component (sp_vampire.go): %w", err)
-	}
-	healCount.Num += 1                      // increase heal frame count
-	if healCount.Num >= vampire.healCount { //if heal count is greater than vampire max heal count
-
-		//remove heal spiral effect to the effects list
-		err := cardinal.UpdateComponent(world, targetID.Target, func(effect *comp.EffectsList) *comp.EffectsList {
-			if effect == nil {
-				fmt.Printf("error retrieving effect list (sp_vampire.go) \n")
-				return nil
-			}
-
-			if list, ok := effect.EffectsList["HealSpiral"]; ok { // if key exists
-				if list <= 1 { // if 1 or less of this buff active remove
-					delete(effect.EffectsList, "HealSpiral")
-				} else { // if more then 1 active reduce by 1
-					effect.EffectsList["HealSpiral"] -= 1
-				}
-			}
-			return effect
-		})
-		if err != nil {
-			return err
-		}
-
-		// remove entity
-		if err := cardinal.Remove(world, id); err != nil {
-			return fmt.Errorf("error removing entity sp (sp_vampire.go): %w", err)
-		}
-	} else { // else update heal count component
-		if err := cardinal.SetComponent(world, id, healCount); err != nil {
-			return fmt.Errorf("error setting heal count (sp_vampire.go): %w", err)
-		}
-	}
-
-	return err
+	return nil
 }
 
 // spawning the vampire special power
 func lavaGolemSpawnSP(world cardinal.WorldContext, id types.EntityID) error {
 
-	//Add heal spiral effect to the effects list
-	err := cardinal.UpdateComponent(world, id, func(effect *comp.EffectsList) *comp.EffectsList {
-		if effect == nil {
-			fmt.Printf("error retrieving effect list (sp_vampire.go) \n")
-			return nil
+	//get fire spirit vars
+	lavaGolem := NewLavaGolemDataSP()
+
+	//get unit comps
+	team, matchID, _, pos, atk, sp, err := GetComponents6[comp.Team, comp.MatchId, comp.MapName, comp.Position, comp.Attack, comp.Sp](world, id)
+	if err != nil {
+		return fmt.Errorf("error getting unit comps (lavaGolemSp): %v", err)
+	}
+
+	var targetID types.EntityID
+
+	if sp.Target != 0 { // get target id if targeting Sp or normal attack
+		targetID = sp.Target
+	} else if atk.Target != 0 {
+		targetID = atk.Target
+	}
+	//get unit comps
+	ePos, err := cardinal.GetComponent[comp.Position](world, targetID)
+	if err != nil {
+		return fmt.Errorf("error getting enemy comps (lavaGolemSp): %v", err)
+	}
+
+	//get collision hash
+	gameStateID, hash, err := getCollisionHashAndGameState(world, matchID)
+	if err != nil {
+		return fmt.Errorf("(lavaGolemSp): %v", err)
+	}
+
+	//find the 4 corners of the AoE rectangle
+	topLeft, topRight, botLeft, botRight := CreateRectangleAroundPoint(Point{X: ePos.PositionVectorX, Y: ePos.PositionVectorY}, Point{X: pos.RotationVectorX, Y: pos.RotationVectorY}, lavaGolem.Width, lavaGolem.Hieght)
+	//find the rectangle that contains our AoE normalized to the (x, y) coord system
+	_, topRightA, botLeftB, _ := FindRectangleAABB(topLeft, topRight, botLeft, botRight)
+
+	// Define a map to track unique collisions
+	collidedEntities := make(map[types.EntityID]bool)
+
+	if SpatialGridCellSize <= 0 {
+		return fmt.Errorf("invalid SpatialGridCellSize (lavaGolemSp)")
+	}
+
+	// Loop through all `x` values from the min to max x, stepping by `stepSize`.
+	for x := botLeftB.X; x <= topRightA.X+float32(SpatialGridCellSize); x += float32(SpatialGridCellSize) {
+		// Loop through all `y` values from the min to max y, stepping by `stepSize`.
+		for y := botLeftB.Y; y <= topRightA.Y+float32(SpatialGridCellSize); y += float32(SpatialGridCellSize) {
+
+			collList := GetEntitiesInCell(hash, x, y) //list of all units in cell
+			for _, collID := range collList {         //for each collision
+				collidedEntities[collID] = true //add to map
+			}
+		}
+	}
+
+	// Iterate over each key in the map
+	for collID := range collidedEntities {
+		if collID == id {
+			continue
 		}
 
-		effect.EffectsList["HealSpiral"]++
+		//get target team and class components
+		targetTeam, targetClass, err := GetComponents2[comp.Team, comp.Class](world, collID)
+		if err != nil {
+			fmt.Printf("error getting targets compoenents (lavaGolemSp): %v \n", err)
+			continue
+		}
 
-		return effect
-	})
-	if err != nil {
-		return fmt.Errorf("error on effect list (class vampire.go): %v", err)
-	}
+		if team.Team != targetTeam.Team && targetClass.Class != "structure" { //dont attack friendlies soilder!!
 
-	// get unit attack component
-	unitAtk, err := cardinal.GetComponent[comp.Attack](world, id)
-	if err != nil {
-		return fmt.Errorf("error retrieving unit Attack component (sp_vampire.go): %w", err)
-	}
+			//get target position and radius components
+			targetPos, targetRad, err := GetComponents2[comp.Position, comp.UnitRadius](world, collID)
+			if err != nil {
+				fmt.Printf("error getting targets compoenents (lavaGolemSp): %v \n", err)
+				continue
+			}
 
-	err = vampireAttack(world, unitAtk)
+			//does our unit intersect the AoE
+			if CircleIntersectsRectangle(Point{X: targetPos.PositionVectorX, Y: targetPos.PositionVectorY}, float32(targetRad.UnitRadius), topLeft, topRight, botRight, botLeft) {
 
-	if err != nil {
-		return err
+				if err := applyKnockUp(world, collID, matchID, lavaGolem.Push, lavaGolem.Speed, lavaGolem.Damage); err != nil {
+					return fmt.Errorf("(lavaGolemSp): %s ", err)
+				}
+
+			}
+		}
 	}
-	//get matchid component
-	matchID, err := cardinal.GetComponent[comp.MatchId](world, id)
-	if err != nil {
-		return fmt.Errorf("error getting matchID comp (sp_vampire.go): %w", err)
-	}
-	//get new uid
-	UID, err := getNextUID(world, matchID.MatchId)
-	if err != nil {
-		return fmt.Errorf("(sp_vampire.go): %v - ", err)
-	}
-	//create healing buff entity
-	_, err = cardinal.Create(world,
-		comp.MatchId{MatchId: matchID.MatchId},
-		comp.UID{UID: UID},
-		comp.SpEntity{SpName: "VampireSP"},
-		comp.IntTracker{Num: 0},
-		comp.Target{Target: id},
-	)
-	if err != nil {
-		return fmt.Errorf("error creating healing entity (sp_vampire.go): %v", err)
+	// update hash
+	if err := cardinal.SetComponent(world, gameStateID, hash); err != nil {
+		return fmt.Errorf("error setting hash (lavaGolemSp): %s ", err)
 	}
 
-	return err
+	return nil
 }
 
 func lavaGolemAttack(world cardinal.WorldContext, atk *comp.Attack) error {
