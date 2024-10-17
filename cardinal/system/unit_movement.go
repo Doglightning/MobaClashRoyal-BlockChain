@@ -40,7 +40,7 @@ func UnitMovementSystem(world cardinal.WorldContext) error {
 				fmt.Printf("error setting unit cc component (unit_movement.go): %v \n", err)
 			}
 			continue
-		} else if cc.Stun > 0 || uAtk.State == "Channeling" { //if unit stunned or channeling cannot move
+		} else if cc.Stun > 0 || cc.KnockUp > 0 || uAtk.State == "Channeling" { //if unit stunned or channeling or knocked up cannot move
 			continue
 		}
 

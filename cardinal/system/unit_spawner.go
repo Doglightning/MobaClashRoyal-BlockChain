@@ -123,7 +123,7 @@ func UnitSpawnerSystem(world cardinal.WorldContext) error {
 					Target:              0,
 				},
 				comp.CenterOffset{CenterOffset: unitType.CenterOffset},
-				comp.CC{Stun: 0, KnockBack: false},
+				comp.CC{Stun: 0, KnockUp: 0, KnockBack: false},
 				comp.EffectsList{EffectsList: make(map[string]int)},
 				comp.UnitTag{},
 			)

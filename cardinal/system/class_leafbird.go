@@ -132,7 +132,7 @@ func leafBirdAttackSystem(world cardinal.WorldContext, id types.EntityID, atk *c
 		fmt.Printf("error getting unit cc component ( leafBirdAttackSystem): %v", err)
 	}
 
-	if cc.Stun > 0 { //if unit stunned cannot attack
+	if cc.Stun > 0 || cc.KnockUp > 0 { //if unit stunned cannot attack
 		return nil
 	}
 

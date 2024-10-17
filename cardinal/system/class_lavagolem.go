@@ -90,7 +90,7 @@ func lavaGolemSpawnSP(world cardinal.WorldContext, id types.EntityID) error {
 		if team.Team != targetTeam.Team && targetClass.Class != "structure" { //dont attack friendlies soilder!!
 
 			//get target position and radius components
-			targetPos, targetRad, err := GetComponents2[comp.Position, comp.UnitRadius](world, collID)
+			targetPos, targetRad, targetCC, err := GetComponents3[comp.Position, comp.UnitRadius, comp.CC](world, collID)
 			if err != nil {
 				fmt.Printf("error getting targets compoenents (lavaGolemSp): %v \n", err)
 				continue
@@ -99,8 +99,12 @@ func lavaGolemSpawnSP(world cardinal.WorldContext, id types.EntityID) error {
 			//does our unit intersect the AoE
 			if CircleIntersectsRectangle(Point{X: targetPos.PositionVectorX, Y: targetPos.PositionVectorY}, float32(targetRad.UnitRadius), topLeft, topRight, botRight, botLeft) {
 
-				if err := applyKnockUp(world, collID, matchID, lavaGolem.Push, lavaGolem.Speed, lavaGolem.Damage); err != nil {
+				if err := applyKnockUp(world, collID, matchID, targetCC, lavaGolem.Push, lavaGolem.Speed, lavaGolem.Damage); err != nil {
 					return fmt.Errorf("(lavaGolemSp): %s ", err)
+				}
+
+				if err := cardinal.SetComponent(world, collID, targetCC); err != nil {
+					return fmt.Errorf("error setting target CC (lavaGolemSp): %s ", err)
 				}
 
 			}

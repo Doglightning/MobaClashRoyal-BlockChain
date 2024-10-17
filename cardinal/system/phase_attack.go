@@ -68,7 +68,7 @@ func MeleeRangeAttack(world cardinal.WorldContext, id types.EntityID, atk *comp.
 		fmt.Printf("error getting unit cc component (unit_movement.go): %v", err)
 	}
 
-	if cc.Stun > 0 { //if unit stunned cannot attack
+	if cc.Stun > 0 || cc.KnockUp > 0 { //if unit stunned cannot attack
 		return nil
 	}
 

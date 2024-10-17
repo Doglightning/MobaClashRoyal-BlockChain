@@ -2,6 +2,7 @@ package component
 
 type CC struct {
 	Stun      int  `json:"Stun"`
+	KnockUp   int  `json:"KnockUp"`
 	KnockBack bool `json:"KnockBack"`
 }
 

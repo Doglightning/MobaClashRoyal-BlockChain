@@ -34,19 +34,8 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 		filter.Contains(filter.Component[comp.UnitTag]())).
 		Each(world, func(id types.EntityID) bool {
 
-			//get Unit CC component
-			cc, err := cardinal.GetComponent[comp.CC](world, id)
-			if err != nil {
-				fmt.Printf("error getting unit cc component (unitCombatSearch - check_combat.go): %v \n", err)
-				return false
-			}
-
-			if cc.Stun > 0 { //if unit stunned cannot attack
-				return true
-			}
-
 			//get Unit Components
-			uPos, uRadius, uAtk, uSp, uTeam, MatchID, class, err := GetComponents7[comp.Position, comp.UnitRadius, comp.Attack, comp.Sp, comp.Team, comp.MatchId, comp.Class](world, id)
+			uPos, uRadius, uAtk, uSp, uTeam, MatchID, class, cc, err := GetComponents8[comp.Position, comp.UnitRadius, comp.Attack, comp.Sp, comp.Team, comp.MatchId, comp.Class, comp.CC](world, id)
 			if err != nil {
 				fmt.Printf("unit comps (unitCombatSearch - check_combat.go) -%v \n", err)
 				return false
@@ -57,6 +46,10 @@ func unitCombatSearch(world cardinal.WorldContext) error {
 			if err != nil {
 				fmt.Printf("error retrieving SpartialHash component on tempSpartialHash (unitCombatSearch - check_combat.go): %s \n", err)
 				return false
+			}
+
+			if cc.Stun > 0 || cc.KnockUp > 0 { //if unit stunned cannot attack
+				return true
 			}
 
 			var atkRadius int

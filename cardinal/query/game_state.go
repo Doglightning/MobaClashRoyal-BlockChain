@@ -45,6 +45,7 @@ type UnitDetails struct {
 	CurrentSp     int
 	ChargedSP     bool
 	Stunned       bool
+	KnockedUp     bool
 	EffectList    []string
 }
 
@@ -201,6 +202,10 @@ func unitStateGS(world cardinal.WorldContext, matchFilter cardinal.FilterFn, res
 		}
 		if cc.Stun > 0 {
 			unit.Stunned = true
+		}
+
+		if cc.KnockUp > 0 {
+			unit.KnockedUp = true
 		}
 
 		// Fetch effect list component

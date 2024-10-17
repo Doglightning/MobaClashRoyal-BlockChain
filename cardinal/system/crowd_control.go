@@ -48,7 +48,7 @@ func applyKnockBack(world cardinal.WorldContext, id types.EntityID, hash *comp.S
 	return nil
 }
 
-func applyKnockUp(world cardinal.WorldContext, id types.EntityID, matchID *comp.MatchId, targetHeight, speed, damage float32) error {
+func applyKnockUp(world cardinal.WorldContext, id types.EntityID, matchID *comp.MatchId, cc *comp.CC, targetHeight, speed, damage float32) error {
 
 	//get new uid
 	UID, err := getNextUID(world, matchID.MatchId)
@@ -67,6 +67,8 @@ func applyKnockUp(world cardinal.WorldContext, id types.EntityID, matchID *comp.
 		return fmt.Errorf("error creating knockup entity (applyKknockUp - crowd control.go): %v", err)
 	}
 
+	cc.KnockUp++
+
 	return nil
 }
 
@@ -77,9 +79,13 @@ func knockUpUpdate(world cardinal.WorldContext, id types.EntityID) error {
 		return fmt.Errorf("knock up entity (knockUpUpdate - crowd control.go): %w", err)
 	}
 
-	pos, err := cardinal.GetComponent[comp.Position](world, tarID.Target)
+	pos, cc, err := GetComponents2[comp.Position, comp.CC](world, tarID.Target)
 	if err != nil {
 		return fmt.Errorf("knock up entity (knockUpUpdate - crowd control.go): %w", err)
+	}
+
+	if cc.KnockUp == 0 { // can't be in a knockup if knockup == 0
+		cc.KnockUp++
 	}
 
 	if !knockUp.ApexReached { // hasn't reached apex
@@ -107,8 +113,13 @@ func knockUpUpdate(world cardinal.WorldContext, id types.EntityID) error {
 			difference := knockUp.Speed + (knockUp.CurrentHieght) // find amount to increment so we don't over shoot
 			pos.PositionVectorZ -= difference
 
-			if err := cardinal.SetComponent(world, tarID.Target, pos); err != nil {
-				return fmt.Errorf("error setting pos comp (knockUpUpdate - crowd control.go): %w", err)
+			cc.KnockUp-- //reduce stun count by 1
+			if cc.KnockUp < 0 {
+				cc.KnockUp = 0
+			}
+
+			if err := SetComponents2(world, tarID.Target, pos, cc); err != nil {
+				return fmt.Errorf("error setting delete comps (knockUpUpdate - crowd control.go): %w", err)
 			}
 
 			if err := applyDamage(world, tarID.Target, knockUp.Damage); err != nil {
@@ -119,7 +130,7 @@ func knockUpUpdate(world cardinal.WorldContext, id types.EntityID) error {
 			if err := cardinal.Remove(world, id); err != nil {
 				return fmt.Errorf("error removing entity sp (knockUpUpdate - crowd control.go): %w", err)
 			}
-
+			return nil
 		}
 	}
 	if err := cardinal.SetComponent(world, id, knockUp); err != nil {
